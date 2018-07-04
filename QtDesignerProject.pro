@@ -24,12 +24,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 
-#INCLUDEPATH += "/Users/laurah/Desktop/malon/dcmtk-3.6.3-install/usr/local/include/"
-#INCLUDEPATH += "/Users/laurah/Desktop/malon/build/"
 
-#LIBS += -L/Users/laurah/Desktop/malon/dcmtk-3.6.3-install/usr/local/lib/
-#LIBS += -lofstd -ldcmdata -ldcmimgle -ldcmimage -loflog
-#LIBS += -lofstd -loflog -ldcmdata -ldcmnet -ldcmimage -ldcmimgle
+INCLUDEPATH += "C:\Program Files\DCMTK\include"
+
+QMAKE_LIBDIR += "C:\Program Files\DCMTK\lib"
+win32:LIBS += -lAdvapi32 -lofstd -loflog -ldcmdata -ldcmnet -ldcmimage -ldcmimgle -lws2_32 -lnetapi32 -lwsock32 -liphlpapi
 
 
 SOURCES += \
