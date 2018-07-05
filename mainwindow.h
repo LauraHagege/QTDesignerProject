@@ -9,6 +9,33 @@
 
 #include <QMainWindow>
 
+
+#include "qimage.h"
+
+//#include <dcmtk/config/cfunix.h>
+//#include <dcmtk/config/osconfig.h>
+//#include <dcmtk/ofstd/ofstring.h>
+//#include <dcmtk/ofstd/ofconsol.h>
+//#include <dcmtk/dcmdata/dcdeftag.h>
+//#include <dcmtk/dcmdata/dcfilefo.h>
+//#include <dcmtk/dcmimgle/dcmimage.h>
+//#include "dcmtk/dcmimage/diregist.h"
+
+class QGrayColorTable
+{
+   public:
+      static const unsigned int GRAY_LEVELS = 256;
+      QGrayColorTable();
+      virtual ~QGrayColorTable() {}
+
+      QRgb* getGrayColorTable() { return m_colortable; }
+   private:
+      static QRgb m_colortable[GRAY_LEVELS];
+};
+
+
+
+
 namespace Ui {
 class MainWindow;
 }
@@ -24,6 +51,12 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    static QGrayColorTable m_grayColorTable;
 };
+
+
+
+
+
 
 #endif // MAINWINDOW_H
