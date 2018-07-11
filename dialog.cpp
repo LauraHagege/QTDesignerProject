@@ -22,7 +22,7 @@ Dialog::~Dialog()
 void Dialog::on_pushButton_clicked()
 {
     Filepath = QFileDialog::getOpenFileName(this,tr("Open File"),
-                                                  "Desktop/","All file (*.*)");
+                                                  "Desktop","All file (*.*)");
 
     //Filepath = QFileDialog::getExistingDirectory(0, ("Select Output Folder"), QDir::currentPath());
     //QMessageBox::information(this,tr("Directory path"), Filepath);

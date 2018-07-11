@@ -20,21 +20,16 @@
 //#include <dcmtk/dcmdata/dcfilefo.h>
 //#include <dcmtk/dcmimgle/dcmimage.h>
 //#include "dcmtk/dcmimage/diregist.h"
+#include <QImage>
+#include <QGraphicsScene>
+#include <QLabel>
+#include <QStackedWidget>
+#include <QScrollBar>
+#include <vector>
+#include <map>
+#include <string>
 
-class QGrayColorTable
-{
-   public:
-      static const unsigned int GRAY_LEVELS = 256;
-      QGrayColorTable();
-      virtual ~QGrayColorTable() {}
-
-      QRgb* getGrayColorTable() { return m_colortable; }
-   private:
-      static QRgb m_colortable[GRAY_LEVELS];
-};
-
-
-
+using namespace std;
 
 namespace Ui {
 class MainWindow;
@@ -49,9 +44,25 @@ public:
     ~MainWindow();
     void setFilepath(QString path);
 
+private slots:
+
+    void on_pushButton_clicked();
+    void wheelEvent(QWheelEvent *event);
+
 private:
+    int index;
+    int series;
+    map<string, vector<QImage*>> Series;
     Ui::MainWindow *ui;
-    static QGrayColorTable m_grayColorTable;
+    vector<QImage*> Images;
+    QImage *currentImage;
+    QImage *secondImage;
+    QGraphicsScene *myScene;
+    QGraphicsScene *myScene2;
+    QGraphicsScene *myScene3;
+
+    QStackedWidget *stacked;
+    QScrollBar *scrollbar;
 };
 
 
