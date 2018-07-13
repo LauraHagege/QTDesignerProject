@@ -51,7 +51,6 @@ void MainWindow::setFilepath(QString path){
     QByteArray ba = path.toLatin1();
     const char *file = ba.data();
     int size = strlen(file);
-    cout << "char size " << size << endl;
     char *filepath=new char[130];
     char *filepath2=new char[130];
     for(int i=0; i<size-8; i++){
@@ -59,10 +58,9 @@ void MainWindow::setFilepath(QString path){
         filepath2[i]=file[i];
     }
     filepath[size-8]='\0';
-    //filepath2[size-8]='\0';
+
     cout << "path " << filepath <<endl;
 
-    //char* path_to_file=new char[130];;
 
 
 
@@ -116,75 +114,31 @@ void MainWindow::setFilepath(QString path){
                             button->setText(tr(serieName));
                             button->setVisible(true);
                             buttonGroup->addButton(button);
-
-
                             ui->verticalLayout_2->addWidget(button);
 
-
-                            //connect(button,SIGNAL(clicked()),this,SLOT(updateSerie(QPushButton*)));
-
-
-
-
-
-
-
-                           // int counter=0;
                             while((FileRecord = SeriesRecord->nextSub(FileRecord)) != NULL){
                                 /*if(FileRecord->findAndGetOFString(DCM_ImageType,tmpString).good()){
                                      cout <<"Img description: " <<tmpString.c_str() << endl ;
                                 }
                                */
-                               //if (series == 2){
+
                                    string fullpath;
                                     if(FileRecord->findAndGetOFStringArray(DCM_ReferencedFileID,tmpString).good()){
-                                        //strcpy(path_to_file,filepath);
-                                        //strcat(path_to_file,tmpString.c_str());
                                         fullpath = filepath + string(tmpString.c_str());
-                                        //cout << "jpp" << fullpath << endl;
-
                                     }
                                     count +=1;
-                                    //cout << "full path " << path_to_file << endl;
+
                                     paths.push_back(fullpath);
-                                    //cout  << "jpp " << paths[counter] << endl;
-                                   // counter +=1;
-
                                     //DicomImages.push_back(new DicomImage(path_to_file));
-                              // }
+
                             }
-
-                            cout <<" path size" << paths.size() << endl;
-
-                            /*cout << "comp " << strcmp(currentSerie,serieName) << endl;
-                            cout << "path0 " << paths[0]<< endl;*/
-
-
-                          //if (series == 2){
-                               //cout << "test path"<<paths[0] <<endl;
-                              //cout << "test path"<<paths[1] <<endl;
                                allPath.insert(pair<string,vector<string>>("serie"+to_string(series),paths));
 
-                               /*char currentserieName[30]="serie";
-                               cout <<"serie name " << serieName << endl;
-                               cout << "TESTTESTESTESTEST " << allPath[serieName][0] << endl;
-                               strcpy(currentserieName,serieName);
-                               cout <<"current serie name " << currentserieName << endl;
-                               cout << "TESTTESTESTESTEST " << allPath[currentserieName][0] << endl;*/
-                          // }
                         }
                     }
                 }
             }
 
-    //string buttonName = seriesButtons[1]->text().toLocal8Bit().constData();
-    //cout << "size with button name "<<allPath[buttonName].size() << endl;
-
-    cout << "sizeee " << allPath["serie2"].size() << endl;
-    cout << "size of currentSerie " << allPath[currentSerie].size() << endl;
-
-    cout << "path " << allPath[currentSerie][0] << endl;
-    cout << "path " << allPath[currentSerie][1] << endl;
 
     for(int i=0; i<allPath[currentSerie].size(); i++){
         //cout << "path " << allPath[currentSerie][i] << endl;
@@ -192,8 +146,6 @@ void MainWindow::setFilepath(QString path){
 
 
     }
-
-
 
 
     //**********DEALING WITH ALL IMAGES OF THE SERIE**********//
@@ -252,18 +204,9 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::wheelEvent(QWheelEvent *event)
 {
-   /* for( int i = 0; i < 256; ++i )
-        currentImage->setColor(255-i, qRgb(i,i,i));
-*/
-    //myLabel->setPixmap( QPixmap::fromImage( *currentImage ) );
-   // cout << "index" << index << endl;
-   // cout << "size" << Images.size() <<endl;
-
     index+=1;
     if(index+1 > Images.size())
         index=0;
-
-   // cout << "index after " << index << endl;
 
     myScene->addPixmap( QPixmap::fromImage( *Images[index] ) );
     ui->graphicsView->setScene(myScene);
