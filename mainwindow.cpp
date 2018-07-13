@@ -76,10 +76,10 @@ void MainWindow::setFilepath(QString path){
 
     int count =0;
 
-    vector<DicomImage*> DicomImages;
+    //vector<DicomImage*> DicomImages;
     //currentSerie=new char[30];
     //strcpy(currentSerie,"serie2");
-    currentSerie = "serie2";
+    currentSerie = "serie3";
 
 
 
@@ -110,7 +110,7 @@ void MainWindow::setFilepath(QString path){
                             strcat(serieName,to_string(series).c_str());
 
                             QPushButton *button = new QPushButton(this);
-                            seriesButtons.push_back(button);
+
                             button->setText(tr(serieName));
                             button->setVisible(true);
                             buttonGroup->addButton(button);
@@ -139,18 +139,17 @@ void MainWindow::setFilepath(QString path){
                 }
             }
 
-
-    for(int i=0; i<allPath[currentSerie].size(); i++){
+    displayImages();
+   /* for(int i=0; i<allPath[currentSerie].size(); i++){
         //cout << "path " << allPath[currentSerie][i] << endl;
         DicomImages.push_back(new DicomImage(allPath[currentSerie][i].c_str()));
 
 
-    }
-
+    }*/
 
     //**********DEALING WITH ALL IMAGES OF THE SERIE**********//
-    //see later not to open everything
-    vector <Uint8*> pixelDatas;
+
+    /*vector <Uint8*> pixelDatas;
 
     int check=true;
     for(int i=0; i<DicomImages.size(); i++){
@@ -181,7 +180,7 @@ void MainWindow::setFilepath(QString path){
     //creating scene
     myScene= new QGraphicsScene(this);
     ui->graphicsView->setScene(myScene);
-    myScene->addPixmap( QPixmap::fromImage( *Images[1] ) );
+    myScene->addPixmap( QPixmap::fromImage( *Images[1] ) );*/
 
     delete filepath;
 }
@@ -215,5 +214,57 @@ void MainWindow::wheelEvent(QWheelEvent *event)
 void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     string buttonName = b->text().toLocal8Bit().constData();
     cout << "button " << buttonName << " clicked, associated serie size: "<< this->allPath[buttonName].size() << endl;
+    currentSerie=buttonName;
+    cout << "currentSeriesize " <<this->allPath[currentSerie].size() << endl;
+
+    Images.clear();
+    displayImages();
+}
+
+void MainWindow::displayImages(){
+    index=0;
+    vector<DicomImage*> DicomImages;
+
+    for(int i=0; i<allPath[currentSerie].size(); i++){
+        //cout << "path " << allPath[currentSerie][i] << endl;
+        DicomImages.push_back(new DicomImage(allPath[currentSerie][i].c_str()));
+
+
+    }
+
+    //**********DEALING WITH ALL IMAGES OF THE SERIE**********//
+    vector <Uint8*> pixelDatas;
+
+    int check=true;
+    for(int i=0; i<DicomImages.size(); i++){
+        if(DicomImages[i] == NULL)
+            check=false;
+        else if(!(DicomImages[i]->getStatus() == EIS_Normal))
+            check=false;
+    }
+
+
+    if (check){
+        //if (DicomImages[0]->getStatus() == EIS_Normal && DicomImages[1]->getStatus() == EIS_Normal)
+        for(int i=0; i<DicomImages.size(); i++){
+            DicomImages[0] ->setMinMaxWindow();
+            Uint8 *pixelData = (Uint8 *)(DicomImages[i]->getOutputData(8 )); // bits per sample
+
+            if (pixelData != NULL){
+                // do something useful with the pixel data
+                Images.push_back(new QImage (pixelData,DicomImages[0]->getWidth(), DicomImages[0]->getHeight(), QImage::Format_Indexed8));
+                for( int j = 0; j < 256; ++j )
+                    Images[i]->setColor(j, qRgb(j,j,j));
+                }
+            }
+    } else
+            cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
+
+
+    //creating scene
+    myScene= new QGraphicsScene(this);
+    ui->graphicsView->setScene(myScene);
+    myScene->addPixmap( QPixmap::fromImage( *Images[1] ) );
+
 }
 

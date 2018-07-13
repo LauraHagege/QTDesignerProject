@@ -43,6 +43,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void setFilepath(QString path);
+    void displayImages();
 
 
 private slots:
@@ -54,12 +55,12 @@ private:
     int index; //index for images in the serie
     int series; //number of series in the directory
     string currentSerie; //name of the current selected serie
-    vector<QImage*> currentSerieImages; //store QImages for the current selected serie
+
     map<string, vector <string>> allPath; // store all path for all series to reach them when selected;
     Ui::MainWindow *ui;
-    vector<QImage*> Images;
-    vector<QPushButton*> seriesButtons;
-    QButtonGroup *buttonGroup;
+    vector<QImage*> Images; //store QImages for the current selected serie
+
+    QButtonGroup *buttonGroup; //button to choose the displayed serie
 
     QGraphicsScene *myScene;
 
