@@ -37,7 +37,9 @@
            </property>
            <widget class="QGraphicsView" name="graphicsView_2"/>
            <widget class="QGraphicsView" name="graphicsView"/>
-           <widget class="QWidget" name="widget_2" native="true"/>
+           <widget class="QWidget" name="verticalLayoutWidget_2">
+            <layout class="QVBoxLayout" name="verticalLayout_2"/>
+           </widget>
           </widget>
          </item>
         </layout>

@@ -8,7 +8,7 @@
 #include <QString>
 
 #include <QMainWindow>
-
+#include <QPushButton>
 
 #include "qimage.h"
 
@@ -44,25 +44,25 @@ public:
     ~MainWindow();
     void setFilepath(QString path);
 
-private slots:
 
+private slots:
     void on_pushButton_clicked();
     void wheelEvent(QWheelEvent *event);
+    void buttonInGroupClicked(QAbstractButton *);
 
 private:
-    int index;
-    int series;
-    map<string, vector<QImage*>> Series;
+    int index; //index for images in the serie
+    int series; //number of series in the directory
+    string currentSerie; //name of the current selected serie
+    vector<QImage*> currentSerieImages; //store QImages for the current selected serie
+    map<string, vector <string>> allPath; // store all path for all series to reach them when selected;
     Ui::MainWindow *ui;
     vector<QImage*> Images;
-    QImage *currentImage;
-    QImage *secondImage;
-    QGraphicsScene *myScene;
-    QGraphicsScene *myScene2;
-    QGraphicsScene *myScene3;
+    vector<QPushButton*> seriesButtons;
+    QButtonGroup *buttonGroup;
 
-    QStackedWidget *stacked;
-    QScrollBar *scrollbar;
+    QGraphicsScene *myScene;
+
 };
 
 
