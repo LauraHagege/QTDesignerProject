@@ -44,6 +44,7 @@ public:
     ~MainWindow();
     void setFilepath(QString path);
     void displayImages();
+    void make3D(int width, int height);
 
 
 private slots:
@@ -52,6 +53,8 @@ private slots:
     void buttonInGroupClicked(QAbstractButton *);
 
 private:
+    int index2;
+    int invert;
     int index; //index for images in the serie
     int series; //number of series in the directory
     string currentSerie; //name of the current selected serie
@@ -59,10 +62,17 @@ private:
     map<string, vector <string>> allPath; // store all path for all series to reach them when selected;
     Ui::MainWindow *ui;
     vector<QImage*> Images; //store QImages for the current selected serie
+    vector<QImage*> Images2;
+    vector<uint8_t *> myPixelsZ;
+    vector<uint8_t *> myPixelsX;
+    vector<uint8_t *> myPixelsY;
 
     QButtonGroup *buttonGroup; //button to choose the displayed serie
 
     QGraphicsScene *myScene;
+    QGraphicsScene *myScene2;
+
+
 
 };
 

@@ -15,14 +15,11 @@ int main(int argc, char *argv[])
     dialogbox.setModal(true);
     dialogbox.exec();
 
-    //if(dialogbox.exec()){
-        QString path=dialogbox.getFilepath();
-       // QMessageBox::information(a,QObject::tr("Directory path"), path);
-        //cout << path.toStdString() << endl;
-   // }
 
-    /*const char *file = "/Users/laurah/Desktop/CTAbdomen/DICOMDAT/SDY00000/SRS00000/IMG00000";
-    DicomImage *image = new DicomImage(file);*/
+    QString path=dialogbox.getFilepath();
+
+    //const char *path = "/Users/laurah/Desktop/CTAbdomen/DICOMDAT/DICOMDIR";
+
 
     MainWindow w;
     w.setFilepath(path);
