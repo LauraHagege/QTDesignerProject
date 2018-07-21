@@ -394,8 +394,8 @@ void MainWindow::createButtons(){
     ui->labels->setIcon(QIcon("C:/Users/simms/Desktop/Laura/img/label.png"));
     ui->labels->setIconSize(QSize(30,30));
 
-    ui->as1->setVisible(false);
-    ui->as2->setVisible(false);
+   // ui->as1->setVisible(false);
+   //ui->as2->setVisible(false);
 
 }
 

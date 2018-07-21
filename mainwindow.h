@@ -51,6 +51,7 @@ private slots:
     void on_pushButton_clicked();
     void wheelEvent(QWheelEvent *event);
     void buttonInGroupClicked(QAbstractButton *);
+    void createButtons();
 
 private:
     int index2;
