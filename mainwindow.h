@@ -48,10 +48,13 @@ public:
 
 
 private slots:
-    void on_pushButton_clicked();
     void wheelEvent(QWheelEvent *event);
     void buttonInGroupClicked(QAbstractButton *);
     void createButtons();
+
+    void on_Hide_clicked();
+    void on_InvertGray_clicked();
+    void on_Advanced_clicked();
 
 private:
     int index2;
