@@ -175,7 +175,7 @@ void MainWindow::setFilepath(QString path){
                                 buttonGroup->addButton(button);
 
 
-                                //ui->verticalLayout_2->addWidget(button);
+                               // ui->verticalLayout_2->addWidget(button);
 
                                 QLabel *SerieDesc= new QLabel(this);
                                 QLabel *SerieDate = new QLabel(this);
@@ -190,7 +190,6 @@ void MainWindow::setFilepath(QString path){
                                     cout <<"Serie date: " << tmpString.c_str() << endl ;
                                     SerieDate->setText(tmpString.c_str()) ;
                                 }
-                                cout << "nb of images" << count << endl;
 
                                 char Images[15]= "Images: ";
                                 strcat(Images, to_string(count).c_str());
@@ -201,16 +200,22 @@ void MainWindow::setFilepath(QString path){
                                 SerieFrame->setFrameShadow(QFrame::Sunken);
                                 SerieFrame->setLineWidth(1);
 
-                                QVBoxLayout *SerieLayout = new QVBoxLayout(this);
-                                SerieLayout->addWidget(button);
-                                SerieLayout->addWidget(SerieDesc);
-                                SerieLayout->addWidget(SerieDate);
-                                SerieLayout->addWidget(SerieImgNb);
-                                SerieLayout->addWidget(SerieFrame);
+//                                QVBoxLayout *SerieLayout = new QVBoxLayout(this);
+//                                SerieLayout->addWidget(button);
+//                                SerieLayout->addWidget(SerieDesc);
+//                                SerieLayout->addWidget(SerieDate);
+//                                SerieLayout->addWidget(SerieImgNb);
+//                                SerieLayout->addWidget(SerieFrame);
 
-                                QWidget *serieWidget = new QWidget(this);
-                                serieWidget->setLayout(SerieLayout);
-                                ui->verticalLayout_2->addWidget(serieWidget);
+//                                QWidget *serieWidget = new QWidget(this);
+//                                serieWidget->setLayout(SerieLayout);
+//                                ui->verticalLayout_2->addWidget(serieWidget);
+
+                                ui->verticalLayout_2->addWidget(button);
+                                ui->verticalLayout_2->addWidget(SerieDesc);
+                                ui->verticalLayout_2->addWidget(SerieDate);
+                                ui->verticalLayout_2->addWidget(SerieImgNb);
+                                ui->verticalLayout_2->addWidget(SerieFrame);
 
 
 
