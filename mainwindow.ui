@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1038</width>
-    <height>556</height>
+    <height>652</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,129 +20,7 @@
       <item>
        <widget class="QWidget" name="widget" native="true">
         <layout class="QGridLayout" name="gridLayout">
-         <item row="2" column="0">
-          <widget class="QWidget" name="AdvancedSettingsWidget" native="true">
-           <property name="minimumSize">
-            <size>
-             <width>1000</width>
-             <height>0</height>
-            </size>
-           </property>
-           <layout class="QGridLayout" name="gridLayout_3">
-            <item row="0" column="0">
-             <layout class="QHBoxLayout" name="AdvancedSettings">
-              <item>
-               <widget class="QPushButton" name="InvertGray">
-                <property name="text">
-                 <string>Invert grayscale</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="as2">
-                <property name="text">
-                 <string>Contrast presets</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="Line" name="line_8">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_4">
-                <property name="text">
-                 <string>Free hand contrast</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_3">
-                <property name="text">
-                 <string>Compare studies</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="Line" name="line_9">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_2">
-                <property name="text">
-                 <string>Link Scroll</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="Line" name="line_11">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_8">
-                <property name="text">
-                 <string>Measure</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="pushButton_9">
-                <property name="text">
-                 <string>Measure angle</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="Line" name="line_12">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="Anonymize">
-                <property name="text">
-                 <string>Anonymize</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="Hide">
-                <property name="text">
-                 <string>Hide</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QSplitter" name="splitter">
-           <property name="layoutDirection">
-            <enum>Qt::RightToLeft</enum>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <widget class="QGraphicsView" name="graphicsView_2"/>
-           <widget class="QGraphicsView" name="graphicsView"/>
-           <widget class="QWidget" name="verticalLayoutWidget_2">
-            <layout class="QVBoxLayout" name="verticalLayout_2"/>
-           </widget>
-          </widget>
-         </item>
-         <item row="0" column="0">
+         <item row="0" column="0" colspan="2">
           <layout class="QHBoxLayout" name="GeneralSettings">
            <item>
             <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -283,12 +161,173 @@
            </item>
           </layout>
          </item>
-         <item row="1" column="0">
+         <item row="1" column="0" colspan="2">
           <widget class="Line" name="line_10">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
           </widget>
+         </item>
+         <item row="2" column="0" colspan="2">
+          <widget class="QWidget" name="AdvancedSettingsWidget" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>1000</width>
+             <height>0</height>
+            </size>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_3">
+            <item row="0" column="0">
+             <layout class="QHBoxLayout" name="AdvancedSettings">
+              <item>
+               <widget class="QPushButton" name="InvertGray">
+                <property name="text">
+                 <string>Invert grayscale</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="as2">
+                <property name="text">
+                 <string>Contrast presets</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line_8">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_4">
+                <property name="text">
+                 <string>Free hand contrast</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_3">
+                <property name="text">
+                 <string>Compare studies</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line_9">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_2">
+                <property name="text">
+                 <string>Link Scroll</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line_11">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_8">
+                <property name="text">
+                 <string>Measure</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_9">
+                <property name="text">
+                 <string>Measure angle</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line_12">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="Anonymize">
+                <property name="text">
+                 <string>Anonymize</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="Hide">
+                <property name="text">
+                 <string>Hide</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QWidget" name="widget_2" native="true">
+           <widget class="QWidget" name="verticalLayoutWidget">
+            <property name="geometry">
+             <rect>
+              <x>20</x>
+              <y>80</y>
+              <width>2</width>
+              <height>2</height>
+             </rect>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_2"/>
+           </widget>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QSplitter" name="splitter_3">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <widget class="QSplitter" name="splitter">
+              <property name="layoutDirection">
+               <enum>Qt::LeftToRight</enum>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <widget class="QWidget" name="verticalLayoutWidget_2">
+               <layout class="QVBoxLayout" name="verticalLayout_12"/>
+              </widget>
+              <widget class="QGraphicsView" name="graphicsView"/>
+              <widget class="QGraphicsView" name="graphicsView_2"/>
+             </widget>
+             <widget class="QSplitter" name="splitter_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <widget class="QGraphicsView" name="graphicsView_3">
+               <property name="layoutDirection">
+                <enum>Qt::RightToLeft</enum>
+               </property>
+              </widget>
+              <widget class="QGraphicsView" name="graphicsView_4">
+               <property name="layoutDirection">
+                <enum>Qt::RightToLeft</enum>
+               </property>
+              </widget>
+             </widget>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>

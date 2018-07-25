@@ -56,8 +56,13 @@ private slots:
     void on_InvertGray_clicked();
     void on_Advanced_clicked();
 
+    void on_w1_clicked();
+
+    void on_w2_clicked();
+
 private:
     int index2;
+    int index3;
     int invert;
     int index; //index for images in the serie
     int series; //number of series in the directory
@@ -67,6 +72,7 @@ private:
     Ui::MainWindow *ui;
     vector<QImage*> Images; //store QImages for the current selected serie
     vector<QImage*> Images2;
+    vector<QImage*> Images3;
     vector<uint8_t *> myPixelsZ;
     vector<uint8_t *> myPixelsX;
     vector<uint8_t *> myPixelsY;
@@ -75,7 +81,7 @@ private:
 
     QGraphicsScene *myScene;
     QGraphicsScene *myScene2;
-
+    QGraphicsScene *myScene3;
 
 
 };

@@ -46,7 +46,6 @@ MainWindow::~MainWindow()
 void MainWindow::setFilepath(QString path){
     createButtons();
     invert=0;
-    index=0;
     series=0;
     //QMessageBox::information(this,tr("Directory path"), path);
 
@@ -139,10 +138,10 @@ void MainWindow::setFilepath(QString path){
 //                                        cout << " image orientation : " <<tmpString.c_str() << endl ;
 //                                        patientposition= atoi(tmpString.c_str());
 //                                    }
-//                                    if(FileRecord->findAndGetOFStringArray(DCM_PixelSpacing,tmpString).good()){
-//                                        cout << " Pixel spacing : " <<tmpString.c_str() << endl ;
-//                                        pixelspacing= atoi(tmpString.c_str());
-//                                    }
+                                    if(FileRecord->findAndGetOFStringArray(DCM_PixelSpacing,tmpString).good()){
+                                        cout << " Pixel spacing : " <<tmpString.c_str() << endl ;
+                                        pixelspacing= atoi(tmpString.c_str());
+                                   }
 //                                    if(FileRecord->findAndGetOFStringArray(DCM_Columns,tmpString).good()){
 //                                        cout << " Column : " <<tmpString.c_str() << endl ;
 //                                        //column= atoi(tmpString.c_str());
@@ -164,7 +163,7 @@ void MainWindow::setFilepath(QString path){
 
                             if(count !=0){
                                 //adding button for each serie
-                                char serieName[30]="serie";
+                                char serieName[30]="Series";
                                 series +=1;
                                 strcat(serieName,to_string(series).c_str());
 
@@ -250,12 +249,20 @@ void MainWindow::wheelEvent(QWheelEvent *event)
 
 
 
-    /*index2+=1;
+    index2+=1;
     if(index2+1 > Images2.size())
         index2=0;
 
     myScene2->addPixmap( QPixmap::fromImage( *Images2[index2] ) );
-    ui->graphicsView_2->setScene(myScene2);*/
+    ui->graphicsView_2->setScene(myScene2);
+
+
+    index3+=1;
+    if(index3+1 > Images3.size())
+        index3=0;
+
+    myScene3->addPixmap( QPixmap::fromImage( *Images3[index3] ) );
+    ui->graphicsView_3->setScene(myScene3);
 }
 
 void MainWindow::buttonInGroupClicked(QAbstractButton *b){
@@ -271,6 +278,7 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
 void MainWindow::displayImages(){
     index=0;
     index2=0;
+    index3=0;
     vector<DicomImage*> DicomImages;
     myPixelsZ.clear();
 
@@ -305,6 +313,29 @@ void MainWindow::displayImages(){
 
             uint8_t* pixelData2 = (uint8_t *)(DicomImages[i]->getOutputData(8 ));
 
+//            if(i==50){
+//                int size=DicomImages[i]->getOutputDataSize(8);
+//                cout << "size "<<size << endl;
+//                cout << "pixels " << endl;
+//                for(int j=0; j<200 ; j++){
+//                    cout << to_string(pixelData2[j]) << " " ;
+//                    if(j% DicomImages[i]->getWidth() ==0){
+//                        cout<< endl;
+//                    }
+//                }
+
+//                cout << "pixels2 " << endl;
+//                for(int j=0; j<200 ; j++){
+//                    cout << to_string( myPixelsZ[12][j])  << " ";
+//                    if(j% DicomImages[i]->getWidth() ==0){
+//                        cout<< endl;
+//                    }
+//                }
+
+
+//            }
+
+
 
             if (pixelData != NULL){
                 // do something useful with the pixel data
@@ -317,7 +348,7 @@ void MainWindow::displayImages(){
             cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
 
 
-   //make3D((int)DicomImages[0]->getWidth(),(int)DicomImages[0]->getHeight());
+   make3D((int)DicomImages[0]->getWidth(),(int)DicomImages[0]->getHeight());
 
     //creating scene
     myScene= new QGraphicsScene(this);
@@ -329,8 +360,9 @@ void MainWindow::displayImages(){
 void MainWindow::make3D(int width, int height){
 
    // int countY=0;
-    cout << "there" << endl;
+
     int depth=myPixelsZ.size();
+    //cout << "depth " << depth << " width " << width << " height " << height << endl;
 
     //X fixed <-> width
     for (int x=0; x<width; x++){
@@ -338,29 +370,51 @@ void MainWindow::make3D(int width, int height){
        int countX=0;
         for(int z=0; z<depth; z++){
             int i=0;
-            for(int y=x; y<height*width ; y++){
-                if (x=0){
-                    //cout << "PIXEL DATA Z" << myPixelsZ[z][y+(width*i+1)] << endl;;
-                    //mypixel[countX]=myPixelsZ[z][y+(width*i+1)];
-                    //cout << "PIXEL DATA " << mypixel[countX] <<endl;
-                    //cout << endl;
-                }
+            for(int y=x; y<height*width ; y+=width){
+                mypixel[countX]=myPixelsZ[z][y];
                 countX +=1;
                 i+=1;
             }
         }
-        myPixelsX.push_back(mypixel);
-        Images2.push_back(new QImage ((Uint8 *)mypixel,height, depth, QImage::Format_Indexed8));
+            myPixelsX.push_back(mypixel);
+            QImage *img = new QImage ((Uint8*)mypixel,height, depth, QImage::Format_Indexed8);
+           
+        Images2.push_back(img);
         for( int j = 0; j < 256; ++j )
             Images2[x]->setColor(j, qRgb(j,j,j));
     }
 
+    cout << "size " << myPixelsZ.size() << endl;
+    myScene2= new QGraphicsScene(this);
+    ui->graphicsView_2->setScene(myScene2);
+    myScene2->addPixmap( QPixmap::fromImage( *Images2[1] ) );
 
 
+    cout << "y now" << endl;
+    //Y fixed <-> width
+    for (int y=0; y<height; y++){
+       uint8_t *mypixel= new uint8_t[width*depth];
+       int countY=0;
+        for(int z=0; z<depth; z++){
+            int l=0;
+            for(int x=y*width; x<(y+1)*width ; x++){
+                mypixel[countY]=myPixelsZ[z][x];
+                countY +=1;
+                l+=1;
+            }
+        }
+            myPixelsY.push_back(mypixel);
+            QImage *img = new QImage (mypixel,width, depth, QImage::Format_Indexed8);
 
-   // myScene2= new QGraphicsScene(this);
-    //ui->graphicsView_2->setScene(myScene2);
-    //myScene2->addPixmap( QPixmap::fromImage( *Images2[1] ) );
+        Images3.push_back(img);
+        for( int j = 0; j < 256; ++j )
+            Images3[y]->setColor(j, qRgb(j,j,j));
+    }
+
+    //cout << "size " << myPixelsZ.size() << endl;
+    myScene3= new QGraphicsScene(this);
+    ui->graphicsView_3->setScene(myScene3);
+    myScene3->addPixmap( QPixmap::fromImage( *Images3[1] ) );
 
 }
 
@@ -398,6 +452,11 @@ void MainWindow::createButtons(){
     ui->AdvancedSettingsWidget->setVisible(false);
     ui->AdvancedSettingsWidget->setVisible(false);
 
+    ui->widget_2->setLayout(ui->verticalLayout_2);
+    ui->widget_2->setFixedWidth(110);
+
+
+
 
 }
 
@@ -414,14 +473,16 @@ void MainWindow::on_InvertGray_clicked()
 {
     if(invert ==0){
         for(int j=0; j<Images.size(); j++){
-            for( int i = 0; i < 256; ++i )
-                Images[j]->setColor(255-i, qRgb(i,i,i));
+//            for( int i = 0; i < 256; ++i )
+//                Images[j]->setColor(255-i, qRgb(i,i,i));
+            Images[j]->invertPixels();
     }
     invert=1;
     }else {
         for(int j=0; j<Images.size(); j++){
-            for( int i = 0; i < 256; ++i )
-                Images[j]->setColor(i, qRgb(i,i,i));
+//            for( int i = 0; i < 256; ++i )
+//                Images[j]->setColor(i, qRgb(i,i,i));
+            Images[j]->invertPixels();
         }
         invert=0;
     }
@@ -434,4 +495,14 @@ void MainWindow::on_Advanced_clicked()
 {
     ui->AdvancedSettingsWidget->setVisible(true);
     ui->AdvancedSettingsWidget->setVisible(true);
+}
+
+void MainWindow::on_w1_clicked()
+{
+    ui->graphicsView_2->setVisible(false);
+}
+
+void MainWindow::on_w2_clicked()
+{
+     ui->graphicsView_2->setVisible(true);
 }
