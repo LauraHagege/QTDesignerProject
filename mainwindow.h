@@ -60,6 +60,8 @@ private slots:
 
     void on_w2_clicked();
 
+    void on_w4_clicked();
+
 private:
     int index2;
     int index3;

@@ -340,9 +340,9 @@ void MainWindow::displayImages(){
             if (pixelData != NULL){
                 // do something useful with the pixel data
                 Images.push_back(new QImage (pixelData,DicomImages[0]->getWidth(), DicomImages[0]->getHeight(), QImage::Format_Indexed8));
-                for( int j = 0; j < 256; ++j )
-                    Images[i]->setColor(j, qRgb(j,j,j));
-                }
+//                for( int j = 0; j < 256; ++j )
+//                    Images[i]->setColor(j, qRgb(j,j,j));
+            }
             }
     } else
             cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
@@ -353,6 +353,12 @@ void MainWindow::displayImages(){
     //creating scene
     myScene= new QGraphicsScene(this);
     ui->graphicsView->setScene(myScene);
+   // QFrame *Frame = new QFrame(this);
+    //Frame->setFrameShape(QFrame::HLine);
+    //Frame->setFrameShadow(QFrame::Sunken);
+    //Frame->setLineWidth(1);
+    ui->graphicsView->setFrameRect(QRect());
+
     myScene->addPixmap( QPixmap::fromImage( *Images[0] ) );
 
 }
@@ -377,11 +383,12 @@ void MainWindow::make3D(int width, int height){
             }
         }
             myPixelsX.push_back(mypixel);
-            QImage *img = new QImage ((Uint8*)mypixel,height, depth, QImage::Format_Indexed8);
-           
-        Images2.push_back(img);
-        for( int j = 0; j < 256; ++j )
-            Images2[x]->setColor(j, qRgb(j,j,j));
+            QImage *img= new QImage(mypixel,height, depth, QImage::Format_Indexed8);
+            QImage *copy =  new QImage(img->scaled(QSize(height,1.8*depth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+            delete img;
+        Images2.push_back(copy);
+//        for( int j = 0; j < 256; ++j )
+//            Images2[x]->setColor(j, qRgb(j,j,j));
     }
 
     cout << "size " << myPixelsZ.size() << endl;
@@ -405,10 +412,12 @@ void MainWindow::make3D(int width, int height){
         }
             myPixelsY.push_back(mypixel);
             QImage *img = new QImage (mypixel,width, depth, QImage::Format_Indexed8);
+            QImage *copy =  new QImage(img->scaled(QSize(height,1.8*depth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+            delete img;
 
-        Images3.push_back(img);
-        for( int j = 0; j < 256; ++j )
-            Images3[y]->setColor(j, qRgb(j,j,j));
+        Images3.push_back(copy);
+//        for( int j = 0; j < 256; ++j )
+//            Images3[y]->setColor(j, qRgb(j,j,j));
     }
 
     //cout << "size " << myPixelsZ.size() << endl;
@@ -418,42 +427,52 @@ void MainWindow::make3D(int width, int height){
 
 }
 
+
 void MainWindow::createButtons(){
-    ui->Zoom->setIcon(QIcon("C:/Users/simms/Desktop/Laura/img/zoom.png"));
-    ui->Zoom->setIconSize(QSize(30,30));
+    ui->mainToolBar->setIconSize(QSize(30,30));
 
-    ui->Flag->setIcon(QIcon("C:/Users/simms/Desktop/Laura/img/flag.png"));
-    ui->Flag->setIconSize(QSize(30,30));
+    QAction *Zoom= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/zoom.png"),"Zoom",this);
+    ui->mainToolBar->addAction(Zoom);
 
-    ui->w1->setIcon(QIcon("C:/Users/simms/Desktop/Laura/img/w1.png"));
-    ui->w1->setIconSize(QSize(20,20));
-    ui->w1->setFixedWidth(35);
-    ui->w1->setFixedHeight(ui->Zoom->height());
 
-    ui->w2->setIcon(QIcon("C:/Users/simms/Desktop/Laura/img/w2.png"));
-    ui->w2->setIconSize(QSize(20,20));
-    ui->w2->setFixedWidth(35);
-    ui->w2->setFixedHeight(ui->Zoom->height());
+    QAction *Flag = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/flag.png"),"Flag Information", this);
+    ui->mainToolBar->addAction(Flag);
 
-    ui->w4->setIcon(QIcon("C:/Users/simms/Desktop/Laura/img/w4.png"));
-    ui->w4->setIconSize(QSize(20,20));
-    ui->w4->setFixedWidth(35);
-    ui->w4->setFixedHeight(ui->Zoom->height());
+    QAction *Display1Window = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/w1.png"),"Show only one window", this);
+    ui->mainToolBar->addAction(Display1Window);
+    connect(Display1Window,SIGNAL(triggered(bool)),this,SLOT(on_w1_clicked()) );
 
-    ui->Labels->setIcon(QIcon("C:/Users/simms/Desktop/Laura/img/label.png"));
-    ui->Labels->setIconSize(QSize(30,30));
+    QAction *Display2Window = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/w2.png"),"Show only one window", this);
+    ui->mainToolBar->addAction(Display2Window);
+    connect(Display2Window,SIGNAL(triggered(bool)),this,SLOT(on_w2_clicked()) );
 
-    ui->ScrollImages->setFixedHeight(30);
-    ui->Example->setFixedHeight(30);
-    ui->Advanced->setFixedHeight(30);
-    ui->Reset->setFixedHeight(30);
+    QAction *Display4Window = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/w4.png"),"Show only one window", this);
+    ui->mainToolBar->addAction(Display4Window);
+    connect(Display4Window,SIGNAL(triggered(bool)),this,SLOT(on_w4_clicked()) );
 
-    ui->AdvancedSettingsWidget->setFixedHeight(40);
-    ui->AdvancedSettingsWidget->setVisible(false);
-    ui->AdvancedSettingsWidget->setVisible(false);
+    QAction *Label = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/label.png"),"Show labels", this);
+    ui->mainToolBar->addAction(Label);
+
+    QAction *Scroll = new QAction("Scroll Images", this);
+    ui->mainToolBar->addAction(Scroll);
+
+    QAction *Examples = new QAction("Show me examples", this);
+    ui->mainToolBar->addAction(Examples);
+
+    QAction *Reset = new QAction("Reset", this);
+    ui->mainToolBar->addAction(Reset);
+
+    QAction *Advanced = new QAction("Show advanced settings", this);
+    ui->mainToolBar->addAction(Advanced);
+
+
+//    ui->AdvancedSettingsWidget->setFixedHeight(40);
+//    ui->AdvancedSettingsWidget->setVisible(false);
+//    ui->AdvancedSettingsWidget->setVisible(false);
 
     ui->widget_2->setLayout(ui->verticalLayout_2);
-    ui->widget_2->setFixedWidth(110);
+
+
 
 
 
@@ -465,8 +484,8 @@ void MainWindow::createButtons(){
 
 void MainWindow::on_Hide_clicked()
 {
-    ui->AdvancedSettingsWidget->setVisible(false);
-    ui->AdvancedSettingsWidget->setVisible(false);
+//    ui->AdvancedSettingsWidget->setVisible(false);
+//    ui->AdvancedSettingsWidget->setVisible(false);
 }
 
 void MainWindow::on_InvertGray_clicked()
@@ -493,16 +512,27 @@ void MainWindow::on_InvertGray_clicked()
 
 void MainWindow::on_Advanced_clicked()
 {
-    ui->AdvancedSettingsWidget->setVisible(true);
-    ui->AdvancedSettingsWidget->setVisible(true);
+//    ui->AdvancedSettingsWidget->setVisible(true);
+//    ui->AdvancedSettingsWidget->setVisible(true);
 }
 
 void MainWindow::on_w1_clicked()
 {
     ui->graphicsView_2->setVisible(false);
+    ui->graphicsView_3->setVisible(false);
+    ui->graphicsView_4->setVisible(false);
 }
 
 void MainWindow::on_w2_clicked()
 {
      ui->graphicsView_2->setVisible(true);
+     ui->graphicsView_3->setVisible(false);
+     ui->graphicsView_4->setVisible(false);
+}
+
+void MainWindow::on_w4_clicked()
+{
+    ui->graphicsView_2->setVisible(true);
+    ui->graphicsView_3->setVisible(true);
+    ui->graphicsView_4->setVisible(true);
 }
