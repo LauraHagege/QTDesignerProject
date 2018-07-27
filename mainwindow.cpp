@@ -429,14 +429,18 @@ void MainWindow::make3D(int width, int height){
 
 
 void MainWindow::createButtons(){
-    ui->mainToolBar->setIconSize(QSize(30,30));
+    ui->mainToolBar->setIconSize(QSize(33,33));
+    ui->AdvancedSettings->setIconSize(QSize(33,33));
 
     QAction *Zoom= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/zoom.png"),"Zoom",this);
     ui->mainToolBar->addAction(Zoom);
 
+    ui->mainToolBar->addSeparator();
 
     QAction *Flag = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/flag.png"),"Flag Information", this);
     ui->mainToolBar->addAction(Flag);
+
+    ui->mainToolBar->addSeparator();
 
     QAction *Display1Window = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/w1.png"),"Show only one window", this);
     ui->mainToolBar->addAction(Display1Window);
@@ -450,25 +454,63 @@ void MainWindow::createButtons(){
     ui->mainToolBar->addAction(Display4Window);
     connect(Display4Window,SIGNAL(triggered(bool)),this,SLOT(on_w4_clicked()) );
 
+    ui->mainToolBar->addSeparator();
+
     QAction *Label = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/label.png"),"Show labels", this);
     ui->mainToolBar->addAction(Label);
 
-    QAction *Scroll = new QAction("Scroll Images", this);
+    ui->mainToolBar->addSeparator();
+
+    QAction *Scroll = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/scroll.png"),"Scroll Images", this);
     ui->mainToolBar->addAction(Scroll);
+
+    ui->mainToolBar->addSeparator();
 
     QAction *Examples = new QAction("Show me examples", this);
     ui->mainToolBar->addAction(Examples);
 
-    QAction *Reset = new QAction("Reset", this);
+    ui->mainToolBar->addSeparator();
+
+    QAction *Reset = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/reset.png"),"Reset", this);
     ui->mainToolBar->addAction(Reset);
 
-    QAction *Advanced = new QAction("Show advanced settings", this);
+    ui->mainToolBar->addSeparator();
+
+    QAction *Advanced = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/add.png"),"Advanced settings", this);
     ui->mainToolBar->addAction(Advanced);
+    connect(Advanced,SIGNAL(triggered(bool)),this,SLOT(on_Advanced_clicked()) );
+
+    ui->mainToolBar->addSeparator();
 
 
-//    ui->AdvancedSettingsWidget->setFixedHeight(40);
-//    ui->AdvancedSettingsWidget->setVisible(false);
-//    ui->AdvancedSettingsWidget->setVisible(false);
+    //creating advanced setting tool bar
+    ui->AdvancedSettings->setVisible(false);
+
+    QAction *Invert = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/grayscale.png"),"Invert Grayscale", this);
+    ui->AdvancedSettings->addAction(Invert);
+
+    QAction *Presets = new QAction("Contrast Presets", this);
+    ui->AdvancedSettings->addAction(Presets);
+
+    QAction *AddStudy = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/study.png"),"Compare my other study", this);
+    ui->AdvancedSettings->addAction(AddStudy);
+
+    QAction *Link = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/link.png"),"Link views scrolling", this);
+    ui->AdvancedSettings->addAction(Link);
+
+    QAction *Measure = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/measure.png"),"Measure", this);
+    ui->AdvancedSettings->addAction(Measure);
+
+    QAction *MeasureAngles = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/measureangle.png"),"Measure Angles", this);
+    ui->AdvancedSettings->addAction(MeasureAngles);
+
+    QAction *Anonymize = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/user.png"),"Anonymize my study", this);
+    ui->AdvancedSettings->addAction(Anonymize);
+
+    QAction *Hide = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/remove.png"),"Hide Settings", this);
+    ui->AdvancedSettings->addAction(Hide);
+    connect(Hide,SIGNAL(triggered(bool)),this,SLOT(on_Hide_clicked()) );
+
 
     ui->widget_2->setLayout(ui->verticalLayout_2);
 
@@ -484,8 +526,7 @@ void MainWindow::createButtons(){
 
 void MainWindow::on_Hide_clicked()
 {
-//    ui->AdvancedSettingsWidget->setVisible(false);
-//    ui->AdvancedSettingsWidget->setVisible(false);
+    ui->AdvancedSettings->setVisible(false);
 }
 
 void MainWindow::on_InvertGray_clicked()
@@ -512,8 +553,7 @@ void MainWindow::on_InvertGray_clicked()
 
 void MainWindow::on_Advanced_clicked()
 {
-//    ui->AdvancedSettingsWidget->setVisible(true);
-//    ui->AdvancedSettingsWidget->setVisible(true);
+      ui->AdvancedSettings->setVisible(true);
 }
 
 void MainWindow::on_w1_clicked()
