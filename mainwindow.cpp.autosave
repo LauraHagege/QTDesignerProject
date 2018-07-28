@@ -248,29 +248,6 @@ void MainWindow::displayImages(){
 
             uint8_t* pixelData2 = (uint8_t *)(DicomImages[i]->getOutputData(8 ));
 
-//            if(i==50){
-//                int size=DicomImages[i]->getOutputDataSize(8);
-//                cout << "size "<<size << endl;
-//                cout << "pixels " << endl;
-//                for(int j=0; j<200 ; j++){
-//                    cout << to_string(pixelData2[j]) << " " ;
-//                    if(j% DicomImages[i]->getWidth() ==0){
-//                        cout<< endl;
-//                    }
-//                }
-
-//                cout << "pixels2 " << endl;
-//                for(int j=0; j<200 ; j++){
-//                    cout << to_string( myPixelsZ[12][j])  << " ";
-//                    if(j% DicomImages[i]->getWidth() ==0){
-//                        cout<< endl;
-//                    }
-//                }
-
-
-//            }
-
-
 
             if (pixelData != NULL){
                 // do something useful with the pixel data

@@ -42,44 +42,54 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    void setFilepath(QString path);
+    //call all relevant function in order to build the window architecture and display images
+    void constructWindow(QString path);
+
+    void processDicom(const char *dicomdirPath,char *filepath);
+    void addSerieButton(int serieNumber, char *serieDescription, char *date, int imgNb);
+
     void displayImages();
-    void make3D(int width, int height);
+
+    //construct other plan according to the given one
+    //if coronal --> sagittal and axial
+    //if axial --> sagittal and coronal
+    // if sagittal --> coronal and axial
+    void constructPlans(int width, int height);
 
 
 private slots:
     void wheelEvent(QWheelEvent *event);
     void buttonInGroupClicked(QAbstractButton *);
     void createButtons();
-
     void on_Hide_clicked();
     void on_InvertGray_clicked();
     void on_Advanced_clicked();
-
     void on_w1_clicked();
-
     void on_w2_clicked();
-
     void on_w4_clicked();
 
 private:
-    int index2;
-    int index3;
-    int invert;
-    int index; //index for images in the serie
+    int selectedWindow; // store the number of the current selected graphic window --> for mouse events
+    bool invertGrayScale ; // boolean variable to sepcify if Grayscaled is inverted
+    int *Index; // index array to store the number of the current displayed image according to each graphic window
     int series; //number of series in the directory
     string currentSerie; //name of the current selected serie
 
     map<string, vector <string>> allPath; // store all path for all series to reach them when selected;
     Ui::MainWindow *ui;
+
+
     vector<QImage*> Images; //store QImages for the current selected serie
     vector<QImage*> Images2;
     vector<QImage*> Images3;
+
+
     vector<uint8_t *> myPixelsZ;
     vector<uint8_t *> myPixelsX;
     vector<uint8_t *> myPixelsY;
 
     QButtonGroup *buttonGroup; //button to choose the displayed serie
+
 
     QGraphicsScene *myScene;
     QGraphicsScene *myScene2;

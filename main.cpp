@@ -10,22 +10,24 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-
+    // dialog box to select the DICOMDIR file
     Dialog dialogbox;
     dialogbox.setModal(true);
     dialogbox.exec();
 
-
+    //Get the selected path
     QString path=dialogbox.getFilepath();
 
-    //const char *path = "/Users/laurah/Desktop/CTAbdomen/DICOMDAT/DICOMDIR";
 
 
     MainWindow w;
-    w.setFilepath(path);
+
+    //create window architecture
+    // find images according to the given path
+    w.constructWindow(path);
 
 
-
+    //
     w.showMaximized();
 
 
