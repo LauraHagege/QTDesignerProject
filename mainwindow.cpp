@@ -43,6 +43,37 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    for(int i=0; i< Images.size() ; i++){
+        if(Images[i]!=NULL)
+            delete Images[i];
+    }
+
+    for(int i=0; i< Images2.size() ; i++){
+        if(Images2[i]!=NULL)
+            delete Images2[i];
+    }
+
+    for(int i=0; i< Images3.size() ; i++){
+        if(Images3[i]!=NULL)
+            delete Images3[i];
+    }
+
+    for(int i=0; i< myPixelsZ.size() ; i++){
+        if(myPixelsZ[i]!=NULL)
+            delete myPixelsZ[i];
+    }
+
+    for(int i=0; i< myPixelsX.size() ; i++){
+        if(myPixelsX[i]!=NULL)
+            delete myPixelsX[i];
+    }
+
+    for(int i=0; i< myPixelsY.size() ; i++){
+        if(myPixelsY[i]!=NULL)
+            delete myPixelsY[i];
+    }
+
+
     delete ui;
 }
 
@@ -113,7 +144,7 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                             //local variable, vector to store paths to files for each serie
                             vector<string> paths;
 
-                            // counter for images withun a serie
+                            // counter for images within a serie
                             int count =0;
 
                             //going down the tree to find images
@@ -140,6 +171,16 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
 
                                 // add path to the local vector
                                  paths.push_back(fullpath);
+
+
+                                 if (count ==1){
+                                    if(FileRecord->findAndGetOFStringArray(DCM_ImagePositionPatient,tmpString).good()){
+                                         cout << "image posiition patient " << tmpString.c_str() << endl;
+                                    }
+                                    if(FileRecord->findAndGetOFStringArray(DCM_ImageOrientationPatient,tmpString).good()){
+                                         cout << "image orientation patient " << tmpString.c_str() << endl;
+                                    }
+                                 }
                             }
 
                             //count !=0 means the folder contain DICOM images so this is a serie
@@ -248,35 +289,16 @@ void MainWindow::displayImages(){
 
             uint8_t* pixelData2 = (uint8_t *)(DicomImages[i]->getOutputData(8 ));
 
-//            if(i==50){
-//                int size=DicomImages[i]->getOutputDataSize(8);
-//                cout << "size "<<size << endl;
-//                cout << "pixels " << endl;
-//                for(int j=0; j<200 ; j++){
-//                    cout << to_string(pixelData2[j]) << " " ;
-//                    if(j% DicomImages[i]->getWidth() ==0){
-//                        cout<< endl;
-//                    }
-//                }
-
-//                cout << "pixels2 " << endl;
-//                for(int j=0; j<200 ; j++){
-//                    cout << to_string( myPixelsZ[12][j])  << " ";
-//                    if(j% DicomImages[i]->getWidth() ==0){
-//                        cout<< endl;
-//                    }
-//                }
-
-
-//            }
-
-
 
             if (pixelData != NULL){
                 // do something useful with the pixel data
-                Images.push_back(new QImage (pixelData,DicomImages[0]->getWidth(), DicomImages[0]->getHeight(), QImage::Format_Indexed8));
-//                for( int j = 0; j < 256; ++j )
-//                    Images[i]->setColor(j, qRgb(j,j,j));
+                QImage *img=new QImage (pixelData,DicomImages[0]->getWidth(), DicomImages[0]->getHeight(), QImage::Format_Indexed8);
+                //QImage *copy = new QImage(img->createHeuristicMask());
+                Images.push_back(img);
+                //delete img;
+
+                for( int j = 0; j < 256; ++j )
+                    Images[i]->setColor(j, qRgb(j,j,j));
             }
             }
     } else
@@ -286,17 +308,24 @@ void MainWindow::displayImages(){
    constructPlans((int)DicomImages[0]->getWidth(),(int)DicomImages[0]->getHeight());
 
     //creating scene
-    myScene= new QGraphicsScene(this);
-    QGraphicsPixmapItem *p= myScene->addPixmap( QPixmap::fromImage( *Images[0] ) );
 
+    myScene= new QGraphicsScene(this);
+    myScene->addPixmap( QPixmap::fromImage( *Images[0] ) );
+
+   // Cscene =  new CustomGraphicsScene(this);
     ui->graphicsView->setScene(myScene);
-    //ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
+    //ui->graphicsView->setScene(Cscene);
+
+    ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
 
     ui->graphicsView->fitInView(QRectF(0,0,ui->graphicsView->width(), ui->graphicsView->height()),Qt::KeepAspectRatio);
 
     ui->graphicsView->setFrameRect(QRect(0,0,ui->graphicsView->width(), ui->graphicsView->height()));
     ui->graphicsView->setFrameStyle(3);
     selectedWindow=1;
+
+
+    //connect(myScene, SIGNAL(mousePressEvent(QGraphicsSceneMouseEvent*)), SLOT(scene_clicked(QGraphicsScene*)));
 
 }
 
@@ -503,6 +532,7 @@ void MainWindow::wheelEvent(QWheelEvent *event)
     }
 
 }
+
 void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     string buttonName = b->text().toLocal8Bit().constData();
     cout << "button " << buttonName << " clicked, associated serie size: "<< this->allPath[buttonName].size() << endl;
@@ -511,6 +541,11 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
 
     Images.clear();
     displayImages();
+}
+
+void MainWindow::scene_clicked(QGraphicsScene *scene){
+    cout << "clicked" << endl;
+
 }
 
 
