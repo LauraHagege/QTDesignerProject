@@ -17,8 +17,6 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QGraphicsItem>
-#include <QGraphicsScene>
-#include <QGraphicsView>
 #include <QMap>
 #include <QRgb>
 #include <QColor>
@@ -247,6 +245,39 @@ void MainWindow::addSerieButton(int serieNumber, char *serieDescription, char *d
 
 }
 
+void MainWindow::mousePressEvent(QMouseEvent* e){
+    if(ui->graphicsView->underMouse()){
+        selectedWindow=1;
+        ui->graphicsView->setFrameStyle(3);
+        ui->graphicsView_2->setFrameStyle(1);
+        ui->graphicsView_3->setFrameStyle(1);
+        ui->graphicsView_4->setFrameStyle(1);
+    }
+    else if(ui->graphicsView_2->underMouse()){
+        selectedWindow=2;
+        ui->graphicsView->setFrameStyle(1);
+        ui->graphicsView_2->setFrameStyle(3);
+        ui->graphicsView_3->setFrameStyle(1);
+        ui->graphicsView_4->setFrameStyle(1);
+    }
+    else if(ui->graphicsView_3->underMouse()){
+        selectedWindow=3;
+        ui->graphicsView->setFrameStyle(1);
+        ui->graphicsView_2->setFrameStyle(1);
+        ui->graphicsView_3->setFrameStyle(3);
+        ui->graphicsView_4->setFrameStyle(1);
+    }
+    else if(ui->graphicsView_4->underMouse()){
+        selectedWindow=4;
+        ui->graphicsView->setFrameStyle(1);
+        ui->graphicsView_2->setFrameStyle(1);
+        ui->graphicsView_3->setFrameStyle(1);
+        ui->graphicsView_4->setFrameStyle(3);
+    }
+
+
+}
+
 
 void MainWindow::displayImages(){
     //initializing index for images
@@ -312,9 +343,13 @@ void MainWindow::displayImages(){
     myScene= new QGraphicsScene(this);
     myScene->addPixmap( QPixmap::fromImage( *Images[0] ) );
 
-   // Cscene =  new CustomGraphicsScene(this);
+   // Cscene =  new CustomGraphicsScene();
+
     ui->graphicsView->setScene(myScene);
     //ui->graphicsView->setScene(Cscene);
+
+
+
 
     ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
 
@@ -328,6 +363,8 @@ void MainWindow::displayImages(){
     //connect(myScene, SIGNAL(mousePressEvent(QGraphicsSceneMouseEvent*)), SLOT(scene_clicked(QGraphicsScene*)));
 
 }
+
+
 
 void MainWindow::constructPlans(int width, int height){
 
@@ -363,6 +400,9 @@ void MainWindow::constructPlans(int width, int height){
     myScene2->addPixmap( QPixmap::fromImage( *Images2[1] ) );
 
     ui->graphicsView_2->fitInView(QRectF(0,0,ui->graphicsView_2->width(), ui->graphicsView_2->height()),Qt::KeepAspectRatio);
+    ui->graphicsView_2->setFrameRect(QRect(0,0,ui->graphicsView_2->width(), ui->graphicsView_2->height()));
+
+    ui->graphicsView_2->setFrameStyle(1);
 
     cout << "y now" << endl;
     //Y fixed <-> width
@@ -393,6 +433,14 @@ void MainWindow::constructPlans(int width, int height){
     myScene3->addPixmap( QPixmap::fromImage( *Images3[1] ) );
 
     ui->graphicsView_3->fitInView(QRectF(0,0,ui->graphicsView_3->width(), ui->graphicsView_3->height()),Qt::KeepAspectRatio);
+    ui->graphicsView_3->setFrameRect(QRect(0,0,ui->graphicsView_3->width(), ui->graphicsView_3->height()));
+    ui->graphicsView_3->setFrameStyle(1);
+
+
+    myScene4= new QGraphicsScene(this);
+    ui->graphicsView_4->setScene(myScene4);
+    ui->graphicsView_4->setFrameRect(QRect(0,0,ui->graphicsView_4->width(), ui->graphicsView_4->height()));
+    ui->graphicsView_4->setFrameStyle(1);
 
 }
 
@@ -406,8 +454,15 @@ void MainWindow::createButtons(){
     ui->PersonalInfo->addWidget(perso);
 
     //Adding button to the toolbar
-    QAction *Zoom= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/zoom.png"),"Zoom",this);
-    ui->mainToolBar->addAction(Zoom);
+    QAction *ZoomPlus= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/zoom-plus.png"),"Zoom",this);
+    ui->mainToolBar->addAction(ZoomPlus);
+
+    connect(ZoomPlus, SIGNAL(triggered(bool)), SLOT(zoomPlus()));
+
+    QAction *ZoomMinus= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/zoom-minus.png"),"Zoom",this);
+    ui->mainToolBar->addAction(ZoomMinus);
+
+    connect(ZoomMinus, SIGNAL(triggered(bool)), SLOT(zoomMinus()));
 
     ui->mainToolBar->addSeparator();
 
@@ -507,6 +562,8 @@ void MainWindow::createButtons(){
 
 void MainWindow::wheelEvent(QWheelEvent *event)
 {
+    if(event->delta() >0){
+
     if(selectedWindow==1){
         Index[0]+=1;
         if(Index[0]+1 > Images.size())
@@ -531,6 +588,34 @@ void MainWindow::wheelEvent(QWheelEvent *event)
         ui->graphicsView_3->setScene(myScene3);
     }
 
+    }
+    else if(event->delta() < 0){
+        if(selectedWindow==1){
+            Index[0]-=1;
+            if(Index[0]<0)
+                Index[0]= Images.size()-1;
+
+            myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
+            ui->graphicsView->setScene(myScene);
+        }else if(selectedWindow==2){
+            Index[1]-=1;
+            if(Index[1]<0)
+                Index[1]=Images2.size()-1;;
+
+            myScene2->addPixmap( QPixmap::fromImage( *Images2[Index[1]] ) );
+            ui->graphicsView_2->setScene(myScene2);
+        }
+        else if(selectedWindow==3){
+            Index[2]+=1;
+            if(Index[2]<0)
+                Index[2]=Images3.size()-1;;
+
+            myScene3->addPixmap( QPixmap::fromImage( *Images3[Index[2]] ) );
+            ui->graphicsView_3->setScene(myScene3);
+        }
+
+
+    }
 }
 
 void MainWindow::buttonInGroupClicked(QAbstractButton *b){
@@ -541,11 +626,6 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
 
     Images.clear();
     displayImages();
-}
-
-void MainWindow::scene_clicked(QGraphicsScene *scene){
-    cout << "clicked" << endl;
-
 }
 
 
@@ -584,7 +664,15 @@ void MainWindow::on_Advanced_clicked()
 
 void MainWindow::on_w1_clicked()
 {
+    //set default selected window
     selectedWindow=1;
+
+    //update frame for selected window
+    ui->graphicsView->setFrameStyle(3);
+    ui->graphicsView_2->setFrameStyle(1);
+    ui->graphicsView_3->setFrameStyle(1);
+    ui->graphicsView_4->setFrameStyle(1);
+
     ui->graphicsView_2->setVisible(false);
     ui->graphicsView_3->setVisible(false);
     ui->graphicsView_4->setVisible(false);
@@ -592,6 +680,14 @@ void MainWindow::on_w1_clicked()
 
 void MainWindow::on_w2_clicked()
 {
+    if(selectedWindow==3 || selectedWindow==4){
+        selectedWindow=1;
+        ui->graphicsView->setFrameStyle(3);
+        ui->graphicsView_2->setFrameStyle(1);
+        ui->graphicsView_3->setFrameStyle(1);
+        ui->graphicsView_4->setFrameStyle(1);
+    }
+
      ui->graphicsView_2->setVisible(true);
      ui->graphicsView_3->setVisible(false);
      ui->graphicsView_4->setVisible(false);
@@ -602,4 +698,39 @@ void MainWindow::on_w4_clicked()
     ui->graphicsView_2->setVisible(true);
     ui->graphicsView_3->setVisible(true);
     ui->graphicsView_4->setVisible(true);
+}
+
+void MainWindow::zoomPlus(){
+    switch(selectedWindow){
+    case 1:
+        ui->graphicsView->scale(1.1,1.1);
+        break;
+    case 2:
+        ui->graphicsView_2->scale(1.1,1.1);
+        break;
+    case 3:
+        ui->graphicsView_3->scale(1.1,1.1);
+        break;
+    case 4:
+        ui->graphicsView_4->scale(1.1,1.1);
+        break;
+    }
+
+}
+
+void MainWindow::zoomMinus(){
+    switch(selectedWindow){
+    case 1:
+        ui->graphicsView->scale(0.9,0.9);
+        break;
+    case 2:
+        ui->graphicsView_2->scale(0.9,0.9);
+        break;
+    case 3:
+        ui->graphicsView_3->scale(0.9,0.9);
+        break;
+    case 4:
+        ui->graphicsView_4->scale(0.9,0.9);
+        break;
+    }
 }

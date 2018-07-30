@@ -28,8 +28,8 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <QWheelEvent>
 
-#include <customgraphicsscene.h>
 
 using namespace std;
 
@@ -58,8 +58,11 @@ public:
     // if sagittal --> coronal and axial
     void constructPlans(int width, int height);
 
+    void setSelectedWindow(int nb);
+
 
 private slots:
+    void mousePressEvent(QMouseEvent *e);
     void wheelEvent(QWheelEvent *event);
     void buttonInGroupClicked(QAbstractButton *);
     void createButtons();
@@ -69,7 +72,8 @@ private slots:
     void on_w1_clicked();
     void on_w2_clicked();
     void on_w4_clicked();
-    void scene_clicked(QGraphicsScene *scene);
+    void zoomPlus();
+    void zoomMinus();
 
 private:
     int selectedWindow; // store the number of the current selected graphic window --> for mouse events
@@ -93,10 +97,11 @@ private:
 
     QButtonGroup *buttonGroup; //button to choose the displayed serie
 
-    CustomGraphicsScene *Cscene;
+
     QGraphicsScene *myScene;
     QGraphicsScene *myScene2;
     QGraphicsScene *myScene3;
+    QGraphicsScene *myScene4;
 
 
 };

@@ -34,13 +34,11 @@ win32:LIBS += -lAdvapi32 -lofstd -loflog -ldcmdata -ldcmnet -ldcmimage -ldcmimgl
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    dialog.cpp \
-    customgraphicsscene.cpp
+    dialog.cpp
 
 HEADERS += \
         mainwindow.h \
-    dialog.h \
-    customgraphicsscene.h
+    dialog.h
 
 FORMS += \
         mainwindow.ui \
