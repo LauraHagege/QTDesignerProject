@@ -50,7 +50,7 @@ public:
     void processDicom(const char *dicomdirPath,char *filepath);
     void addSerieButton(int serieNumber, char *serieDescription, char *date, int imgNb);
 
-    void displayImages(int contrast);
+    void displayImages();
 
     //construct other plan according to the given one
     //if coronal --> sagittal and axial
@@ -66,15 +66,17 @@ private slots:
     void wheelEvent(QWheelEvent *event);
     void buttonInGroupClicked(QAbstractButton *);
     void createButtons();
-    void on_Hide_clicked();
-    void on_InvertGray_clicked();
-    void on_Advanced_clicked();
-    void on_w1_clicked();
-    void on_w2_clicked();
-    void on_w4_clicked();
-    void zoomPlus();
-    void zoomMinus();
-    void change_contrast();
+    void hide_advanced();
+    void invert_grayscale();
+    void show_advanced();
+    void display_one_window();
+    void display_two_window();
+    void display_four_window();
+    void zoom_plus();
+    void zoom_minus();
+    void default_contrast();
+    void minmax_contrast();
+    void histo_contrast();
 
 private:
     int selectedWindow; // store the number of the current selected graphic window --> for mouse events
@@ -110,6 +112,9 @@ private:
     int width;
     int height;
     int depth;
+
+    int creation;
+    int contrast;
 
 };
 

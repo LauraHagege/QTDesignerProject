@@ -33,6 +33,9 @@ MainWindow::MainWindow(QWidget *parent) :
     buttonGroup = new QButtonGroup(this);
     connect(buttonGroup, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(buttonInGroupClicked(QAbstractButton*)));
 
+    creation=0;
+    contrast=0;
+
 }
 
 //********************************************************************************//
@@ -98,7 +101,7 @@ void MainWindow::constructWindow(QString path){
 
 
     //display images for the first serie found
-    displayImages(0);
+    displayImages();
 
 
     constructPlans();
@@ -261,41 +264,10 @@ void MainWindow::addSerieButton(int serieNumber, char *serieDescription, char *d
 
 }
 
-void MainWindow::mousePressEvent(QMouseEvent* e){
-    if(ui->graphicsView->underMouse()){
-        selectedWindow=1;
-        ui->graphicsView->setFrameStyle(3);
-        ui->graphicsView_2->setFrameStyle(1);
-        ui->graphicsView_3->setFrameStyle(1);
-        ui->graphicsView_4->setFrameStyle(1);
-    }
-    else if(ui->graphicsView_2->underMouse()){
-        selectedWindow=2;
-        ui->graphicsView->setFrameStyle(1);
-        ui->graphicsView_2->setFrameStyle(3);
-        ui->graphicsView_3->setFrameStyle(1);
-        ui->graphicsView_4->setFrameStyle(1);
-    }
-    else if(ui->graphicsView_3->underMouse()){
-        selectedWindow=3;
-        ui->graphicsView->setFrameStyle(1);
-        ui->graphicsView_2->setFrameStyle(1);
-        ui->graphicsView_3->setFrameStyle(3);
-        ui->graphicsView_4->setFrameStyle(1);
-    }
-    else if(ui->graphicsView_4->underMouse()){
-        selectedWindow=4;
-        ui->graphicsView->setFrameStyle(1);
-        ui->graphicsView_2->setFrameStyle(1);
-        ui->graphicsView_3->setFrameStyle(1);
-        ui->graphicsView_4->setFrameStyle(3);
-    }
 
 
-}
 
-
-void MainWindow::displayImages(int contrast){
+void MainWindow::displayImages(){
     //initializing index for images
     Index = new int[4];
     for(int i=0; i<4; i++){
@@ -339,15 +311,16 @@ void MainWindow::displayImages(int contrast){
         //cout << "height "<<  DicomImages[0]->getHeight() << endl;
         for(int i=0; i<DicomImages.size(); i++){
 
-            if (contrast==1)
+            if (contrast==0)
                 DicomImages[i]->setWindow(WC,WW);
-            else
+            else if (contrast ==1)
                 DicomImages[i] ->setMinMaxWindow();
+            else
+                DicomImages[i] ->setHistogramWindow();
 
             Uint8* pixelData = (Uint8 *)(DicomImages[i]->getOutputData(8 )); // bits per sample
             myPixelsZ.push_back((uint8_t *)pixelData);
 
-            uint8_t* pixelData2 = (uint8_t *)(DicomImages[i]->getOutputData(8 ));
 
 
 
@@ -378,15 +351,15 @@ void MainWindow::displayImages(int contrast){
     //ui->graphicsView->setScene(Cscene);
 
 
-
-
+    if(creation==0){
+    creation =1;
     ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
 
     ui->graphicsView->fitInView(QRectF(0,0,ui->graphicsView->width(), ui->graphicsView->height()),Qt::KeepAspectRatio);
 
     ui->graphicsView->setFrameRect(QRect(0,0,ui->graphicsView->width(), ui->graphicsView->height()));
     ui->graphicsView->setFrameStyle(3);
-    selectedWindow=1;
+    selectedWindow=1;}
 
 
     //connect(myScene, SIGNAL(mousePressEvent(QGraphicsSceneMouseEvent*)), SLOT(scene_clicked(QGraphicsScene*)));
@@ -486,12 +459,12 @@ void MainWindow::createButtons(){
     QAction *ZoomPlus= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/zoom-plus.png"),"Zoom",this);
     ui->mainToolBar->addAction(ZoomPlus);
 
-    connect(ZoomPlus, SIGNAL(triggered(bool)), SLOT(zoomPlus()));
+    connect(ZoomPlus, SIGNAL(triggered(bool)), SLOT(zoom_plus()));
 
     QAction *ZoomMinus= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/zoom-minus.png"),"Zoom",this);
     ui->mainToolBar->addAction(ZoomMinus);
 
-    connect(ZoomMinus, SIGNAL(triggered(bool)), SLOT(zoomMinus()));
+    connect(ZoomMinus, SIGNAL(triggered(bool)), SLOT(zoom_minus()));
 
     ui->mainToolBar->addSeparator();
 
@@ -502,15 +475,15 @@ void MainWindow::createButtons(){
 
     QAction *Display1Window = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/w1.png"),"Show only one window", this);
     ui->mainToolBar->addAction(Display1Window);
-    connect(Display1Window,SIGNAL(triggered(bool)),this,SLOT(on_w1_clicked()) );
+    connect(Display1Window,SIGNAL(triggered(bool)),this,SLOT(display_one_window()) );
 
     QAction *Display2Window = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/w2.png"),"Show only one window", this);
     ui->mainToolBar->addAction(Display2Window);
-    connect(Display2Window,SIGNAL(triggered(bool)),this,SLOT(on_w2_clicked()) );
+    connect(Display2Window,SIGNAL(triggered(bool)),this,SLOT(display_two_window()) );
 
     QAction *Display4Window = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/w4.png"),"Show only one window", this);
     ui->mainToolBar->addAction(Display4Window);
-    connect(Display4Window,SIGNAL(triggered(bool)),this,SLOT(on_w4_clicked()) );
+    connect(Display4Window,SIGNAL(triggered(bool)),this,SLOT(display_four_window()) );
 
     ui->mainToolBar->addSeparator();
 
@@ -536,7 +509,7 @@ void MainWindow::createButtons(){
 
     QAction *Advanced = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/add.png"),"Advanced settings", this);
     ui->mainToolBar->addAction(Advanced);
-    connect(Advanced,SIGNAL(triggered(bool)),this,SLOT(on_Advanced_clicked()) );
+    connect(Advanced,SIGNAL(triggered(bool)),this,SLOT(show_advanced()) );
 
     ui->mainToolBar->addSeparator();
 
@@ -549,10 +522,19 @@ void MainWindow::createButtons(){
 
     //setting invert var to zero = normal grayscale displayed
     invertGrayScale=0;
+    connect(Invert,SIGNAL(triggered(bool)),this,SLOT(invert_grayscale()) );
 
-    QAction *Presets = new QAction("Contrast Presets", this);
-    ui->AdvancedSettings->addAction(Presets);
-    connect(Presets,SIGNAL(triggered(bool)),this,SLOT(change_contrast()) );
+    QAction *Default = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/defaultcontrast.png"),"Set default contrast", this);
+    ui->AdvancedSettings->addAction(Default);
+    connect(Default,SIGNAL(triggered(bool)),this,SLOT(default_contrast()) );
+
+    QAction *Darker = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/minmaxcontrast.png"),"Set darker contrast", this);
+    ui->AdvancedSettings->addAction(Darker);
+    connect(Darker,SIGNAL(triggered(bool)),this,SLOT(minmax_contrast()) );
+
+    QAction *Brigther = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/histogramcontrast.png"),"Set brighter contrast", this);
+    ui->AdvancedSettings->addAction(Brigther);
+    connect(Brigther,SIGNAL(triggered(bool)),this,SLOT(histo_contrast()) );
 
     QAction *AddStudy = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/study.png"),"Compare my other study", this);
     ui->AdvancedSettings->addAction(AddStudy);
@@ -571,7 +553,7 @@ void MainWindow::createButtons(){
 
     QAction *Hide = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/remove.png"),"Hide Settings", this);
     ui->AdvancedSettings->addAction(Hide);
-    connect(Hide,SIGNAL(triggered(bool)),this,SLOT(on_Hide_clicked()) );
+    connect(Hide,SIGNAL(triggered(bool)),this,SLOT(hide_advanced()) );
 
 
     ui->Informations->setLayout(ui->SeriesLayout);
@@ -588,7 +570,36 @@ void MainWindow::createButtons(){
 //********************************************************************************//
 //---------------------ALL PRIVATE SLOTS FOLLOWING -----------------------------//
 //********************************************************************************//
-
+void MainWindow::mousePressEvent(QMouseEvent* e){
+    if(ui->graphicsView->underMouse()){
+        selectedWindow=1;
+        ui->graphicsView->setFrameStyle(3);
+        ui->graphicsView_2->setFrameStyle(1);
+        ui->graphicsView_3->setFrameStyle(1);
+        ui->graphicsView_4->setFrameStyle(1);
+    }
+    else if(ui->graphicsView_2->underMouse()){
+        selectedWindow=2;
+        ui->graphicsView->setFrameStyle(1);
+        ui->graphicsView_2->setFrameStyle(3);
+        ui->graphicsView_3->setFrameStyle(1);
+        ui->graphicsView_4->setFrameStyle(1);
+    }
+    else if(ui->graphicsView_3->underMouse()){
+        selectedWindow=3;
+        ui->graphicsView->setFrameStyle(1);
+        ui->graphicsView_2->setFrameStyle(1);
+        ui->graphicsView_3->setFrameStyle(3);
+        ui->graphicsView_4->setFrameStyle(1);
+    }
+    else if(ui->graphicsView_4->underMouse()){
+        selectedWindow=4;
+        ui->graphicsView->setFrameStyle(1);
+        ui->graphicsView_2->setFrameStyle(1);
+        ui->graphicsView_3->setFrameStyle(1);
+        ui->graphicsView_4->setFrameStyle(3);
+    }
+}
 
 void MainWindow::wheelEvent(QWheelEvent *event)
 {
@@ -655,17 +666,17 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     cout << "currentSeriesize " <<this->allPath[currentSerie].size() << endl;
 
     Images.clear();
-    displayImages(0);
+    displayImages();
 }
 
 
 
-void MainWindow::on_Hide_clicked()
+void MainWindow::hide_advanced()
 {
     ui->AdvancedSettings->setVisible(false);
 }
 
-void MainWindow::on_InvertGray_clicked()
+void MainWindow::invert_grayscale()
 {
     if(invertGrayScale ==0){
         for(int j=0; j<Images.size(); j++){
@@ -687,12 +698,12 @@ void MainWindow::on_InvertGray_clicked()
     ui->graphicsView->setScene(myScene);
 }
 
-void MainWindow::on_Advanced_clicked()
+void MainWindow::show_advanced()
 {
       ui->AdvancedSettings->setVisible(true);
 }
 
-void MainWindow::on_w1_clicked()
+void MainWindow::display_one_window()
 {
     //set default selected window
     selectedWindow=1;
@@ -708,7 +719,7 @@ void MainWindow::on_w1_clicked()
     ui->graphicsView_4->setVisible(false);
 }
 
-void MainWindow::on_w2_clicked()
+void MainWindow::display_two_window()
 {
     if(selectedWindow==3 || selectedWindow==4){
         selectedWindow=1;
@@ -723,14 +734,14 @@ void MainWindow::on_w2_clicked()
      ui->graphicsView_4->setVisible(false);
 }
 
-void MainWindow::on_w4_clicked()
+void MainWindow::display_four_window()
 {
     ui->graphicsView_2->setVisible(true);
     ui->graphicsView_3->setVisible(true);
     ui->graphicsView_4->setVisible(true);
 }
 
-void MainWindow::zoomPlus(){
+void MainWindow::zoom_plus(){
     cout << "zoom clicked" << endl;
     switch(selectedWindow){
     case 1:
@@ -749,14 +760,7 @@ void MainWindow::zoomPlus(){
 
 }
 
-void MainWindow::change_contrast(){
-    cout << "change contrast "<< endl;
-    Images.clear();
-    displayImages(1);
-}
-
-
-void MainWindow::zoomMinus(){
+void MainWindow::zoom_minus(){
     switch(selectedWindow){
     case 1:
         ui->graphicsView->scale(0.9,0.9);
@@ -770,5 +774,31 @@ void MainWindow::zoomMinus(){
     case 4:
         ui->graphicsView_4->scale(0.9,0.9);
         break;
+    }
+}
+
+
+void MainWindow::default_contrast(){
+    Images.clear();
+    if(contrast !=0){
+        contrast=0;
+        displayImages();
+    }
+}
+
+
+void MainWindow::minmax_contrast(){
+    Images.clear();
+    if(contrast !=1){
+        contrast=1;
+        displayImages();
+    }
+}
+
+void MainWindow::histo_contrast(){
+    Images.clear();
+    if(contrast !=2){
+        contrast=2;
+        displayImages();
     }
 }
