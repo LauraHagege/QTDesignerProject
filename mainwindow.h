@@ -50,13 +50,13 @@ public:
     void processDicom(const char *dicomdirPath,char *filepath);
     void addSerieButton(int serieNumber, char *serieDescription, char *date, int imgNb);
 
-    void displayImages();
+    void displayImages(int contrast);
 
     //construct other plan according to the given one
     //if coronal --> sagittal and axial
     //if axial --> sagittal and coronal
     // if sagittal --> coronal and axial
-    void constructPlans(int width, int height);
+    void constructPlans();
 
     void setSelectedWindow(int nb);
 
@@ -74,6 +74,7 @@ private slots:
     void on_w4_clicked();
     void zoomPlus();
     void zoomMinus();
+    void change_contrast();
 
 private:
     int selectedWindow; // store the number of the current selected graphic window --> for mouse events
@@ -103,6 +104,12 @@ private:
     QGraphicsScene *myScene3;
     QGraphicsScene *myScene4;
 
+    int WW;
+    int WC;
+
+    int width;
+    int height;
+    int depth;
 
 };
 

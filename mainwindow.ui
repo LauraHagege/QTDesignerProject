@@ -25,14 +25,7 @@
      <widget class="QWidget" name="widget" native="true">
       <layout class="QGridLayout" name="gridLayout_4">
        <item row="1" column="1">
-        <layout class="QHBoxLayout" name="Reports">
-         <item>
-          <widget class="QTextEdit" name="report"/>
-         </item>
-         <item>
-          <widget class="QTextEdit" name="simplified_report"/>
-         </item>
-        </layout>
+        <layout class="QHBoxLayout" name="Reports"/>
        </item>
        <item row="0" column="0" rowspan="2">
         <widget class="QWidget" name="Informations" native="true">

@@ -95,8 +95,14 @@ void MainWindow::constructWindow(QString path){
     //call function to open DICOMDIR and store images paths
     processDicom(dicomdirPath,filepath);
 
+
+
     //display images for the first serie found
-    displayImages();
+    displayImages(0);
+
+
+    constructPlans();
+
 
     delete filepath;
 }
@@ -118,7 +124,7 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
     OFString            tmpString;
 
 
-    currentSerie = "serie2";
+    currentSerie = "Series2";
 
 
     if(root != NULL)
@@ -171,13 +177,23 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                                  paths.push_back(fullpath);
 
 
-                                 if (count ==1){
-                                    if(FileRecord->findAndGetOFStringArray(DCM_ImagePositionPatient,tmpString).good()){
-                                         cout << "image posiition patient " << tmpString.c_str() << endl;
-                                    }
-                                    if(FileRecord->findAndGetOFStringArray(DCM_ImageOrientationPatient,tmpString).good()){
-                                         cout << "image orientation patient " << tmpString.c_str() << endl;
-                                    }
+                                 if (count ==1 && series ==1){
+//                                    if(FileRecord->findAndGetOFStringArray(DCM_ImagePositionPatient,tmpString).good()){
+//                                         cout << "image posiition patient " << tmpString.c_str() << endl;
+//                                    }
+//                                    if(FileRecord->findAndGetOFStringArray(DCM_ImageOrientationPatient,tmpString).good()){
+//                                         cout << "image orientation patient " << tmpString.c_str() << endl;
+//                                    }
+                                     if(FileRecord->findAndGetOFString(DCM_WindowCenter,tmpString).good()){
+                                            cout << "window center " << tmpString.c_str() << endl;
+                                            WC=atoi(tmpString.c_str());
+
+                                     }
+                                     if(FileRecord->findAndGetOFString(DCM_WindowWidth,tmpString).good()){
+                                            cout << "window width " << tmpString.c_str() << endl;
+                                             WW=atoi(tmpString.c_str());
+                                     }
+
                                  }
                             }
 
@@ -198,7 +214,7 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                                 addSerieButton(series,desc,date, count);
 
                                 //storing paths for the current serie
-                                allPath.insert(pair<string,vector<string>>("serie"+to_string(series),paths));
+                                allPath.insert(pair<string,vector<string>>("Series"+to_string(series),paths));
 
                             }
                         }
@@ -279,7 +295,7 @@ void MainWindow::mousePressEvent(QMouseEvent* e){
 }
 
 
-void MainWindow::displayImages(){
+void MainWindow::displayImages(int contrast){
     //initializing index for images
     Index = new int[4];
     for(int i=0; i<4; i++){
@@ -308,35 +324,48 @@ void MainWindow::displayImages(){
             check=false;
     }
 
+    int max = WC + (WW/2);
+    int min = WC - (WW/2);
+    cout << "min " << min << endl;
+    cout << "max " << max << endl;
+
+    width = DicomImages[0]->getWidth();
+    height =  DicomImages[0]->getHeight();
+
 
     if (check){
         //if (DicomImages[0]->getStatus() == EIS_Normal && DicomImages[1]->getStatus() == EIS_Normal)
-        cout << "width " << DicomImages[0]->getWidth() << endl;
-        cout << "height "<<  DicomImages[0]->getHeight() << endl;
+        //cout << "width " << DicomImages[0]->getWidth() << endl;
+        //cout << "height "<<  DicomImages[0]->getHeight() << endl;
         for(int i=0; i<DicomImages.size(); i++){
-            DicomImages[0] ->setMinMaxWindow();
+
+            if (contrast==1)
+                DicomImages[i]->setWindow(WC,WW);
+            else
+                DicomImages[i] ->setMinMaxWindow();
+
             Uint8* pixelData = (Uint8 *)(DicomImages[i]->getOutputData(8 )); // bits per sample
             myPixelsZ.push_back((uint8_t *)pixelData);
 
             uint8_t* pixelData2 = (uint8_t *)(DicomImages[i]->getOutputData(8 ));
 
 
+
             if (pixelData != NULL){
+
                 // do something useful with the pixel data
-                QImage *img=new QImage (pixelData,DicomImages[0]->getWidth(), DicomImages[0]->getHeight(), QImage::Format_Indexed8);
-                //QImage *copy = new QImage(img->createHeuristicMask());
+                QImage *img=new QImage (pixelData,width,height, QImage::Format_Indexed8);
+
                 Images.push_back(img);
-                //delete img;
 
-                for( int j = 0; j < 256; ++j )
-                    Images[i]->setColor(j, qRgb(j,j,j));
+
             }
-            }
-    } else
-            cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
+       }
+   }
+   else
+      cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
 
 
-   constructPlans((int)DicomImages[0]->getWidth(),(int)DicomImages[0]->getHeight());
 
     //creating scene
 
@@ -366,11 +395,11 @@ void MainWindow::displayImages(){
 
 
 
-void MainWindow::constructPlans(int width, int height){
+void MainWindow::constructPlans(){
 
    // int countY=0;
 
-    int depth=myPixelsZ.size();
+    depth=myPixelsZ.size();
     //cout << "depth " << depth << " width " << width << " height " << height << endl;
 
     //X fixed <-> width
@@ -523,6 +552,7 @@ void MainWindow::createButtons(){
 
     QAction *Presets = new QAction("Contrast Presets", this);
     ui->AdvancedSettings->addAction(Presets);
+    connect(Presets,SIGNAL(triggered(bool)),this,SLOT(change_contrast()) );
 
     QAction *AddStudy = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/study.png"),"Compare my other study", this);
     ui->AdvancedSettings->addAction(AddStudy);
@@ -625,7 +655,7 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     cout << "currentSeriesize " <<this->allPath[currentSerie].size() << endl;
 
     Images.clear();
-    displayImages();
+    displayImages(0);
 }
 
 
@@ -701,6 +731,7 @@ void MainWindow::on_w4_clicked()
 }
 
 void MainWindow::zoomPlus(){
+    cout << "zoom clicked" << endl;
     switch(selectedWindow){
     case 1:
         ui->graphicsView->scale(1.1,1.1);
@@ -717,6 +748,13 @@ void MainWindow::zoomPlus(){
     }
 
 }
+
+void MainWindow::change_contrast(){
+    cout << "change contrast "<< endl;
+    Images.clear();
+    displayImages(1);
+}
+
 
 void MainWindow::zoomMinus(){
     switch(selectedWindow){
