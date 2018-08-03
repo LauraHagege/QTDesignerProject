@@ -54,13 +54,13 @@ public:
     void processDicom(const char *dicomdirPath,char *filepath);
     void addSerieButton(int serieNumber, char *serieDescription, char *date, int imgNb);
 
-    void displayImages();
+   // void displayImages();
 
     //construct other plan according to the given one
     //if coronal --> sagittal and axial
     //if axial --> sagittal and coronal
     // if sagittal --> coronal and axial
-    void constructPlans();
+    //void constructPlans();
 
     void createDefaultPlan();
 
@@ -89,9 +89,11 @@ private slots:
     void default_contrast();
     void minmax_contrast();
     void histo_contrast();
-
-
     void on_showReport_clicked();
+
+    void callAxial();
+    void callCoronal();
+    void callSagittal();
 
 private:
     int selectedWindow; // store the number of the current selected graphic window --> for mouse events
@@ -107,6 +109,8 @@ private:
     vector<QImage*> Images; //store QImages for the current selected serie
     vector<QImage*> Images2;
     vector<QImage*> Images3;
+    vector<QImage*> Images4;
+
 
 
     vector<uint8_t *> myPixelsZ;

@@ -460,34 +460,11 @@ void MainWindow::createDefaultPlan(){
 
     cout << "nb of images " << Images.size() << endl;
 
+    Index[0]= Images.size()/2;
+
     //creating scene
 
     createScene();
-
-//    myScene= new QGraphicsScene(this);
-//    myScene->addPixmap( QPixmap::fromImage( *Images[0] ) );
-
-   // Cscene =  new CustomGraphicsScene();
-
-//    ui->graphicsView->setScene(myScene);
-    //ui->graphicsView->setScene(Cscene);
-
-
-//    if(creation==0){
-//        creation =1;
-//        ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
-
-//        ui->graphicsView->fitInView(QRectF(0,0,ui->graphicsView->width(), ui->graphicsView->height()),Qt::KeepAspectRatio);
-
-//        ui->graphicsView->setFrameRect(QRect(0,0,ui->graphicsView->width(), ui->graphicsView->height()));
-//        ui->graphicsView->setFrameStyle(3);
-//        selectedWindow=1;
-//    }
-
-
-
-
-    //connect(myScene, SIGNAL(mousePressEvent(QGraphicsSceneMouseEvent*)), SLOT(scene_clicked(QGraphicsScene*)));
 
 }
 
@@ -495,11 +472,12 @@ void MainWindow::createScene(){
     switch(selectedWindow){
     case 1:
         myScene= new QGraphicsScene(this);
-        myScene->addPixmap( QPixmap::fromImage( *Images[0] ) );
+        myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
 
-         ui->graphicsView->setScene(myScene);
+        ui->graphicsView->setBackgroundBrush(QBrush(Qt::black));
+        ui->graphicsView->setScene(myScene);
 
-         if(creation[0]==0){
+        if(creation[0]==0){
              creation[0] =1;
              ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
 
@@ -507,44 +485,56 @@ void MainWindow::createScene(){
 
              ui->graphicsView->setFrameRect(QRect(0,0,ui->graphicsView->width(), ui->graphicsView->height()));
              ui->graphicsView->setFrameStyle(3);
-         }
+
+             ui->graphicsView->setStyleSheet("color:orange");
+             ui->graphicsView_2->setStyleSheet("color:orange");
+             ui->graphicsView_3->setStyleSheet("color:orange");
+             ui->graphicsView_4->setStyleSheet("color:orange");
+
+             myScene2= new QGraphicsScene(this);
+             myScene3= new QGraphicsScene(this);
+             myScene4= new QGraphicsScene(this);
+
+             ui->graphicsView_2->setBackgroundBrush(QBrush(Qt::black));
+             ui->graphicsView_3->setBackgroundBrush(QBrush(Qt::black));
+             ui->graphicsView_4->setBackgroundBrush(QBrush(Qt::black));
+
+             ui->graphicsView_2->setScene(myScene2);
+             ui->graphicsView_3->setScene(myScene3);
+             ui->graphicsView_4->setScene(myScene4);
+        }
 
         break;
     case 2:
-        myScene2= new QGraphicsScene(this);
-        myScene2->addPixmap( QPixmap::fromImage( *Images2[0] ) );
+        myScene2->addPixmap( QPixmap::fromImage( *Images2[Index[1]] ) );
 
-         ui->graphicsView_2->setScene(myScene2);
+        ui->graphicsView_2->setScene(myScene2);
 
-         if(creation[1]==0){
+        if(creation[1]==0){
              creation[1] =1;
              ui->graphicsView_2->fitInView(myScene2->sceneRect(),Qt::KeepAspectRatioByExpanding);
 
              ui->graphicsView_2->fitInView(QRectF(0,0,ui->graphicsView_2->width(), ui->graphicsView_2->height()),Qt::KeepAspectRatio);
 
              ui->graphicsView_2->setFrameRect(QRect(0,0,ui->graphicsView_2->width(), ui->graphicsView_2->height()));
-            // ui->graphicsView_2->setFrameStyle(3);
-         }
+        }
         break;
     case 3:
-        myScene3= new QGraphicsScene(this);
-        myScene3->addPixmap( QPixmap::fromImage( *Images3[0] ) );
+        myScene3->addPixmap( QPixmap::fromImage( *Images3[Index[2]] ) );
 
-         ui->graphicsView_3->setScene(myScene3);
+        ui->graphicsView_3->setScene(myScene3);
 
-         if(creation[2]==0){
+        if(creation[2]==0){
              creation[2] =1;
              ui->graphicsView_3->fitInView(myScene3->sceneRect(),Qt::KeepAspectRatioByExpanding);
 
              ui->graphicsView_3->fitInView(QRectF(0,0,ui->graphicsView_3->width(), ui->graphicsView_3->height()),Qt::KeepAspectRatio);
 
              ui->graphicsView_3->setFrameRect(QRect(0,0,ui->graphicsView_3->width(), ui->graphicsView_3->height()));
-            // ui->graphicsView_2->setFrameStyle(3);
-         }
+        }
         break;
     case 4:
-        myScene4= new QGraphicsScene(this);
-        myScene4->addPixmap( QPixmap::fromImage( *Images4[0] ) );
+        myScene4->addPixmap( QPixmap::fromImage( *Images4[Index[3]] ) );
 
          ui->graphicsView_4->setScene(myScene3);
 
@@ -555,7 +545,6 @@ void MainWindow::createScene(){
              ui->graphicsView_4->fitInView(QRectF(0,0,ui->graphicsView_4->width(), ui->graphicsView_4->height()),Qt::KeepAspectRatio);
 
              ui->graphicsView_4->setFrameRect(QRect(0,0,ui->graphicsView_4->width(), ui->graphicsView_4->height()));
-            // ui->graphicsView_2->setFrameStyle(3);
          }
         break;
 
@@ -565,6 +554,7 @@ void MainWindow::createScene(){
 }
 
 void MainWindow::constructSagittalPlan(){
+    cout << "construct sagittal" << endl;
     //construct Sagittal from Axial view
     if(currentPlan == Axial){
         depth=myPixelsZ.size();
@@ -605,99 +595,92 @@ void MainWindow::constructSagittalPlan(){
             }
 
 
-            createScene();
-
         }
     }else if(currentPlan == Coronal){
 
         // TO DOOOOOOO
     }
 
+    switch(selectedWindow){
+    case 1:
+        Index[0]=Images.size()/2;
+        break;
+    case 2:
+        Index[1]=Images2.size()/2;
+        break;
+    case 3:
+        Index[2]=Images3.size()/2;
+        break;
+    case 4:
+        Index[3]=Images4.size()/2;
+    }
+    createScene();
+
 }
 
 
 
+void MainWindow::constructAxialPlan(){
 
-
-
-
-void MainWindow::constructPlans(){
-
-   // int countY=0;
-
-    depth=myPixelsZ.size();
-    //cout << "depth " << depth << " width " << width << " height " << height << endl;
-
-    //X fixed <-> width
-    for (int x=0; x<width; x++){
-       uint8_t *mypixel= new uint8_t[height*depth];
-       int countX=0;
-        for(int z=0; z<depth; z++){
-            int i=0;
-            for(int y=x; y<height*width ; y+=width){
-                mypixel[countX]=myPixelsZ[z][y];
-                countX +=1;
-                i+=1;
-            }
-        }
-            myPixelsX.push_back(mypixel);
-            QImage *img= new QImage(mypixel,height, depth, QImage::Format_Indexed8);
-            QImage *copy =  new QImage(img->scaled(QSize(height,1.8*depth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
-            delete img;
-        Images2.push_back(copy);
-//        for( int j = 0; j < 256; ++j )
-//            Images2[x]->setColor(j, qRgb(j,j,j));
-    }
-
-    cout << "size " << myPixelsZ.size() << endl;
-    myScene2= new QGraphicsScene(this);
-    ui->graphicsView_2->setScene(myScene2);
-    myScene2->addPixmap( QPixmap::fromImage( *Images2[1] ) );
-
-    ui->graphicsView_2->fitInView(QRectF(0,0,ui->graphicsView_2->width(), ui->graphicsView_2->height()),Qt::KeepAspectRatio);
-    ui->graphicsView_2->setFrameRect(QRect(0,0,ui->graphicsView_2->width(), ui->graphicsView_2->height()));
-
-    ui->graphicsView_2->setFrameStyle(1);
-
-    cout << "y now" << endl;
-    //Y fixed <-> width
-    for (int y=0; y<height; y++){
-       uint8_t *mypixel= new uint8_t[width*depth];
-       int countY=0;
-        for(int z=0; z<depth; z++){
-            int l=0;
-            for(int x=y*width; x<(y+1)*width ; x++){
-                mypixel[countY]=myPixelsZ[z][x];
-                countY +=1;
-                l+=1;
-            }
-        }
-            myPixelsY.push_back(mypixel);
-            QImage *img = new QImage (mypixel,width, depth, QImage::Format_Indexed8);
-            QImage *copy =  new QImage(img->scaled(QSize(height,1.8*depth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
-            delete img;
-
-        Images3.push_back(copy);
-//        for( int j = 0; j < 256; ++j )
-//            Images3[y]->setColor(j, qRgb(j,j,j));
-    }
-
-    //cout << "size " << myPixelsZ.size() << endl;
-    myScene3= new QGraphicsScene(this);
-    ui->graphicsView_3->setScene(myScene3);
-    myScene3->addPixmap( QPixmap::fromImage( *Images3[1] ) );
-
-    ui->graphicsView_3->fitInView(QRectF(0,0,ui->graphicsView_3->width(), ui->graphicsView_3->height()),Qt::KeepAspectRatio);
-    ui->graphicsView_3->setFrameRect(QRect(0,0,ui->graphicsView_3->width(), ui->graphicsView_3->height()));
-    ui->graphicsView_3->setFrameStyle(1);
-
-
-    myScene4= new QGraphicsScene(this);
-    ui->graphicsView_4->setScene(myScene4);
-    ui->graphicsView_4->setFrameRect(QRect(0,0,ui->graphicsView_4->width(), ui->graphicsView_4->height()));
-    ui->graphicsView_4->setFrameStyle(1);
 
 }
+
+void MainWindow::constructCoronalPlan(){
+    if(currentPlan == Axial){
+        depth=myPixelsZ.size();
+        //Y fixed <-> width
+        for (int y=0; y<height; y++){
+           uint8_t *mypixel= new uint8_t[width*depth];
+           int countY=0;
+            for(int z=0; z<depth; z++){
+                int l=0;
+                for(int x=y*width; x<(y+1)*width ; x++){
+                    mypixel[countY]=myPixelsZ[z][x];
+                    countY +=1;
+                    l+=1;
+                }
+            }
+                myPixelsY.push_back(mypixel);
+                QImage *img = new QImage (mypixel,width, depth, QImage::Format_Indexed8);
+                QImage *copy =  new QImage(img->scaled(QSize(height,1.8*depth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+                delete img;
+
+                switch(selectedWindow){
+                case 1:
+                    Images.push_back(copy);
+                    break;
+                case 2:
+                    Images2.push_back(copy);
+                    break;
+                case 3:
+                    Images3.push_back(copy);
+                    break;
+                case 4:
+                    Images4.push_back(copy);
+                }
+
+        }
+    }else if(currentPlan == Sagittal){
+
+
+    }
+    switch(selectedWindow){
+    case 1:
+        Index[0]=Images.size()/2;
+        break;
+    case 2:
+        Index[1]=Images2.size()/2;
+        break;
+    case 3:
+        Index[2]=Images3.size()/2;
+        break;
+    case 4:
+        Index[3]=Images4.size()/2;
+    }
+    createScene();
+
+}
+
 
 
 void MainWindow::createButtons(){
@@ -740,15 +723,15 @@ void MainWindow::createButtons(){
 
     ui->mainToolBar->addSeparator();
 
-    QAction *Axial = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/axial.png"),"Show top/bottom view", this);
+    QAction *Axial = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/axial.png"),"Show top/bottom view (Axial)", this);
     ui->mainToolBar->addAction(Axial);
     connect(Axial, SIGNAL(triggered(bool)), SLOT(callAxial()));
 
-    QAction *Coronal = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/coronal.png"),"Show left/right view", this);
+    QAction *Coronal = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/coronal.png"),"Show front/back view (Coronal)", this);
     ui->mainToolBar->addAction(Coronal);
-    connect(Coronal;, SIGNAL(triggered(bool)), SLOT(callCoronal()));
+    connect(Coronal, SIGNAL(triggered(bool)), SLOT(callCoronal()));
 
-    QAction *Sagittal = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/sagittal.png"),"Show front/back view", this);
+    QAction *Sagittal = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/sagittal.png"),"Show left/right view (Sagittal)", this);
     ui->mainToolBar->addAction(Sagittal);
     connect(Sagittal, SIGNAL(triggered(bool)), SLOT(callSagittal()));
 
@@ -1092,5 +1075,6 @@ void MainWindow::callCoronal(){
 }
 
 void MainWindow::callSagittal(){
+    cout << "create sagittal" << endl;
     constructSagittalPlan();
 }
