@@ -3,6 +3,7 @@
 #include "dialog.h"
 #include <QMessageBox>
 #include <iostream>
+#include "reportwindow.h"
 
 using namespace std;
 
@@ -17,7 +18,6 @@ int main(int argc, char *argv[])
 
     //Get the selected path
     QString path=dialogbox.getFilepath();
-
 
 
     MainWindow w;

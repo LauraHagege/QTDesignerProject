@@ -29,6 +29,8 @@
 #include <map>
 #include <string>
 #include <QWheelEvent>
+#include "reportwindow.h"
+
 
 
 using namespace std;
@@ -78,6 +80,9 @@ private slots:
     void minmax_contrast();
     void histo_contrast();
 
+
+    void on_showReport_clicked();
+
 private:
     int selectedWindow; // store the number of the current selected graphic window --> for mouse events
     bool invertGrayScale ; // boolean variable to sepcify if Grayscaled is inverted
@@ -115,6 +120,11 @@ private:
 
     int creation;
     int contrast;
+
+    int nbOfFrame;
+    unsigned long  indexFrame;
+
+    ReportWindow *report;
 
 };
 

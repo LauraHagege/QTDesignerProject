@@ -31,7 +31,7 @@
         <widget class="QWidget" name="Informations" native="true">
          <layout class="QGridLayout" name="gridLayout_5">
           <item row="2" column="0">
-           <widget class="QPushButton" name="Report">
+           <widget class="QPushButton" name="showReport">
             <property name="text">
              <string>Show Report</string>
             </property>

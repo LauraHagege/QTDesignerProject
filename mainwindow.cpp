@@ -23,7 +23,10 @@
 #include <stdlib.h>
 #include <QButtonGroup>
 
+
+
 using namespace std;
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -32,6 +35,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     buttonGroup = new QButtonGroup(this);
     connect(buttonGroup, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(buttonInGroupClicked(QAbstractButton*)));
+
+    report = new ReportWindow();
 
     creation=0;
     contrast=0;
@@ -104,7 +109,7 @@ void MainWindow::constructWindow(QString path){
     displayImages();
 
 
-    constructPlans();
+   // constructPlans();
 
 
     delete filepath;
@@ -113,6 +118,9 @@ void MainWindow::constructWindow(QString path){
 void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
     //counter for the number of series found in the file
     series=0;
+    nbOfFrame=0;
+
+    cout <<"path " << filepath << endl;
 
     //Open DICOMDIR with given path
     //DcmDicomDir class to deal with DicomDir element
@@ -126,8 +134,9 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
     DcmDirectoryRecord *   FileRecord = NULL;
     OFString            tmpString;
 
+    DcmDirectoryRecord *   ImageRecord = NULL;
 
-    currentSerie = "Series2";
+    currentSerie = "Series1";
 
 
     if(root != NULL)
@@ -162,6 +171,9 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                                 //increment image counter
                                 count +=1;
 
+                                if((ImageRecord = FileRecord->nextSub(ImageRecord)) != NULL)
+                                    cout <<"tree keep going" << endl;
+
                                 //DCM_ReferencedFileID give the name of the DICOM Image file
                                 if(FileRecord->findAndGetOFStringArray(DCM_ReferencedFileID,tmpString).good()){
                                     //add image name to file path to get the full path
@@ -172,21 +184,25 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                                 //If not normal status the "parent" is not a serie
 
                                 if(count ==1){
-                                    if (DicomImage(fullpath.c_str()).getStatus() != EIS_Normal)
+                                    if (DicomImage(fullpath.c_str()).getStatus() != EIS_Normal){
                                         count =0;
+                                        cout << "statu not normal" << endl;
+                                    }
                                 }
 
                                 // add path to the local vector
                                  paths.push_back(fullpath);
 
 
-                                 if (count ==1 && series ==1){
+                                 if (count ==1 && series ==0){
 //                                    if(FileRecord->findAndGetOFStringArray(DCM_ImagePositionPatient,tmpString).good()){
 //                                         cout << "image posiition patient " << tmpString.c_str() << endl;
 //                                    }
-//                                    if(FileRecord->findAndGetOFStringArray(DCM_ImageOrientationPatient,tmpString).good()){
-//                                         cout << "image orientation patient " << tmpString.c_str() << endl;
-//                                    }
+                                    if(FileRecord->findAndGetOFStringArray(DCM_NumberOfFrames,tmpString).good()){
+                                         cout << "Nb of Frames " << tmpString.c_str() << endl;
+                                         nbOfFrame= atoi(tmpString.c_str());
+                                        // cout << "test " << nbOfFrame << endl;
+                                    }
                                      if(FileRecord->findAndGetOFString(DCM_WindowCenter,tmpString).good()){
                                             cout << "window center " << tmpString.c_str() << endl;
                                             WC=atoi(tmpString.c_str());
@@ -203,6 +219,9 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                             //count !=0 means the folder contain DICOM images so this is a serie
                             if(count !=0){
                                 series +=1;
+
+                                cout << "series nb " <<series << "with "<< count <<" images" << endl;
+
                                 char *desc=new char[100];
                                 char *date=new char[10];
 
@@ -277,16 +296,40 @@ void MainWindow::displayImages(){
     vector<DicomImage*> DicomImages;
     myPixelsZ.clear();
 
-    for(int i=0; i<allPath[currentSerie].size(); i++){
-        //cout << "path " << allPath[currentSerie][i] << endl;
-        DicomImages.push_back(new DicomImage(allPath[currentSerie][i].c_str()));
+    int nbImage = allPath[currentSerie].size();
+
+
+    for(int i=0; i< nbImage ; i++){
+       // DicomImage * img =
+        if(nbOfFrame ==0)
+            DicomImages.push_back(new DicomImage(allPath[currentSerie][i].c_str()));
+        else {
         //DiconImage img = new DicomImage(path);
+             DicomImages.push_back(new DicomImage(allPath[currentSerie][i].c_str(),0,0,nbOfFrame));
+            //indexFrame=DicomImages[i]->getFirstFrame() ;
+            //cout << "nb frame " << nbOfFrame << endl;
+            //cout << "first frame" << DicomImages[i]->getFirstFrame() << endl;
+
+
+        }
 
 
     }
 
     //**********DEALING WITH ALL IMAGES OF THE SERIE**********//
 
+
+    width = DicomImages[0]->getWidth();
+    height =  DicomImages[0]->getHeight();
+
+    cout << "width " << width <<" height " << height << endl;
+
+    int max = WC + (WW/2);
+    int min = WC - (WW/2);
+    cout << "min " << min << endl;
+    cout << "max " << max << endl;
+
+    if(nbOfFrame ==0){
 
     int check=true;
     for(int i=0; i<DicomImages.size(); i++){
@@ -295,14 +338,6 @@ void MainWindow::displayImages(){
         else if(!(DicomImages[i]->getStatus() == EIS_Normal))
             check=false;
     }
-
-    int max = WC + (WW/2);
-    int min = WC - (WW/2);
-    cout << "min " << min << endl;
-    cout << "max " << max << endl;
-
-    width = DicomImages[0]->getWidth();
-    height =  DicomImages[0]->getHeight();
 
 
     if (check){
@@ -321,9 +356,6 @@ void MainWindow::displayImages(){
             Uint8* pixelData = (Uint8 *)(DicomImages[i]->getOutputData(8 )); // bits per sample
             myPixelsZ.push_back((uint8_t *)pixelData);
 
-
-
-
             if (pixelData != NULL){
 
                 // do something useful with the pixel data
@@ -337,8 +369,65 @@ void MainWindow::displayImages(){
    }
    else
       cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
+}
+
+    else {
+        if(DicomImages[0]->getStatus() == EIS_Normal){
+//            if (contrast==0)
+//                DicomImages[0]->setWindow(WC,WW);
+//            else if (contrast ==1)
+//                DicomImages[0] ->setMinMaxWindow();
+//            else
+//                DicomImages[0] ->setHistogramWindow();
 
 
+            Uint8* pixelData = (Uint8 *)(DicomImages[0]->getOutputData(8), nbOfFrame-1);
+            if (pixelData != NULL)
+                cout << "no problem"  << endl;
+            else
+                cout << "no pixel";
+
+            //DicomImages[0]->processNextFrames();
+            for(int i=0; i< nbOfFrame ; i ++){
+               // cout << "processsed  " << DicomImages[0]->getFrameCount() <<  endl;
+                //DicomImages[0]->processNextFrames(nbOfFrame-i);
+
+
+                uint8_t* pixelFrameData = new uint8_t[width*height];
+                int index=0;
+                //cout << "there " << endl;
+                for(int j =i* width*height; j <(i+1)* width*height ; j++ ){
+
+                    pixelFrameData[index]= (uint8_t)pixelData[j];
+
+                        //cout << "idk" << endl;
+                    index+=1;
+                }
+
+               // cout << "there after " << endl;
+                myPixelsZ.push_back((uint8_t *)pixelFrameData);
+
+                if (pixelFrameData != NULL){
+                    // do something useful with the pixel data
+                    QImage *img=new QImage (pixelFrameData,width,height, QImage::Format_Indexed8);
+
+                    Images.push_back(img);
+
+                }
+
+
+                //cout << "index frame " << indexFrame << endl;
+            }
+
+
+        }
+        else
+            cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
+
+
+    }
+
+    cout << "nb of images " << Images.size() << endl;
 
     //creating scene
 
@@ -554,6 +643,9 @@ void MainWindow::createButtons(){
     QAction *Hide = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/remove.png"),"Hide Settings", this);
     ui->AdvancedSettings->addAction(Hide);
     connect(Hide,SIGNAL(triggered(bool)),this,SLOT(hide_advanced()) );
+
+
+
 
 
     ui->Informations->setLayout(ui->SeriesLayout);
@@ -801,4 +893,9 @@ void MainWindow::histo_contrast(){
         contrast=2;
         displayImages();
     }
+}
+
+void MainWindow::on_showReport_clicked()
+{
+    report->show();
 }
