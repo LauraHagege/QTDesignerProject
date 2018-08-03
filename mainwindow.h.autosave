@@ -107,6 +107,8 @@ private:
     vector<QImage*> Images; //store QImages for the current selected serie
     vector<QImage*> Images2;
     vector<QImage*> Images3;
+    vector<QImage*> Images4;
+    
 
 
     vector<uint8_t *> myPixelsZ;

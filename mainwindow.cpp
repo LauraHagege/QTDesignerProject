@@ -38,8 +38,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     report = new ReportWindow();
 
-    creation=0;
-    contrast=0;
+    for(int i=0 ; i<4; i++){
+        creation[i]=0;
+        contrast[i]=0;
+
+    }
 
 }
 
@@ -106,10 +109,14 @@ void MainWindow::constructWindow(QString path){
 
 
     //display images for the first serie found
-    displayImages();
+  // displayImages();
+
+    display_one_window(); // by default show only one window
+    createDefaultPlan();
 
 
-   // constructPlans();
+
+  // constructPlans();
 
 
     delete filepath;
@@ -136,7 +143,8 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
 
     DcmDirectoryRecord *   ImageRecord = NULL;
 
-    currentSerie = "Series1";
+    currentSerie = "Series2";
+
 
 
     if(root != NULL)
@@ -235,6 +243,12 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
 
                                 addSerieButton(series,desc,date, count);
 
+
+                                //SUPPOSSE HERE I HAVE A WAY TO DET THE SERIE CURRENT PLAN
+                                // FOR NOW BY DEFAULT I PU AXIAL FOR ALL SERIES
+                                seriesPlan.insert(pair<string,Plan>("Series"+to_string(series),Axial));
+
+
                                 //storing paths for the current serie
                                 allPath.insert(pair<string,vector<string>>("Series"+to_string(series),paths));
 
@@ -243,6 +257,8 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                     }
                 }
             }
+
+    currentPlan = seriesPlan[currentSerie];
 
 }
 
@@ -286,7 +302,7 @@ void MainWindow::addSerieButton(int serieNumber, char *serieDescription, char *d
 
 
 
-void MainWindow::displayImages(){
+void MainWindow::createDefaultPlan(){
     //initializing index for images
     Index = new int[4];
     for(int i=0; i<4; i++){
@@ -295,6 +311,9 @@ void MainWindow::displayImages(){
 
     vector<DicomImage*> DicomImages;
     myPixelsZ.clear();
+    myPixelsX.clear();
+    myPixelsY.clear();
+
 
     int nbImage = allPath[currentSerie].size();
 
@@ -346,15 +365,27 @@ void MainWindow::displayImages(){
         //cout << "height "<<  DicomImages[0]->getHeight() << endl;
         for(int i=0; i<DicomImages.size(); i++){
 
-            if (contrast==0)
+            if (contrast[0]==0)
                 DicomImages[i]->setWindow(WC,WW);
-            else if (contrast ==1)
+            else if (contrast[0] ==1)
                 DicomImages[i] ->setMinMaxWindow();
             else
                 DicomImages[i] ->setHistogramWindow();
 
             Uint8* pixelData = (Uint8 *)(DicomImages[i]->getOutputData(8 )); // bits per sample
-            myPixelsZ.push_back((uint8_t *)pixelData);
+
+            switch(currentPlan){
+            case Axial:
+                myPixelsZ.push_back((uint8_t *)pixelData);
+                break;
+            case Sagittal:
+                myPixelsX.push_back((uint8_t *)pixelData);
+                break;
+            case Coronal:
+                myPixelsY.push_back((uint8_t *)pixelData);
+                break;
+
+            }
 
             if (pixelData != NULL){
 
@@ -431,29 +462,162 @@ void MainWindow::displayImages(){
 
     //creating scene
 
-    myScene= new QGraphicsScene(this);
-    myScene->addPixmap( QPixmap::fromImage( *Images[0] ) );
+    createScene();
+
+//    myScene= new QGraphicsScene(this);
+//    myScene->addPixmap( QPixmap::fromImage( *Images[0] ) );
 
    // Cscene =  new CustomGraphicsScene();
 
-    ui->graphicsView->setScene(myScene);
+//    ui->graphicsView->setScene(myScene);
     //ui->graphicsView->setScene(Cscene);
 
 
-    if(creation==0){
-    creation =1;
-    ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
+//    if(creation==0){
+//        creation =1;
+//        ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
 
-    ui->graphicsView->fitInView(QRectF(0,0,ui->graphicsView->width(), ui->graphicsView->height()),Qt::KeepAspectRatio);
+//        ui->graphicsView->fitInView(QRectF(0,0,ui->graphicsView->width(), ui->graphicsView->height()),Qt::KeepAspectRatio);
 
-    ui->graphicsView->setFrameRect(QRect(0,0,ui->graphicsView->width(), ui->graphicsView->height()));
-    ui->graphicsView->setFrameStyle(3);
-    selectedWindow=1;}
+//        ui->graphicsView->setFrameRect(QRect(0,0,ui->graphicsView->width(), ui->graphicsView->height()));
+//        ui->graphicsView->setFrameStyle(3);
+//        selectedWindow=1;
+//    }
+
+
 
 
     //connect(myScene, SIGNAL(mousePressEvent(QGraphicsSceneMouseEvent*)), SLOT(scene_clicked(QGraphicsScene*)));
 
 }
+
+void MainWindow::createScene(){
+    switch(selectedWindow){
+    case 1:
+        myScene= new QGraphicsScene(this);
+        myScene->addPixmap( QPixmap::fromImage( *Images[0] ) );
+
+         ui->graphicsView->setScene(myScene);
+
+         if(creation[0]==0){
+             creation[0] =1;
+             ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
+
+             ui->graphicsView->fitInView(QRectF(0,0,ui->graphicsView->width(), ui->graphicsView->height()),Qt::KeepAspectRatio);
+
+             ui->graphicsView->setFrameRect(QRect(0,0,ui->graphicsView->width(), ui->graphicsView->height()));
+             ui->graphicsView->setFrameStyle(3);
+         }
+
+        break;
+    case 2:
+        myScene2= new QGraphicsScene(this);
+        myScene2->addPixmap( QPixmap::fromImage( *Images2[0] ) );
+
+         ui->graphicsView_2->setScene(myScene2);
+
+         if(creation[1]==0){
+             creation[1] =1;
+             ui->graphicsView_2->fitInView(myScene2->sceneRect(),Qt::KeepAspectRatioByExpanding);
+
+             ui->graphicsView_2->fitInView(QRectF(0,0,ui->graphicsView_2->width(), ui->graphicsView_2->height()),Qt::KeepAspectRatio);
+
+             ui->graphicsView_2->setFrameRect(QRect(0,0,ui->graphicsView_2->width(), ui->graphicsView_2->height()));
+            // ui->graphicsView_2->setFrameStyle(3);
+         }
+        break;
+    case 3:
+        myScene3= new QGraphicsScene(this);
+        myScene3->addPixmap( QPixmap::fromImage( *Images3[0] ) );
+
+         ui->graphicsView_3->setScene(myScene3);
+
+         if(creation[2]==0){
+             creation[2] =1;
+             ui->graphicsView_3->fitInView(myScene3->sceneRect(),Qt::KeepAspectRatioByExpanding);
+
+             ui->graphicsView_3->fitInView(QRectF(0,0,ui->graphicsView_3->width(), ui->graphicsView_3->height()),Qt::KeepAspectRatio);
+
+             ui->graphicsView_3->setFrameRect(QRect(0,0,ui->graphicsView_3->width(), ui->graphicsView_3->height()));
+            // ui->graphicsView_2->setFrameStyle(3);
+         }
+        break;
+    case 4:
+        myScene4= new QGraphicsScene(this);
+        myScene4->addPixmap( QPixmap::fromImage( *Images4[0] ) );
+
+         ui->graphicsView_4->setScene(myScene3);
+
+         if(creation[3]==0){
+             creation[3] =1;
+             ui->graphicsView_4->fitInView(myScene4->sceneRect(),Qt::KeepAspectRatioByExpanding);
+
+             ui->graphicsView_4->fitInView(QRectF(0,0,ui->graphicsView_4->width(), ui->graphicsView_4->height()),Qt::KeepAspectRatio);
+
+             ui->graphicsView_4->setFrameRect(QRect(0,0,ui->graphicsView_4->width(), ui->graphicsView_4->height()));
+            // ui->graphicsView_2->setFrameStyle(3);
+         }
+        break;
+
+    }
+
+
+}
+
+void MainWindow::constructSagittalPlan(){
+    //construct Sagittal from Axial view
+    if(currentPlan == Axial){
+        depth=myPixelsZ.size();
+
+        //X fixed <-> width
+        for (int x=0; x<width; x++){
+           uint8_t *mypixel= new uint8_t[height*depth];
+           int countX=0;
+            for(int z=0; z<depth; z++){
+                int i=0;
+                for(int y=x; y<height*width ; y+=width){
+                    mypixel[countX]=myPixelsZ[z][y];
+                    countX +=1;
+                    i+=1;
+                }
+            }
+
+            myPixelsX.push_back(mypixel);
+            QImage *img= new QImage(mypixel,height, depth, QImage::Format_Indexed8);
+
+            //CHECK FOR THE RIGTH SCALING
+
+            QImage *copy =  new QImage(img->scaled(QSize(height,1.8*depth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+            delete img;
+
+            switch(selectedWindow){
+            case 1:
+                Images.push_back(copy);
+                break;
+            case 2:
+                Images2.push_back(copy);
+                break;
+            case 3:
+                Images3.push_back(copy);
+                break;
+            case 4:
+                Images4.push_back(copy);
+            }
+
+
+            createScene();
+
+        }
+    }else if(currentPlan == Coronal){
+
+        // TO DOOOOOOO
+    }
+
+}
+
+
+
+
 
 
 
@@ -557,7 +721,7 @@ void MainWindow::createButtons(){
 
     ui->mainToolBar->addSeparator();
 
-    QAction *Flag = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/flag.png"),"Flag Information", this);
+    QAction *Flag = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/flag.png"),"Get me to the relevant image", this);
     ui->mainToolBar->addAction(Flag);
 
     ui->mainToolBar->addSeparator();
@@ -576,6 +740,22 @@ void MainWindow::createButtons(){
 
     ui->mainToolBar->addSeparator();
 
+    QAction *Axial = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/axial.png"),"Show top/bottom view", this);
+    ui->mainToolBar->addAction(Axial);
+    connect(Axial, SIGNAL(triggered(bool)), SLOT(callAxial()));
+
+    QAction *Coronal = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/coronal.png"),"Show left/right view", this);
+    ui->mainToolBar->addAction(Coronal);
+    connect(Coronal;, SIGNAL(triggered(bool)), SLOT(callCoronal()));
+
+    QAction *Sagittal = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/sagittal.png"),"Show front/back view", this);
+    ui->mainToolBar->addAction(Sagittal);
+    connect(Sagittal, SIGNAL(triggered(bool)), SLOT(callSagittal()));
+
+
+
+    ui->mainToolBar->addSeparator();
+
     QAction *Label = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/label.png"),"Show labels", this);
     ui->mainToolBar->addAction(Label);
 
@@ -586,7 +766,7 @@ void MainWindow::createButtons(){
 
     ui->mainToolBar->addSeparator();
 
-    QAction *Examples = new QAction("Show me examples", this);
+    QAction *Examples = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/examples.png"),"Show me normal images", this);
     ui->mainToolBar->addAction(Examples);
 
     ui->mainToolBar->addSeparator();
@@ -639,6 +819,9 @@ void MainWindow::createButtons(){
 
     QAction *Anonymize = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/user.png"),"Anonymize my study", this);
     ui->AdvancedSettings->addAction(Anonymize);
+
+    QAction *Share = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/share.png"),"Share my study", this);
+    ui->AdvancedSettings->addAction(Share);
 
     QAction *Hide = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/remove.png"),"Hide Settings", this);
     ui->AdvancedSettings->addAction(Hide);
@@ -758,7 +941,7 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     cout << "currentSeriesize " <<this->allPath[currentSerie].size() << endl;
 
     Images.clear();
-    displayImages();
+    createDefaultPlan();
 }
 
 
@@ -872,30 +1055,42 @@ void MainWindow::zoom_minus(){
 
 void MainWindow::default_contrast(){
     Images.clear();
-    if(contrast !=0){
-        contrast=0;
-        displayImages();
+    if(contrast[0] !=0){
+        contrast[0]=0;
+        createDefaultPlan();
     }
 }
 
 
 void MainWindow::minmax_contrast(){
     Images.clear();
-    if(contrast !=1){
-        contrast=1;
-        displayImages();
+    if(contrast[0] !=1){
+        contrast[0]=1;
+        createDefaultPlan();
     }
 }
 
 void MainWindow::histo_contrast(){
     Images.clear();
-    if(contrast !=2){
-        contrast=2;
-        displayImages();
+    if(contrast[0] !=2){
+        contrast[0]=2;
+        createDefaultPlan();
     }
 }
 
 void MainWindow::on_showReport_clicked()
 {
     report->show();
+}
+
+void MainWindow::callAxial(){
+    constructAxialPlan();
+}
+
+void MainWindow::callCoronal(){
+    constructCoronalPlan();
+}
+
+void MainWindow::callSagittal(){
+    constructSagittalPlan();
 }
