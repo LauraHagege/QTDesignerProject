@@ -35,7 +35,7 @@
 
 using namespace std;
 
-enum Plan {Axial, Coronal, Sagittal};
+enum Plan {Axial, Coronal, Sagittal,Test};
 
 namespace Ui {
 class MainWindow;
@@ -68,6 +68,7 @@ public:
     void constructCoronalPlan();
     void constructSagittalPlan();
 
+
     void setSelectedWindow(int nb);
 
     void createScene();
@@ -95,11 +96,14 @@ private slots:
     void callCoronal();
     void callSagittal();
 
+    void callTest();
 private:
     int selectedWindow; // store the number of the current selected graphic window --> for mouse events
     bool invertGrayScale ; // boolean variable to sepcify if Grayscaled is inverted
     int *Index; // index array to store the number of the current displayed image according to each graphic window
     int series; //number of series in the directory
+
+    int currentSerieNumber; // asociated in for the current displayed serie
     string currentSerie; //name of the current selected serie
 
     map<string, vector <string>> allPath; // store all path for all series to reach them when selected;
@@ -125,12 +129,18 @@ private:
     QGraphicsScene *myScene3;
     QGraphicsScene *myScene4;
 
-    int WW;
-    int WC;
+    vector<int> WW;
+    vector<int> WC;
 
+    // height and with are the default argument defined for the default plan of the Image
     int width;
     int height;
-    int depth;
+
+    // Those three value are used to recreate the views
+    int pixelXdepth;
+    int pixelYdepth;
+    int pixelZdepth;
+
 
     int creation[4];
     int contrast[4];
@@ -141,7 +151,7 @@ private:
     ReportWindow *report;
 
     Plan currentPlan;
-    map <string, Plan> seriesPlan; // store the "inherant"/obvious plan coresponding to the serie number
+    vector< Plan> seriesPlan; // store the "inherant"/obvious plan for eaxh serie
     bool PlanContruction ; // set to true if possible to recreate other plan from the current images, sest to false othewise
 
 };

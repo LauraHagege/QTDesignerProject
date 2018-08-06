@@ -109,14 +109,14 @@ void MainWindow::constructWindow(QString path){
 
 
     //display images for the first serie found
-  // displayImages();
+    // displayImages();
 
     display_one_window(); // by default show only one window
     createDefaultPlan();
 
 
 
-  // constructPlans();
+    // constructPlans();
 
 
     delete filepath;
@@ -144,7 +144,9 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
     DcmDirectoryRecord *   ImageRecord = NULL;
 
     currentSerie = "Series2";
+    currentSerieNumber =2;
 
+    int WC1,WW1;
 
 
     if(root != NULL)
@@ -202,24 +204,29 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                                  paths.push_back(fullpath);
 
 
-                                 if (count ==1 && series ==0){
-//                                    if(FileRecord->findAndGetOFStringArray(DCM_ImagePositionPatient,tmpString).good()){
-//                                         cout << "image posiition patient " << tmpString.c_str() << endl;
-//                                    }
+                                 if(count ==1){
+                                    if(FileRecord->findAndGetOFString(DCM_WindowCenter,tmpString).good()){
+                                        cout << "window center " << tmpString.c_str() << endl;
+                                        WC1=atoi(tmpString.c_str());
+
+                                    }
+                                    if(FileRecord->findAndGetOFString(DCM_WindowWidth,tmpString).good()){
+                                        cout << "window width " << tmpString.c_str() << endl;
+                                        WW1= atoi(tmpString.c_str());
+                                    }
+                                 }
+
+
+                                 if (count ==1 && (series ==1 || series ==2)){
+                                    if(FileRecord->findAndGetOFStringArray(DCM_ImageOrientationPatient,tmpString).good()){
+                                         cout << "image posiition patient " << tmpString.c_str() << endl;
+                                    }
                                     if(FileRecord->findAndGetOFStringArray(DCM_NumberOfFrames,tmpString).good()){
                                          cout << "Nb of Frames " << tmpString.c_str() << endl;
                                          nbOfFrame= atoi(tmpString.c_str());
                                         // cout << "test " << nbOfFrame << endl;
                                     }
-                                     if(FileRecord->findAndGetOFString(DCM_WindowCenter,tmpString).good()){
-                                            cout << "window center " << tmpString.c_str() << endl;
-                                            WC=atoi(tmpString.c_str());
 
-                                     }
-                                     if(FileRecord->findAndGetOFString(DCM_WindowWidth,tmpString).good()){
-                                            cout << "window width " << tmpString.c_str() << endl;
-                                             WW=atoi(tmpString.c_str());
-                                     }
 
                                  }
                             }
@@ -243,10 +250,15 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
 
                                 addSerieButton(series,desc,date, count);
 
+                                WC.push_back(WC1);
+                                WW.push_back(WW1);
+
+
+
 
                                 //SUPPOSSE HERE I HAVE A WAY TO DET THE SERIE CURRENT PLAN
                                 // FOR NOW BY DEFAULT I PU AXIAL FOR ALL SERIES
-                                seriesPlan.insert(pair<string,Plan>("Series"+to_string(series),Axial));
+                                seriesPlan.push_back(Sagittal);
 
 
                                 //storing paths for the current serie
@@ -258,7 +270,7 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                 }
             }
 
-    currentPlan = seriesPlan[currentSerie];
+    currentPlan = seriesPlan[currentSerieNumber-1];
 
 }
 
@@ -271,6 +283,7 @@ void MainWindow::addSerieButton(int serieNumber, char *serieDescription, char *d
     QPushButton *button = new QPushButton(this);
 
     button->setText(tr(serieName));
+    button->setProperty("Id",serieNumber);
     button->setVisible(true);
     buttonGroup->addButton(button);
 
@@ -315,7 +328,7 @@ void MainWindow::createDefaultPlan(){
     myPixelsY.clear();
 
 
-    int nbImage = allPath[currentSerie].size();
+    int nbImage = (int)allPath[currentSerie].size();
 
 
     for(int i=0; i< nbImage ; i++){
@@ -336,17 +349,38 @@ void MainWindow::createDefaultPlan(){
     }
 
     //**********DEALING WITH ALL IMAGES OF THE SERIE**********//
-
-
-    width = DicomImages[0]->getWidth();
+    width = DicomImages[0]->getWidth(); // height and with are the default argument defined for the default plan of the Image
     height =  DicomImages[0]->getHeight();
+
+
+
+    switch(currentPlan){
+    case Axial:
+        pixelXdepth = DicomImages[0]->getWidth();
+        pixelYdepth =  DicomImages[0]->getHeight();
+        pixelZdepth = nbImage; //  nbImage is not properly the depth, but this is the value that will be used to recreate the other plans
+        break;
+    case Coronal:
+        pixelZdepth = DicomImages[0]->getHeight();
+        pixelXdepth =  DicomImages[0]->getWidth();
+        pixelYdepth = nbImage;
+
+        break;
+    case Sagittal:
+        pixelZdepth = DicomImages[0]->getHeight();
+        pixelYdepth =  DicomImages[0]->getWidth();
+        pixelXdepth = nbImage;
+
+        break;
+    default:
+        break;
+
+    }
+
 
     cout << "width " << width <<" height " << height << endl;
 
-    int max = WC + (WW/2);
-    int min = WC - (WW/2);
-    cout << "min " << min << endl;
-    cout << "max " << max << endl;
+
 
     if(nbOfFrame ==0){
 
@@ -366,7 +400,7 @@ void MainWindow::createDefaultPlan(){
         for(int i=0; i<DicomImages.size(); i++){
 
             if (contrast[0]==0)
-                DicomImages[i]->setWindow(WC,WW);
+                DicomImages[i]->setWindow(WC[currentSerieNumber-1],WW[currentSerieNumber-1]);
             else if (contrast[0] ==1)
                 DicomImages[i] ->setMinMaxWindow();
             else
@@ -461,6 +495,7 @@ void MainWindow::createDefaultPlan(){
     cout << "nb of images " << Images.size() << endl;
 
     Index[0]= Images.size()/2;
+    cout << "RATIO "<< Images[Index[0]]->devicePixelRatio() << endl;;
 
     //creating scene
 
@@ -487,9 +522,10 @@ void MainWindow::createScene(){
              ui->graphicsView->setFrameStyle(3);
 
              ui->graphicsView->setStyleSheet("color:orange");
-             ui->graphicsView_2->setStyleSheet("color:orange");
-             ui->graphicsView_3->setStyleSheet("color:orange");
-             ui->graphicsView_4->setStyleSheet("color:orange");
+             ui->graphicsView_2->setStyleSheet("color:black");
+             ui->graphicsView_3->setStyleSheet("color:black");
+             ui->graphicsView_4->setStyleSheet("color:black");
+
 
              myScene2= new QGraphicsScene(this);
              myScene3= new QGraphicsScene(this);
@@ -557,27 +593,24 @@ void MainWindow::constructSagittalPlan(){
     cout << "construct sagittal" << endl;
     //construct Sagittal from Axial view
     if(currentPlan == Axial){
-        depth=myPixelsZ.size();
 
         //X fixed <-> width
-        for (int x=0; x<width; x++){
-           uint8_t *mypixel= new uint8_t[height*depth];
+        for (int x=0; x<pixelXdepth; x++){
+           uint8_t *mypixel= new uint8_t[pixelYdepth*pixelZdepth];
            int countX=0;
-            for(int z=0; z<depth; z++){
-                int i=0;
-                for(int y=x; y<height*width ; y+=width){
+            for(int z=0; z<pixelZdepth; z++){
+                for(int y=x; y<pixelXdepth*pixelYdepth ; y+=pixelXdepth){
                     mypixel[countX]=myPixelsZ[z][y];
                     countX +=1;
-                    i+=1;
                 }
             }
 
             myPixelsX.push_back(mypixel);
-            QImage *img= new QImage(mypixel,height, depth, QImage::Format_Indexed8);
+            QImage *img= new QImage(mypixel,pixelYdepth, pixelZdepth, QImage::Format_Indexed8);
 
             //CHECK FOR THE RIGTH SCALING
 
-            QImage *copy =  new QImage(img->scaled(QSize(height,1.8*depth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+            QImage *copy =  new QImage(img->scaled(QSize(pixelYdepth,1.8*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
             delete img;
 
             switch(selectedWindow){
@@ -593,12 +626,52 @@ void MainWindow::constructSagittalPlan(){
             case 4:
                 Images4.push_back(copy);
             }
-
-
         }
     }else if(currentPlan == Coronal){
-
         // TO DOOOOOOO
+        cout << "pixelXdepth "<< pixelXdepth << endl;
+        cout << "pixelYdepth "<< pixelYdepth << endl;
+        cout << "pixelZdepth "<< pixelZdepth << endl;
+
+
+        for (int x=0; x<pixelXdepth; x++){
+           uint8_t *mypixel= new uint8_t[pixelZdepth*pixelYdepth];
+           int countX=0;
+            for(int y=0; y<pixelYdepth; y++){
+                for(int z=x*pixelZdepth; z<(x+1)*pixelZdepth ; z++){
+                    mypixel[countX]=myPixelsY[y][z];
+                    countX +=1;
+                }
+            }
+
+            if(x==0)
+                cout << "x0 pass" << endl;
+
+            myPixelsX.push_back(mypixel);
+            QImage *img= new QImage(mypixel,pixelYdepth, pixelZdepth, QImage::Format_Indexed8);
+
+            //CHECK FOR THE RIGTH SCALING
+
+            QImage *copy =  new QImage(img->scaled(QSize(pixelYdepth,1.8*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+            delete img;
+
+            switch(selectedWindow){
+            case 1:
+                Images.push_back(copy);
+                break;
+            case 2:
+                Images2.push_back(copy);
+                break;
+            case 3:
+                Images3.push_back(copy);
+                break;
+            case 4:
+                Images4.push_back(copy);
+            }
+        }
+
+
+
     }
 
     switch(selectedWindow){
@@ -621,28 +694,65 @@ void MainWindow::constructSagittalPlan(){
 
 
 void MainWindow::constructAxialPlan(){
+    if(currentPlan == Sagittal){
 
+        //X fixed <-> width
+        for (int z=0; z<pixelZdepth; z++){
+           uint8_t *mypixel= new uint8_t[pixelYdepth*pixelXdepth];
+           int countZ=0;
+            for(int x=0; x<pixelXdepth; x++){
+                for(int y=x; y<pixelXdepth*pixelYdepth ; y+=pixelXdepth){
+                    mypixel[countZ]=myPixelsZ[z][y];
+                    countZ +=1;
+                }
+            }
+
+            myPixelsX.push_back(mypixel);
+            QImage *img= new QImage(mypixel,pixelYdepth, pixelZdepth, QImage::Format_Indexed8);
+
+            //CHECK FOR THE RIGTH SCALING
+
+            QImage *copy =  new QImage(img->scaled(QSize(pixelYdepth,1.8*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+            delete img;
+
+            switch(selectedWindow){
+            case 1:
+                Images.push_back(copy);
+                break;
+            case 2:
+                Images2.push_back(copy);
+                break;
+            case 3:
+                Images3.push_back(copy);
+                break;
+            case 4:
+                Images4.push_back(copy);
+            }
+        }
+    }else if(currentPlan == Coronal){
+
+
+
+    }
 
 }
 
 void MainWindow::constructCoronalPlan(){
     if(currentPlan == Axial){
-        depth=myPixelsZ.size();
         //Y fixed <-> width
-        for (int y=0; y<height; y++){
-           uint8_t *mypixel= new uint8_t[width*depth];
+        for (int y=0; y<pixelYdepth; y++){
+           uint8_t *mypixel= new uint8_t[pixelXdepth*pixelZdepth];
            int countY=0;
-            for(int z=0; z<depth; z++){
-                int l=0;
-                for(int x=y*width; x<(y+1)*width ; x++){
+            for(int z=0; z<pixelZdepth; z++){
+
+                for(int x=y*pixelXdepth; x<(y+1)*pixelXdepth ; x++){
                     mypixel[countY]=myPixelsZ[z][x];
                     countY +=1;
-                    l+=1;
                 }
             }
                 myPixelsY.push_back(mypixel);
-                QImage *img = new QImage (mypixel,width, depth, QImage::Format_Indexed8);
-                QImage *copy =  new QImage(img->scaled(QSize(height,1.8*depth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+                QImage *img = new QImage (mypixel,pixelXdepth, pixelZdepth, QImage::Format_Indexed8);
+                QImage *copy =  new QImage(img->scaled(QSize(pixelXdepth,1.8*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
                 delete img;
 
                 switch(selectedWindow){
@@ -661,7 +771,41 @@ void MainWindow::constructCoronalPlan(){
 
         }
     }else if(currentPlan == Sagittal){
+        cout << "pixelXdepth "<< pixelXdepth << endl;
+        cout << "pixelYdepth "<< pixelYdepth << endl;
+        cout << "pixelZdepth "<< pixelZdepth << endl;
 
+        for (int y=0; y<pixelYdepth; y++){
+           uint8_t *mypixel= new uint8_t[pixelXdepth*pixelZdepth];
+           int countY=0;
+            for(int z=0; z<pixelZdepth; z++){
+                for(int x=0; x<pixelXdepth ; x++){
+                    mypixel[countY]=myPixelsX[x][z];
+                    countY +=1;
+                }
+            }
+                myPixelsY.push_back(mypixel);
+                QImage *img = new QImage (mypixel,pixelXdepth, pixelZdepth, QImage::Format_Indexed8);
+                QImage *copy =  new QImage(img->scaled(QSize(pixelXdepth,pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+                delete img;
+
+
+
+                switch(selectedWindow){
+                case 1:
+                    Images.push_back(copy);
+                    break;
+                case 2:
+                    Images2.push_back(copy);
+                    break;
+                case 3:
+                    Images3.push_back(copy);
+                    break;
+                case 4:
+                    Images4.push_back(copy);
+                }
+
+        }
 
     }
     switch(selectedWindow){
@@ -676,6 +820,7 @@ void MainWindow::constructCoronalPlan(){
         break;
     case 4:
         Index[3]=Images4.size()/2;
+        break;
     }
     createScene();
 
@@ -706,6 +851,7 @@ void MainWindow::createButtons(){
 
     QAction *Flag = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/flag.png"),"Get me to the relevant image", this);
     ui->mainToolBar->addAction(Flag);
+    connect(Flag, SIGNAL(triggered(bool)), SLOT(callTest()));
 
     ui->mainToolBar->addSeparator();
 
@@ -835,6 +981,12 @@ void MainWindow::mousePressEvent(QMouseEvent* e){
         ui->graphicsView_2->setFrameStyle(1);
         ui->graphicsView_3->setFrameStyle(1);
         ui->graphicsView_4->setFrameStyle(1);
+
+        ui->graphicsView->setStyleSheet("color:orange");
+        ui->graphicsView_2->setStyleSheet("color:black");
+        ui->graphicsView_3->setStyleSheet("color:black");
+        ui->graphicsView_4->setStyleSheet("color:black");
+
     }
     else if(ui->graphicsView_2->underMouse()){
         selectedWindow=2;
@@ -842,6 +994,12 @@ void MainWindow::mousePressEvent(QMouseEvent* e){
         ui->graphicsView_2->setFrameStyle(3);
         ui->graphicsView_3->setFrameStyle(1);
         ui->graphicsView_4->setFrameStyle(1);
+
+        ui->graphicsView->setStyleSheet("color:black");
+        ui->graphicsView_2->setStyleSheet("color:orange");
+        ui->graphicsView_3->setStyleSheet("color:black");
+        ui->graphicsView_4->setStyleSheet("color:black");
+
     }
     else if(ui->graphicsView_3->underMouse()){
         selectedWindow=3;
@@ -849,6 +1007,11 @@ void MainWindow::mousePressEvent(QMouseEvent* e){
         ui->graphicsView_2->setFrameStyle(1);
         ui->graphicsView_3->setFrameStyle(3);
         ui->graphicsView_4->setFrameStyle(1);
+
+        ui->graphicsView->setStyleSheet("color:black");
+        ui->graphicsView_2->setStyleSheet("color:black");
+        ui->graphicsView_3->setStyleSheet("color:orange");
+        ui->graphicsView_4->setStyleSheet("color:black");
     }
     else if(ui->graphicsView_4->underMouse()){
         selectedWindow=4;
@@ -856,6 +1019,12 @@ void MainWindow::mousePressEvent(QMouseEvent* e){
         ui->graphicsView_2->setFrameStyle(1);
         ui->graphicsView_3->setFrameStyle(1);
         ui->graphicsView_4->setFrameStyle(3);
+
+
+        ui->graphicsView->setStyleSheet("color:black");
+        ui->graphicsView_2->setStyleSheet("color:orange");
+        ui->graphicsView_3->setStyleSheet("color:black");
+        ui->graphicsView_4->setStyleSheet("color:orange");
     }
 }
 
@@ -918,6 +1087,8 @@ void MainWindow::wheelEvent(QWheelEvent *event)
 }
 
 void MainWindow::buttonInGroupClicked(QAbstractButton *b){
+    currentSerieNumber = b->property("Id").toInt();
+    cout << "property number  " << currentSerieNumber<<endl;
     string buttonName = b->text().toLocal8Bit().constData();
     cout << "button " << buttonName << " clicked, associated serie size: "<< this->allPath[buttonName].size() << endl;
     currentSerie=buttonName;
@@ -1075,6 +1246,11 @@ void MainWindow::callCoronal(){
 }
 
 void MainWindow::callSagittal(){
-    cout << "create sagittal" << endl;
     constructSagittalPlan();
 }
+
+void MainWindow::callTest(){
+    currentPlan=Test;
+    constructSagittalPlan();
+}
+
