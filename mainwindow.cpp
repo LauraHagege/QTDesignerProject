@@ -125,7 +125,6 @@ void MainWindow::constructWindow(QString path){
 void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
     //counter for the number of series found in the file
     series=0;
-    nbOfFrame=0;
 
     cout <<"path " << filepath << endl;
 
@@ -143,8 +142,10 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
 
     DcmDirectoryRecord *   ImageRecord = NULL;
 
-    currentSerie = "Series2";
-    currentSerieNumber =2;
+    currentSerie = "Series1";
+    currentSerieNumber =1;
+    int nbFrame=0;
+    Plan seriePlan = Unknown;
 
     int WC1,WW1;
 
@@ -204,31 +205,38 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                                  paths.push_back(fullpath);
 
 
-                                 if(count ==1){
+                                 if(count <=3){
                                     if(FileRecord->findAndGetOFString(DCM_WindowCenter,tmpString).good()){
-                                        cout << "window center " << tmpString.c_str() << endl;
+                                        //cout << "window center " << tmpString.c_str() << endl;
                                         WC1=atoi(tmpString.c_str());
 
                                     }
                                     if(FileRecord->findAndGetOFString(DCM_WindowWidth,tmpString).good()){
-                                        cout << "window width " << tmpString.c_str() << endl;
+                                       // cout << "window width " << tmpString.c_str() << endl;
                                         WW1= atoi(tmpString.c_str());
                                     }
                                  }
 
 
-                                 if (count ==1 && (series ==1 || series ==2)){
-                                    if(FileRecord->findAndGetOFStringArray(DCM_ImageOrientationPatient,tmpString).good()){
-                                         cout << "image posiition patient " << tmpString.c_str() << endl;
-                                    }
-                                    if(FileRecord->findAndGetOFStringArray(DCM_NumberOfFrames,tmpString).good()){
-                                         cout << "Nb of Frames " << tmpString.c_str() << endl;
-                                         nbOfFrame= atoi(tmpString.c_str());
-                                        // cout << "test " << nbOfFrame << endl;
-                                    }
+                                 if(count<=2 ){
+                                     if(FileRecord->findAndGetOFStringArray(DCM_NumberOfFrames,tmpString).good()){
+                                          cout << "Nb of Frames " << tmpString.c_str() << endl;
+                                          nbFrame = atoi(tmpString.c_str());
+                                     }
 
+                                     if(FileRecord->findAndGetOFStringArray(DCM_ImageOrientationPatient,tmpString).good()){
+                                         cout << "image orientation patient " << tmpString.c_str() << endl;
+                                         //const char* orientation = tmpString.c_str();
+
+                                          //float jpp =tmpString;
+                                         // cout << "test " << jpp << endl;
+                                         seriePlan = findSeriePlan(tmpString.c_str());
+
+                                     }
 
                                  }
+
+
                             }
 
                             //count !=0 means the folder contain DICOM images so this is a serie
@@ -253,24 +261,26 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                                 WC.push_back(WC1);
                                 WW.push_back(WW1);
 
-
+                                cout << "Serie " << series << " plan " << seriePlan << endl;
 
 
                                 //SUPPOSSE HERE I HAVE A WAY TO DET THE SERIE CURRENT PLAN
                                 // FOR NOW BY DEFAULT I PU AXIAL FOR ALL SERIES
-                                seriesPlan.push_back(Sagittal);
+                                seriesPlan.push_back(seriePlan);
 
 
                                 //storing paths for the current serie
                                 allPath.insert(pair<string,vector<string>>("Series"+to_string(series),paths));
+
+                                nbOfFrame.insert(pair<string,int>("Series"+to_string(series), nbFrame));
+
+                                cout << "hey " << endl;
 
                             }
                         }
                     }
                 }
             }
-
-    currentPlan = seriesPlan[currentSerieNumber-1];
 
 }
 
@@ -312,11 +322,74 @@ void MainWindow::addSerieButton(int serieNumber, char *serieDescription, char *d
 
 }
 
+Plan MainWindow::findSeriePlan(const char *orientation){
+    int count=0;
+    int str=0;
+    int coordinate=0;
+    int axial=2;
+    int coronal=2;
+    int sagittal=2;
+
+    double ref=pow(10, -10);
+
+    double number=0;
+    char *nb= new char[30];
+
+    while(orientation[str] != '\0'){
+        if(orientation[str] == '\\' || orientation[str+1]=='\0' ){
+            if(orientation[str+1]=='\0'){
+                nb[count]=orientation[str];
+                count ++;
+            }
+
+            nb[count]='\0';
+            number=stod(nb);
+            count =0;
+
+            if(abs(number)<ref){
+                if(coordinate==2 || coordinate==5){
+                    axial-=1;
+                }
+                else if(coordinate==0 || coordinate==3){
+                    coronal-=1;
+                }
+                else if(coordinate==1 || coordinate==4){
+                    sagittal-=1;
+                }
+            }
+            coordinate+=1;
+        }else{
+                nb[count]=orientation[str];
+                count ++;
+        }
+        str +=1;
+    }
+
+
+    if(axial==0){
+        cout << "axial" << endl;
+        return Axial;
+    }else if(coronal==0){
+        cout << "coronal" << endl;
+        return Coronal;
+    }else if(sagittal==0){
+        cout << "sagittal" << endl;
+        return Sagittal;
+    }else {
+        cout << "other" << endl;
+        return Unknown;
+    }
+
+
+
+}
+
 
 
 
 void MainWindow::createDefaultPlan(){
     //initializing index for images
+    currentPlan = seriesPlan[currentSerieNumber-1];
     Index = new int[4];
     for(int i=0; i<4; i++){
         Index[i]=0;
@@ -327,22 +400,18 @@ void MainWindow::createDefaultPlan(){
     myPixelsX.clear();
     myPixelsY.clear();
 
-
+    int nbFrame = nbOfFrame[currentSerie];
     int nbImage = (int)allPath[currentSerie].size();
 
+    //currentPlan=Axial;
 
     for(int i=0; i< nbImage ; i++){
        // DicomImage * img =
-        if(nbOfFrame ==0)
+        if(nbFrame ==0)
             DicomImages.push_back(new DicomImage(allPath[currentSerie][i].c_str()));
         else {
-        //DiconImage img = new DicomImage(path);
-             DicomImages.push_back(new DicomImage(allPath[currentSerie][i].c_str(),0,0,nbOfFrame));
-            //indexFrame=DicomImages[i]->getFirstFrame() ;
-            //cout << "nb frame " << nbOfFrame << endl;
-            //cout << "first frame" << DicomImages[i]->getFirstFrame() << endl;
-
-
+             for(int j=0; j<nbFrame ; j++)
+                DicomImages.push_back(new DicomImage(allPath[currentSerie][i].c_str(),0,j,1));
         }
 
 
@@ -351,8 +420,6 @@ void MainWindow::createDefaultPlan(){
     //**********DEALING WITH ALL IMAGES OF THE SERIE**********//
     width = DicomImages[0]->getWidth(); // height and with are the default argument defined for the default plan of the Image
     height =  DicomImages[0]->getHeight();
-
-
 
     switch(currentPlan){
     case Axial:
@@ -377,12 +444,7 @@ void MainWindow::createDefaultPlan(){
 
     }
 
-
     cout << "width " << width <<" height " << height << endl;
-
-
-
-    if(nbOfFrame ==0){
 
     int check=true;
     for(int i=0; i<DicomImages.size(); i++){
@@ -434,68 +496,11 @@ void MainWindow::createDefaultPlan(){
    }
    else
       cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
-}
 
-    else {
-        if(DicomImages[0]->getStatus() == EIS_Normal){
-//            if (contrast==0)
-//                DicomImages[0]->setWindow(WC,WW);
-//            else if (contrast ==1)
-//                DicomImages[0] ->setMinMaxWindow();
-//            else
-//                DicomImages[0] ->setHistogramWindow();
-
-
-            Uint8* pixelData = (Uint8 *)(DicomImages[0]->getOutputData(8), nbOfFrame-1);
-            if (pixelData != NULL)
-                cout << "no problem"  << endl;
-            else
-                cout << "no pixel";
-
-            //DicomImages[0]->processNextFrames();
-            for(int i=0; i< nbOfFrame ; i ++){
-               // cout << "processsed  " << DicomImages[0]->getFrameCount() <<  endl;
-                //DicomImages[0]->processNextFrames(nbOfFrame-i);
-
-
-                uint8_t* pixelFrameData = new uint8_t[width*height];
-                int index=0;
-                //cout << "there " << endl;
-                for(int j =i* width*height; j <(i+1)* width*height ; j++ ){
-
-                    pixelFrameData[index]= (uint8_t)pixelData[j];
-
-                        //cout << "idk" << endl;
-                    index+=1;
-                }
-
-               // cout << "there after " << endl;
-                myPixelsZ.push_back((uint8_t *)pixelFrameData);
-
-                if (pixelFrameData != NULL){
-                    // do something useful with the pixel data
-                    QImage *img=new QImage (pixelFrameData,width,height, QImage::Format_Indexed8);
-
-                    Images.push_back(img);
-
-                }
-
-
-                //cout << "index frame " << indexFrame << endl;
-            }
-
-
-        }
-        else
-            cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
-
-
-    }
 
     cout << "nb of images " << Images.size() << endl;
 
     Index[0]= Images.size()/2;
-    cout << "RATIO "<< Images[Index[0]]->devicePixelRatio() << endl;;
 
     //creating scene
 
@@ -712,7 +717,7 @@ void MainWindow::constructAxialPlan(){
 
             //CHECK FOR THE RIGTH SCALING
 
-            QImage *copy =  new QImage(img->scaled(QSize(pixelYdepth,1.8*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+            QImage *copy =  new QImage(img->scaled(QSize(pixelYdepth,pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
             delete img;
 
             switch(selectedWindow){
@@ -786,7 +791,7 @@ void MainWindow::constructCoronalPlan(){
             }
                 myPixelsY.push_back(mypixel);
                 QImage *img = new QImage (mypixel,pixelXdepth, pixelZdepth, QImage::Format_Indexed8);
-                QImage *copy =  new QImage(img->scaled(QSize(pixelXdepth,pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+                QImage *copy =  new QImage(img->scaled(QSize(pixelXdepth,1.8*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
                 delete img;
 
 
@@ -1250,7 +1255,6 @@ void MainWindow::callSagittal(){
 }
 
 void MainWindow::callTest(){
-    currentPlan=Test;
     constructSagittalPlan();
 }
 

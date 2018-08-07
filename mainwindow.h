@@ -35,7 +35,7 @@
 
 using namespace std;
 
-enum Plan {Axial, Coronal, Sagittal,Test};
+enum Plan {Axial, Coronal, Sagittal, Unknown};
 
 namespace Ui {
 class MainWindow;
@@ -72,6 +72,8 @@ public:
     void setSelectedWindow(int nb);
 
     void createScene();
+
+    Plan findSeriePlan(const char * orientation);
 
 
 private slots:
@@ -116,7 +118,6 @@ private:
     vector<QImage*> Images4;
 
 
-
     vector<uint8_t *> myPixelsZ;
     vector<uint8_t *> myPixelsX;
     vector<uint8_t *> myPixelsY;
@@ -145,7 +146,7 @@ private:
     int creation[4];
     int contrast[4];
 
-    int nbOfFrame;
+    map <string, int >nbOfFrame;
     unsigned long  indexFrame;
 
     ReportWindow *report;
