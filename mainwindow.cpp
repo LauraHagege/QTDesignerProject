@@ -142,12 +142,14 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
 
     DcmDirectoryRecord *   ImageRecord = NULL;
 
-    currentSerie = "Series1";
-    currentSerieNumber =1;
+    currentSerie = "Series2";
+    currentSerieNumber =2;
     int nbFrame=0;
     Plan seriePlan = Unknown;
 
     int WC1,WW1;
+
+    double rescale =1;
 
 
     if(root != NULL)
@@ -226,12 +228,18 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
 
                                      if(FileRecord->findAndGetOFStringArray(DCM_ImageOrientationPatient,tmpString).good()){
                                          cout << "image orientation patient " << tmpString.c_str() << endl;
-                                         //const char* orientation = tmpString.c_str();
-
-                                          //float jpp =tmpString;
-                                         // cout << "test " << jpp << endl;
                                          seriePlan = findSeriePlan(tmpString.c_str());
-
+                                     }
+                                     if(FileRecord->findAndGetOFString(DCM_SliceThickness,tmpString).good()){
+                                         //cout << "image orientation patient " << tmpString.c_str() << endl;
+                                         rescale = atoi(tmpString.c_str()) ;
+                                         //cout << "RESCALE FACTOR " << rescaleFactor << endl;
+                                     }
+                                     if(FileRecord->findAndGetOFStringArray(DCM_PixelSpacing,tmpString).good()){
+                                         double pixelspacing = getPixelNb(tmpString.c_str());
+                                         rescale = rescale*pixelspacing;
+                                         cout << "pixel spacing " << pixelspacing << endl;
+                                         cout << "RESCALE FACTOR " << rescale << endl;
                                      }
 
                                  }
@@ -267,14 +275,13 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                                 //SUPPOSSE HERE I HAVE A WAY TO DET THE SERIE CURRENT PLAN
                                 // FOR NOW BY DEFAULT I PU AXIAL FOR ALL SERIES
                                 seriesPlan.push_back(seriePlan);
+                                seriesRescaleFactor.push_back(rescale);
 
 
                                 //storing paths for the current serie
                                 allPath.insert(pair<string,vector<string>>("Series"+to_string(series),paths));
 
                                 nbOfFrame.insert(pair<string,int>("Series"+to_string(series), nbFrame));
-
-                                cout << "hey " << endl;
 
                             }
                         }
@@ -379,9 +386,25 @@ Plan MainWindow::findSeriePlan(const char *orientation){
         cout << "other" << endl;
         return Unknown;
     }
+}
 
+double MainWindow::getPixelNb(const char* pixelArray){
+    char *nb= new char[30];
+    double number=0;
 
+    int count=0;
 
+    while(pixelArray[count] != '\\'){
+        nb[count]=pixelArray[count];
+        count ++;
+    }
+    nb[count]='\0';
+    number=stod(nb);
+
+   // cout << "test " << nb < " " << number << endl;
+
+    delete nb;
+    return number;
 }
 
 
@@ -390,6 +413,7 @@ Plan MainWindow::findSeriePlan(const char *orientation){
 void MainWindow::createDefaultPlan(){
     //initializing index for images
     currentPlan = seriesPlan[currentSerieNumber-1];
+    rescaleFactor=seriesRescaleFactor[currentSerieNumber-1];
     Index = new int[4];
     for(int i=0; i<4; i++){
         Index[i]=0;
@@ -425,18 +449,21 @@ void MainWindow::createDefaultPlan(){
     case Axial:
         pixelXdepth = DicomImages[0]->getWidth();
         pixelYdepth =  DicomImages[0]->getHeight();
+        //if currentplan is Axial, while creating other plan, pixelZdepth will need to be rescales to rescaleFatcor*pixelZdepth
         pixelZdepth = nbImage; //  nbImage is not properly the depth, but this is the value that will be used to recreate the other plans
         break;
     case Coronal:
-        pixelZdepth = DicomImages[0]->getHeight();
         pixelXdepth =  DicomImages[0]->getWidth();
+        //if currentplan is Coronal, while creating other plan, pixelYdepth will need to be rescales to rescaleFatcor*pixelYdepth
         pixelYdepth = nbImage;
+        pixelZdepth = DicomImages[0]->getHeight();
 
         break;
     case Sagittal:
-        pixelZdepth = DicomImages[0]->getHeight();
-        pixelYdepth =  DicomImages[0]->getWidth();
+        //if currentplan is Sagittal, while creating other plan, pixelXdepth will need to be rescales to rescaleFatcor*pixelXdepth
         pixelXdepth = nbImage;
+        pixelYdepth =  DicomImages[0]->getWidth();
+        pixelZdepth = DicomImages[0]->getHeight();
 
         break;
     default:
@@ -500,7 +527,7 @@ void MainWindow::createDefaultPlan(){
 
     cout << "nb of images " << Images.size() << endl;
 
-    Index[0]= Images.size()/2;
+    Index[0]= (int)Images.size()/2;
 
     //creating scene
 
@@ -615,7 +642,7 @@ void MainWindow::constructSagittalPlan(){
 
             //CHECK FOR THE RIGTH SCALING
 
-            QImage *copy =  new QImage(img->scaled(QSize(pixelYdepth,1.8*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+            QImage *copy =  new QImage(img->scaled(QSize(pixelYdepth,rescaleFactor*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
             delete img;
 
             switch(selectedWindow){
@@ -633,64 +660,53 @@ void MainWindow::constructSagittalPlan(){
             }
         }
     }else if(currentPlan == Coronal){
-        // TO DOOOOOOO
-        cout << "pixelXdepth "<< pixelXdepth << endl;
-        cout << "pixelYdepth "<< pixelYdepth << endl;
-        cout << "pixelZdepth "<< pixelZdepth << endl;
-
-
+        cout << "sagittal from coronal" << endl;
         for (int x=0; x<pixelXdepth; x++){
-           uint8_t *mypixel= new uint8_t[pixelZdepth*pixelYdepth];
+           uint8_t *mypixel= new uint8_t[pixelYdepth*pixelZdepth];
            int countX=0;
-            for(int y=0; y<pixelYdepth; y++){
-                for(int z=x*pixelZdepth; z<(x+1)*pixelZdepth ; z++){
+            for(int z=x; z<pixelXdepth*pixelZdepth; z+=pixelXdepth){
+                for(int y=0; y<pixelYdepth ; y++){
                     mypixel[countX]=myPixelsY[y][z];
                     countX +=1;
                 }
             }
+                myPixelsX.push_back(mypixel);
+                QImage *img = new QImage (mypixel,pixelYdepth, pixelZdepth, QImage::Format_Indexed8);
+                QImage *copy =  new QImage(img->scaled(QSize(rescaleFactor*pixelYdepth,pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+                delete img;
 
-            if(x==0)
-                cout << "x0 pass" << endl;
 
-            myPixelsX.push_back(mypixel);
-            QImage *img= new QImage(mypixel,pixelYdepth, pixelZdepth, QImage::Format_Indexed8);
 
-            //CHECK FOR THE RIGTH SCALING
+                switch(selectedWindow){
+                case 1:
+                    Images.push_back(copy);
+                    break;
+                case 2:
+                    Images2.push_back(copy);
+                    break;
+                case 3:
+                    Images3.push_back(copy);
+                    break;
+                case 4:
+                    Images4.push_back(copy);
+                }
 
-            QImage *copy =  new QImage(img->scaled(QSize(pixelYdepth,1.8*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
-            delete img;
-
-            switch(selectedWindow){
-            case 1:
-                Images.push_back(copy);
-                break;
-            case 2:
-                Images2.push_back(copy);
-                break;
-            case 3:
-                Images3.push_back(copy);
-                break;
-            case 4:
-                Images4.push_back(copy);
-            }
         }
-
-
 
     }
 
     switch(selectedWindow){
     case 1:
-        Index[0]=Images.size()/2;
+        Index[0]=(int)Images.size()/2;
         break;
     case 2:
-        Index[1]=Images2.size()/2;
+        Index[1]=(int)Images2.size()/2;
         break;
     case 3:
-        Index[2]=Images3.size()/2;
+        Index[2]=(int)Images3.size()/2;
         break;
     case 4:
-        Index[3]=Images4.size()/2;
+        Index[3]=(int)Images4.size()/2;
     }
     createScene();
 
@@ -700,24 +716,20 @@ void MainWindow::constructSagittalPlan(){
 
 void MainWindow::constructAxialPlan(){
     if(currentPlan == Sagittal){
-
-        //X fixed <-> width
         for (int z=0; z<pixelZdepth; z++){
            uint8_t *mypixel= new uint8_t[pixelYdepth*pixelXdepth];
            int countZ=0;
-            for(int x=0; x<pixelXdepth; x++){
-                for(int y=x; y<pixelXdepth*pixelYdepth ; y+=pixelXdepth){
-                    mypixel[countZ]=myPixelsZ[z][y];
+            for(int y=z*pixelYdepth; y<(z+1)*pixelYdepth; y++){
+                for(int x=0; x<pixelXdepth ; x++){
+                    mypixel[countZ]=myPixelsX[x][y];
                     countZ +=1;
                 }
             }
 
-            myPixelsX.push_back(mypixel);
-            QImage *img= new QImage(mypixel,pixelYdepth, pixelZdepth, QImage::Format_Indexed8);
+            myPixelsZ.push_back(mypixel);
+            QImage *img= new QImage(mypixel,pixelXdepth, pixelYdepth, QImage::Format_Indexed8);
 
-            //CHECK FOR THE RIGTH SCALING
-
-            QImage *copy =  new QImage(img->scaled(QSize(pixelYdepth,pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+            QImage *copy =  new QImage(img->scaled(QSize(rescaleFactor*pixelXdepth,pixelYdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
             delete img;
 
             switch(selectedWindow){
@@ -735,11 +747,54 @@ void MainWindow::constructAxialPlan(){
             }
         }
     }else if(currentPlan == Coronal){
+        cout << "axial from coronal" << endl;
+        for (int z=0; z<pixelZdepth; z++){
+           uint8_t *mypixel= new uint8_t[pixelYdepth*pixelXdepth];
+           int countZ=0;
+            for(int y=0; y<pixelYdepth; y++){
+                for(int x=z*pixelXdepth; x<(z+1)*pixelXdepth ; x++){
+                    mypixel[countZ]=myPixelsY[y][x];
+                    countZ +=1;
+                }
+            }
+
+            myPixelsZ.push_back(mypixel);
+            QImage *img= new QImage(mypixel,pixelXdepth, pixelYdepth, QImage::Format_Indexed8);
 
 
+            QImage *copy =  new QImage(img->scaled(QSize(pixelXdepth,rescaleFactor*pixelYdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+            delete img;
+
+            switch(selectedWindow){
+            case 1:
+                Images.push_back(copy);
+                break;
+            case 2:
+                Images2.push_back(copy);
+                break;
+            case 3:
+                Images3.push_back(copy);
+                break;
+            case 4:
+                Images4.push_back(copy);
+            }
+        }
 
     }
-
+    switch(selectedWindow){
+    case 1:
+        Index[0]=(int)Images.size()/2;
+        break;
+    case 2:
+        Index[1]=(int)Images2.size()/2;
+        break;
+    case 3:
+        Index[2]=(int)Images3.size()/2;
+        break;
+    case 4:
+        Index[3]=(int)Images4.size()/2;
+        break;
+    }
 }
 
 void MainWindow::constructCoronalPlan(){
@@ -757,7 +812,7 @@ void MainWindow::constructCoronalPlan(){
             }
                 myPixelsY.push_back(mypixel);
                 QImage *img = new QImage (mypixel,pixelXdepth, pixelZdepth, QImage::Format_Indexed8);
-                QImage *copy =  new QImage(img->scaled(QSize(pixelXdepth,1.8*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+                QImage *copy =  new QImage(img->scaled(QSize(pixelXdepth,rescaleFactor*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
                 delete img;
 
                 switch(selectedWindow){
@@ -776,14 +831,11 @@ void MainWindow::constructCoronalPlan(){
 
         }
     }else if(currentPlan == Sagittal){
-        cout << "pixelXdepth "<< pixelXdepth << endl;
-        cout << "pixelYdepth "<< pixelYdepth << endl;
-        cout << "pixelZdepth "<< pixelZdepth << endl;
-
+        cout << "coronal from sagittal" << endl;
         for (int y=0; y<pixelYdepth; y++){
            uint8_t *mypixel= new uint8_t[pixelXdepth*pixelZdepth];
            int countY=0;
-            for(int z=0; z<pixelZdepth; z++){
+            for(int z=y; z<pixelYdepth*pixelZdepth; z+=pixelYdepth){
                 for(int x=0; x<pixelXdepth ; x++){
                     mypixel[countY]=myPixelsX[x][z];
                     countY +=1;
@@ -791,7 +843,7 @@ void MainWindow::constructCoronalPlan(){
             }
                 myPixelsY.push_back(mypixel);
                 QImage *img = new QImage (mypixel,pixelXdepth, pixelZdepth, QImage::Format_Indexed8);
-                QImage *copy =  new QImage(img->scaled(QSize(pixelXdepth,1.8*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+                QImage *copy =  new QImage(img->scaled(QSize(rescaleFactor*pixelXdepth,pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
                 delete img;
 
 
@@ -815,16 +867,16 @@ void MainWindow::constructCoronalPlan(){
     }
     switch(selectedWindow){
     case 1:
-        Index[0]=Images.size()/2;
+        Index[0]=(int)Images.size()/2;
         break;
     case 2:
-        Index[1]=Images2.size()/2;
+        Index[1]=(int)Images2.size()/2;
         break;
     case 3:
-        Index[2]=Images3.size()/2;
+        Index[2]=(int)Images3.size()/2;
         break;
     case 4:
-        Index[3]=Images4.size()/2;
+        Index[3]=(int)Images4.size()/2;
         break;
     }
     createScene();
@@ -1066,14 +1118,14 @@ void MainWindow::wheelEvent(QWheelEvent *event)
         if(selectedWindow==1){
             Index[0]-=1;
             if(Index[0]<0)
-                Index[0]= Images.size()-1;
+                Index[0]= (int)Images.size()-1;
 
             myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
             ui->graphicsView->setScene(myScene);
         }else if(selectedWindow==2){
             Index[1]-=1;
             if(Index[1]<0)
-                Index[1]=Images2.size()-1;;
+                Index[1]=(int)Images2.size()-1;;
 
             myScene2->addPixmap( QPixmap::fromImage( *Images2[Index[1]] ) );
             ui->graphicsView_2->setScene(myScene2);
@@ -1081,7 +1133,7 @@ void MainWindow::wheelEvent(QWheelEvent *event)
         else if(selectedWindow==3){
             Index[2]+=1;
             if(Index[2]<0)
-                Index[2]=Images3.size()-1;;
+                Index[2]=(int)Images3.size()-1;;
 
             myScene3->addPixmap( QPixmap::fromImage( *Images3[Index[2]] ) );
             ui->graphicsView_3->setScene(myScene3);
@@ -1093,6 +1145,7 @@ void MainWindow::wheelEvent(QWheelEvent *event)
 
 void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     currentSerieNumber = b->property("Id").toInt();
+    currentPlan = seriesPlan[currentSerieNumber-1];
     cout << "property number  " << currentSerieNumber<<endl;
     string buttonName = b->text().toLocal8Bit().constData();
     cout << "button " << buttonName << " clicked, associated serie size: "<< this->allPath[buttonName].size() << endl;
@@ -1255,6 +1308,9 @@ void MainWindow::callSagittal(){
 }
 
 void MainWindow::callTest(){
+    cout << "callTest"<< endl;
+    currentPlan=Coronal;
+    myPixelsX.clear();
     constructSagittalPlan();
 }
 

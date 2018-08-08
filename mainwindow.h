@@ -74,6 +74,7 @@ public:
     void createScene();
 
     Plan findSeriePlan(const char * orientation);
+    double getPixelNb(const char* pixelArray);
 
 
 private slots:
@@ -142,6 +143,8 @@ private:
     int pixelYdepth;
     int pixelZdepth;
 
+    double rescaleFactor;
+    vector <double> seriesRescaleFactor;
 
     int creation[4];
     int contrast[4];
