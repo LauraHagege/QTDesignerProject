@@ -22,6 +22,7 @@
 #include <QColor>
 #include <stdlib.h>
 #include <QButtonGroup>
+#include <QTransform>
 
 
 
@@ -151,6 +152,8 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
 
     double rescale =1;
 
+    string firstpath;
+
 
     if(root != NULL)
             {
@@ -159,15 +162,75 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                 {
                     while (((StudyRecord = PatientRecord->nextSub(StudyRecord)) != NULL))
                     {
+                        char *date=new char[11];
+                        char *studydesc=new char[30];
+                        char *patientName=new char[50];
+                        char *birthdate=new char[11];
+
                         if (StudyRecord->findAndGetOFString(DCM_PatientName, tmpString).good()) {
                             cout << "PatientName 1: " << tmpString.c_str() << endl ;
+                            strcpy(patientName,tmpString.c_str());
+                            int count=0;
+                            while(patientName[count] != '\0'){
+                                if(patientName[count] == '^')
+                                    patientName[count] = ' ';
+                                count ++;
+                            }
+
+
                         }
+                        else{
+                            string noname= "No patient name found";
+                            strcpy(patientName,noname.c_str());
+                        }
+
                         if (StudyRecord->findAndGetOFString(DCM_PatientBirthDate, tmpString).good()) {
                             cout << "birthdate 1 : " << tmpString.c_str() << endl ;
+                            int count=0;
+                            for(int i=0 ; i< 8; i++){
+                                if(i==4 || i ==6 ){
+                                    birthdate[count]= '\\';
+                                    count ++;
+                                }
+
+                                birthdate[count]=tmpString[i];
+                                count ++;
+                            }
+                            birthdate[count]='\0';
+
                         }
                         if (StudyRecord->findAndGetOFString(DCM_StudyDescription, tmpString).good()) {
                             cout <<"Study Description: " << tmpString.c_str() << endl ;
+                            strcpy(studydesc,tmpString.c_str());
+                        }else{
+                            string nodesc= "No description found";
+                            strcpy(studydesc,nodesc.c_str());
                         }
+
+                        if (StudyRecord->findAndGetOFString(DCM_StudyDate, tmpString).good()){
+                            cout << "date " << tmpString.c_str() << endl ;
+                            int count=0;
+                            for(int i=0 ; i< 8; i++){
+                                if(i==4 || i ==6 ){
+                                    date[count]= '\\';
+                                    count ++;
+                                }
+
+                                date[count]=tmpString[i];
+                                count ++;
+                            }
+                            date[count]='\0';
+
+                            cout << "date " << date <<  endl;
+                            //strcpy(date,tmpString.c_str());
+                        }
+
+                        setPatientInfo(studydesc,date,patientName,birthdate);
+
+
+
+
+
                         while (((SeriesRecord = StudyRecord->nextSub(SeriesRecord)) != NULL))
                         {
                             //local variable, vector to store paths to files for each serie
@@ -191,6 +254,8 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                                 if(FileRecord->findAndGetOFStringArray(DCM_ReferencedFileID,tmpString).good()){
                                     //add image name to file path to get the full path
                                     fullpath = filepath + string(tmpString.c_str());
+                                    if(count ==1)
+                                        firstpath =  filepath + string(tmpString.c_str());
                                 }
 
                                 //Check file status, if not EIS_Normal the file is not an Image
@@ -254,20 +319,18 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                                 cout << "series nb " <<series << "with "<< count <<" images" << endl;
 
                                 char *desc=new char[100];
-                                char *date=new char[10];
 
-                                if (SeriesRecord->findAndGetOFString(DCM_SeriesDescription, tmpString).good())
+
+                                if (SeriesRecord->findAndGetOFString(DCM_SeriesDescription, tmpString).good()){
                                     strcpy(desc,tmpString.c_str());
+                                    cout << tmpString.c_str() << " " << endl;
+                                }
 
-
-                                if (SeriesRecord->findAndGetOFString(DCM_Date, tmpString).good())
-                                    strcpy(date,tmpString.c_str());
-
-
-                                addSerieButton(series,desc,date, count);
 
                                 WC.push_back(WC1);
                                 WW.push_back(WW1);
+
+                                addSerieButton(series,desc, count, firstpath);
 
                                 cout << "Serie " << series << " plan " << seriePlan << endl;
 
@@ -291,30 +354,82 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
 
 }
 
-void MainWindow::addSerieButton(int serieNumber, char *serieDescription, char *date, int imgNb){
+void MainWindow::setPatientInfo(char *studydesc, char *date, char *patientName, char *birthdate){
+    //Personnal Information
+    //QWidget *personalInfo = new QWidget(this);
+    string str = string("<b>Personal Information:</b>") + string("<br>") + string(studydesc) + string("<br>") +  string(date) +  string("<br>") +  string(patientName) +  string("<br>") +  string("Birthdate: ") +  string(birthdate);
+
+    QLabel *perso =new  QLabel( str.c_str()); //+ studydesc );//+ "\n" + date + "\n" + patientName + "\n" + "Birthdate: " + birthdate);
+
+    perso->setMaximumHeight(120);
+
+    ui->PersonalInfo->addWidget(perso);
+
+}
+
+
+void MainWindow::addSerieButton(int serieNumber, char *serieDescription, int imgNb, string firstPath){
     //adding button for each serie
     char serieName[30]="Series";
-
     strcat(serieName,to_string(serieNumber).c_str());
+
+
+    // display first Image of the serie as seriebutton
+//    DicomImage *serieImg;
+//    int nbFrame = nbOfFrame[serieName];
+
+//    if(nbFrame ==0)
+//        serieImg = new DicomImage(firstPath.c_str());
+//    else {
+//        serieImg = new DicomImage(firstPath.c_str(),0,0,1);
+//    }
+
+
+//    serieImg->setWindow(WC[serieNumber-1],WW[serieNumber-1]);
+
+
+//    uint8_t * pixel = (uint8_t *)serieImg->getOutputData(8);
+
+
+//    QImage *img = new QImage(pixel, serieImg->getWidth(), serieImg->getHeight(),QImage::Format_Indexed8);
+//    QPixmap pixmap = QPixmap::fromImage( QImage(img->scaled(QSize(50,50), Qt::IgnoreAspectRatio,Qt::SmoothTransformation)) );
+//    QIcon ButtonIcon(pixmap);
+
 
     QPushButton *button = new QPushButton(this);
 
+
+//    button->setIcon(ButtonIcon);
+//    button->setIconSize(pixmap.rect().size());
+
+
     button->setText(tr(serieName));
+
     button->setProperty("Id",serieNumber);
     button->setVisible(true);
     buttonGroup->addButton(button);
 
     QLabel *SerieDesc= new QLabel(this);
-    QLabel *SerieDate = new QLabel(this);
-    QLabel *SerieImgNb = new QLabel(this);
-
-    SerieDesc->setText(serieDescription) ;
-    SerieDate->setText(date) ;
+   // QLabel *SerieImgNb = new QLabel(this);
 
 
-    char Images[15]= "Images: ";
-    strcat(Images, to_string(imgNb).c_str());
-    SerieImgNb->setText(Images);
+    char serieDesc[100]="";
+    strcpy(serieDesc, serieDescription);
+    strcat(serieDesc, string("<br>").c_str());
+    strcat(serieDesc, string ("Images: ").c_str());
+    strcat(serieDesc,  to_string(imgNb).c_str());
+
+    SerieDesc->setMaximumHeight(50);
+
+
+
+//    char Images[15]= "Images: ";
+//    strcat(Images, to_string(imgNb).c_str());
+
+
+    SerieDesc->setText(serieDesc) ;
+
+    //SerieImgNb->setText(Images);
 
     QFrame *SerieFrame = new QFrame(this);
     SerieFrame->setFrameShape(QFrame::HLine);
@@ -323,8 +438,7 @@ void MainWindow::addSerieButton(int serieNumber, char *serieDescription, char *d
 
     ui->SeriesLayout->addWidget(button);
     ui->SeriesLayout->addWidget(SerieDesc);
-    ui->SeriesLayout->addWidget(SerieDate);
-    ui->SeriesLayout->addWidget(SerieImgNb);
+    //ui->SeriesLayout->addWidget(SerieImgNb);
     ui->SeriesLayout->addWidget(SerieFrame);
 
 }
@@ -515,7 +629,24 @@ void MainWindow::createDefaultPlan(){
                 // do something useful with the pixel data
                 QImage *img=new QImage (pixelData,width,height, QImage::Format_Indexed8);
 
-                Images.push_back(img);
+                switch(selectedWindow){
+                case 1:
+                    Images.push_back(img);
+                    break;
+                case 2:
+                    Images2.push_back(img);
+                    break;
+                case 3:
+                    Images3.push_back(img);
+                    break;
+                case 4:
+                    Images4.push_back(img);
+                    break;
+
+
+
+                }
+
 
 
             }
@@ -525,9 +656,9 @@ void MainWindow::createDefaultPlan(){
       cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
 
 
-    cout << "nb of images " << Images.size() << endl;
+//    cout << "nb of images " << Images.size() << endl;
 
-    Index[0]= (int)Images.size()/2;
+  //  Index[0]= (int)Images.size()/2;
 
     //creating scene
 
@@ -536,8 +667,13 @@ void MainWindow::createDefaultPlan(){
 }
 
 void MainWindow::createScene(){
+//    QPixmap pixmap;
+//     pixmap = QPixmap::fromImage( *Images[Index[0]] );
+//    QPainter p(&pixmap);
     switch(selectedWindow){
     case 1:
+        windowSerieNb[0]= currentSerieNumber;
+
         myScene= new QGraphicsScene(this);
         myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
 
@@ -546,6 +682,9 @@ void MainWindow::createScene(){
 
         if(creation[0]==0){
              creation[0] =1;
+
+
+
              ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
 
              ui->graphicsView->fitInView(QRectF(0,0,ui->graphicsView->width(), ui->graphicsView->height()),Qt::KeepAspectRatio);
@@ -574,12 +713,15 @@ void MainWindow::createScene(){
 
         break;
     case 2:
+        windowSerieNb[1]= currentSerieNumber;
+
         myScene2->addPixmap( QPixmap::fromImage( *Images2[Index[1]] ) );
 
         ui->graphicsView_2->setScene(myScene2);
 
         if(creation[1]==0){
              creation[1] =1;
+
              ui->graphicsView_2->fitInView(myScene2->sceneRect(),Qt::KeepAspectRatioByExpanding);
 
              ui->graphicsView_2->fitInView(QRectF(0,0,ui->graphicsView_2->width(), ui->graphicsView_2->height()),Qt::KeepAspectRatio);
@@ -588,6 +730,8 @@ void MainWindow::createScene(){
         }
         break;
     case 3:
+        windowSerieNb[2]= currentSerieNumber;
+
         myScene3->addPixmap( QPixmap::fromImage( *Images3[Index[2]] ) );
 
         ui->graphicsView_3->setScene(myScene3);
@@ -602,6 +746,8 @@ void MainWindow::createScene(){
         }
         break;
     case 4:
+        windowSerieNb[3]= currentSerieNumber;
+
         myScene4->addPixmap( QPixmap::fromImage( *Images4[Index[3]] ) );
 
          ui->graphicsView_4->setScene(myScene3);
@@ -889,9 +1035,6 @@ void MainWindow::createButtons(){
     ui->mainToolBar->setIconSize(QSize(33,33));
     ui->AdvancedSettings->setIconSize(QSize(33,33));
 
-    //Personnal Information
-    QLabel *perso =new  QLabel("Personal Information");
-    ui->PersonalInfo->addWidget(perso);
 
     //Adding button to the toolbar
     QAction *ZoomPlus= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/zoom-plus.png"),"Zoom",this);
@@ -899,12 +1042,25 @@ void MainWindow::createButtons(){
 
     connect(ZoomPlus, SIGNAL(triggered(bool)), SLOT(zoom_plus()));
 
-    QAction *ZoomMinus= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/zoom-minus.png"),"Zoom",this);
+    QAction *ZoomMinus= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/zoom-minus.png"),"Dezoom",this);
     ui->mainToolBar->addAction(ZoomMinus);
 
     connect(ZoomMinus, SIGNAL(triggered(bool)), SLOT(zoom_minus()));
 
     ui->mainToolBar->addSeparator();
+
+//    QAction *RotateRight= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/rotateright.png"),"Rotate image to right",this);
+//    ui->mainToolBar->addAction(RotateRight);
+
+//    connect(RotateRight, SIGNAL(triggered(bool)), SLOT(rotate_right()));
+
+//    QAction *RotateLeft= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/rotateleft.png"),"Rotate image to left",this);
+//    ui->mainToolBar->addAction(RotateLeft);
+
+//    connect(RotateLeft, SIGNAL(triggered(bool)), SLOT(rotate_left()));
+
+//    ui->mainToolBar->addSeparator();
+
 
     QAction *Flag = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/flag.png"),"Get me to the relevant image", this);
     ui->mainToolBar->addAction(Flag);
@@ -996,6 +1152,7 @@ void MainWindow::createButtons(){
 
     QAction *Link = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/link.png"),"Link views scrolling", this);
     ui->AdvancedSettings->addAction(Link);
+    connect(Link,SIGNAL(triggered(bool)),this,SLOT(link_views()) );
 
     QAction *Measure = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/measure.png"),"Measure", this);
     ui->AdvancedSettings->addAction(Measure);
@@ -1020,11 +1177,8 @@ void MainWindow::createButtons(){
     ui->Informations->setLayout(ui->SeriesLayout);
 
 
-
-
-
-
 }
+
 
 
 
@@ -1150,10 +1304,35 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     string buttonName = b->text().toLocal8Bit().constData();
     cout << "button " << buttonName << " clicked, associated serie size: "<< this->allPath[buttonName].size() << endl;
     currentSerie=buttonName;
+
     cout << "currentSeriesize " <<this->allPath[currentSerie].size() << endl;
 
-    Images.clear();
-    createDefaultPlan();
+    switch(selectedWindow){
+    case 1:
+        Images.clear();
+        createDefaultPlan();
+        break;
+    case 2:
+        Images2.clear();
+        createDefaultPlan();
+        break;
+    case 3:
+        Images3.clear();
+        createDefaultPlan();
+        break;
+    case 4:
+        Images4.clear();
+        createDefaultPlan();
+        break;
+    default:
+        break;
+    }
+
+
+
+
+
+
 }
 
 
@@ -1264,6 +1443,53 @@ void MainWindow::zoom_minus(){
     }
 }
 
+void MainWindow::rotate(int rotation){
+    QTransform rotating;
+    rotating.rotate(rotation);
+
+
+
+    switch(selectedWindow){
+    case 1:
+        for(int i =0; i< Images.size(); i ++)
+            *Images[i] = Images[i]->transformed(rotating);
+        myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
+        break;
+    case 2:
+        for(int i =0; i< Images2.size(); i ++)
+            *Images2[i] = Images2[i]->transformed(rotating);
+        myScene2->addPixmap( QPixmap::fromImage( *Images2[Index[1]] ) );
+        break;
+    case 3:
+        for(int i =0; i< Images3.size(); i ++)
+            *Images3[i] = Images3[i]->transformed(rotating);
+        myScene3->addPixmap( QPixmap::fromImage( *Images3[Index[2]] ) );
+        break;
+    case 4:
+        for(int i =0; i< Images4.size(); i ++)
+            *Images4[i] = Images4[i]->transformed(rotating);
+        myScene4->addPixmap( QPixmap::fromImage( *Images4[Index[3]] ) );
+        break;
+    default:
+        break;
+
+
+
+    }
+
+
+}
+
+
+void MainWindow::rotate_left(){
+    rotate(-90);
+}
+
+void MainWindow::rotate_right(){
+    rotate(90);
+
+}
+
 
 void MainWindow::default_contrast(){
     Images.clear();
@@ -1309,8 +1535,26 @@ void MainWindow::callSagittal(){
 
 void MainWindow::callTest(){
     cout << "callTest"<< endl;
-    currentPlan=Coronal;
-    myPixelsX.clear();
-    constructSagittalPlan();
+    QPixmap pixmap = QPixmap::fromImage( *Images[Index[0]] );
+    QPainter p(&pixmap);
+
+
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(QPen(Qt::red, 2));
+    p.drawLine(0, 0,0, height);
+    p.end(); // Don't forget this line!
+
+    myScene->addPixmap( pixmap );
+
+
 }
+
+void MainWindow::link_views(){
+    viewConnected= true;
+
+
+
+
+}
+
 

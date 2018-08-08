@@ -30,22 +30,71 @@
        <item row="0" column="0" rowspan="2">
         <widget class="QWidget" name="Informations" native="true">
          <layout class="QGridLayout" name="gridLayout_5">
-          <item row="2" column="0">
+          <item row="4" column="0">
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <item>
+             <widget class="Line" name="line">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="Contact">
+              <property name="text">
+               <string>Contact Dr</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="Suggestion">
+              <property name="text">
+               <string>Send suggestions</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="Chat">
+              <property name="text">
+               <string>Chat</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="FAQs">
+              <property name="text">
+               <string>FAQs</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="3" column="0">
            <widget class="QPushButton" name="showReport">
             <property name="text">
              <string>Show Report</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
+          <item row="2" column="0">
            <layout class="QVBoxLayout" name="SeriesLayout"/>
           </item>
           <item row="0" column="0">
            <layout class="QVBoxLayout" name="PersonalInfo">
+            <property name="spacing">
+             <number>1</number>
+            </property>
             <property name="sizeConstraint">
              <enum>QLayout::SetFixedSize</enum>
             </property>
            </layout>
+          </item>
+          <item row="1" column="0">
+           <widget class="Line" name="line_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>

@@ -52,7 +52,9 @@ public:
     void constructWindow(QString path);
 
     void processDicom(const char *dicomdirPath,char *filepath);
-    void addSerieButton(int serieNumber, char *serieDescription, char *date, int imgNb);
+    void addSerieButton(int serieNumber, char *serieDescription, int imgNb, string firstPath);
+    void setPatientInfo(char *studydesc, char * date, char* patientName, char* birthdate);
+
 
    // void displayImages();
 
@@ -75,6 +77,7 @@ public:
 
     Plan findSeriePlan(const char * orientation);
     double getPixelNb(const char* pixelArray);
+    void rotate(int rotation);
 
 
 private slots:
@@ -90,6 +93,8 @@ private slots:
     void display_four_window();
     void zoom_plus();
     void zoom_minus();
+    void rotate_left();
+    void rotate_right();
     void default_contrast();
     void minmax_contrast();
     void histo_contrast();
@@ -100,6 +105,8 @@ private slots:
     void callSagittal();
 
     void callTest();
+
+    void link_views();
 private:
     int selectedWindow; // store the number of the current selected graphic window --> for mouse events
     bool invertGrayScale ; // boolean variable to sepcify if Grayscaled is inverted
@@ -112,6 +119,8 @@ private:
     map<string, vector <string>> allPath; // store all path for all series to reach them when selected;
     Ui::MainWindow *ui;
 
+    //Store from wich serie comes the current displayed plan
+    int WindowSerieNb[4];
 
     vector<QImage*> Images; //store QImages for the current selected serie
     vector<QImage*> Images2;
@@ -157,6 +166,8 @@ private:
     Plan currentPlan;
     vector< Plan> seriesPlan; // store the "inherant"/obvious plan for eaxh serie
     bool PlanContruction ; // set to true if possible to recreate other plan from the current images, sest to false othewise
+
+    bool viewConnected;
 
 };
 
