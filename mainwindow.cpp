@@ -43,6 +43,7 @@ MainWindow::MainWindow(QWidget *parent) :
         creation[i]=0;
         contrast[i]=0;
         windowSerieNb[i]=-1;
+        windowCurrentPlan[i]=Unknown;
     }
 
 }
@@ -53,35 +54,35 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    for(int i=0; i< Images.size() ; i++){
-        if(Images[i]!=NULL)
-            delete Images[i];
-    }
+//    for(int i=0; i< Images.size() ; i++){
+//        if(Images[i]!=NULL)
+//            delete Images[i];
+//    }
 
-    for(int i=0; i< Images2.size() ; i++){
-        if(Images2[i]!=NULL)
-            delete Images2[i];
-    }
+//    for(int i=0; i< Images2.size() ; i++){
+//        if(Images2[i]!=NULL)
+//            delete Images2[i];
+//    }
 
-    for(int i=0; i< Images3.size() ; i++){
-        if(Images3[i]!=NULL)
-            delete Images3[i];
-    }
+//    for(int i=0; i< Images3.size() ; i++){
+//        if(Images3[i]!=NULL)
+//            delete Images3[i];
+//    }
 
-    for(int i=0; i< myPixelsZ.size() ; i++){
-        if(myPixelsZ[i]!=NULL)
-            delete myPixelsZ[i];
-    }
+//    for(int i=0; i< myPixelsZ.size() ; i++){
+//        if(myPixelsZ[i]!=NULL)
+//            delete myPixelsZ[i];
+//    }
 
-    for(int i=0; i< myPixelsX.size() ; i++){
-        if(myPixelsX[i]!=NULL)
-            delete myPixelsX[i];
-    }
+//    for(int i=0; i< myPixelsX.size() ; i++){
+//        if(myPixelsX[i]!=NULL)
+//            delete myPixelsX[i];
+//    }
 
-    for(int i=0; i< myPixelsY.size() ; i++){
-        if(myPixelsY[i]!=NULL)
-            delete myPixelsY[i];
-    }
+//    for(int i=0; i< myPixelsY.size() ; i++){
+//        if(myPixelsY[i]!=NULL)
+//            delete myPixelsY[i];
+//    }
 
 
     delete ui;
@@ -325,8 +326,8 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                                 }
 
 
-                                WC.push_back(WC1);
-                                WW.push_back(WW1);
+//                                WC.push_back(WC1);
+//                                WW.push_back(WW1);
 
                                 //create a new serie of images
                                 Serie *serie = new Serie(series, seriePlan,paths, nbFrame,rescale, desc, WW1, WC1);
@@ -339,15 +340,15 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
 
                                 //SUPPOSSE HERE I HAVE A WAY TO DET THE SERIE CURRENT PLAN
                                 // FOR NOW BY DEFAULT I PU AXIAL FOR ALL SERIES
-                                seriesPlan.push_back(seriePlan);
-                                seriesRescaleFactor.push_back(rescale);
-                                serieNbImages.push_back(paths.size());
+                                //seriesPlan.push_back(seriePlan);
+                                //seriesRescaleFactor.push_back(rescale);
+                                //serieNbImages.push_back(paths.size());
 
 
                                 //storing paths for the current serie
-                                allPath.insert(pair<string,vector<string>>("Series"+to_string(series),paths));
+                                //allPath.insert(pair<string,vector<string>>("Series"+to_string(series),paths));
 
-                                nbOfFrame.insert(pair<string,int>("Series"+to_string(series), nbFrame));
+                                //nbOfFrame.insert(pair<string,int>("Series"+to_string(series), nbFrame));
 
                                 Series.push_back(serie);
 
@@ -513,31 +514,31 @@ double MainWindow::getPixelNb(const char* pixelArray){
 void MainWindow::createDefaultPlan(){
     //initializing index for images
     currentPlan = Series[currentSerieNumber-1]->getdefaultPlan();
-    rescaleFactor = Series[currentSerieNumber-1]->getRescaleFactor();
+    //rescaleFactor = Series[currentSerieNumber-1]->getRescaleFactor();
     currentNbImages = Series[currentSerieNumber-1]->getNbImages();
 
 
     cout << "nb images "<< currentNbImages << endl;
 
-    Index = new int[4];
-    for(int i=0; i<4; i++){
-        Index[i]=0;
-    }
+//    Index = new int[4];
+//    for(int i=0; i<4; i++){
+//        Index[i]=0;
+//    }
 
     vector<DicomImage*> DicomImages;
-    myPixelsZ.clear();
-    myPixelsX.clear();
-    myPixelsY.clear();
+//    myPixelsZ.clear();
+//    myPixelsX.clear();
+//    myPixelsY.clear();
 
     int nbFrame = Series[currentSerieNumber-1]->getNbFrames();
 
 
     for(int i=0; i< currentNbImages ; i++){
         if(nbFrame ==0)
-            DicomImages.push_back(new DicomImage(allPath[currentSerie][i].c_str()));
+            DicomImages.push_back(new DicomImage(Series[currentSerieNumber-1]->getPath(i).c_str()));
         else {
              for(int j=0; j<nbFrame ; j++)
-                DicomImages.push_back(new DicomImage(allPath[currentSerie][i].c_str(),0,j,1));
+                DicomImages.push_back(new DicomImage(Series[currentSerieNumber-1]->getPath(i).c_str(),0,j,1));
         }
 
 
@@ -551,9 +552,9 @@ void MainWindow::createDefaultPlan(){
     Series[currentSerieNumber-1]->setDepths(width,height);
 
     //to be removed
-    pixelXdepth =  Series[currentSerieNumber-1]->getXdepth();
-    pixelYdepth =  Series[currentSerieNumber-1]->getYdepth();
-    pixelZdepth =  Series[currentSerieNumber-1]->getZdepth();
+//    pixelXdepth =  Series[currentSerieNumber-1]->getXdepth();
+//    pixelYdepth =  Series[currentSerieNumber-1]->getYdepth();
+//    pixelZdepth =  Series[currentSerieNumber-1]->getZdepth();
 
     cout << "width " << width <<" height " << height << endl;
 
@@ -580,38 +581,38 @@ void MainWindow::createDefaultPlan(){
 
             Series[currentSerieNumber-1]->storePixel((uint8_t *)pixelData);
 
-            switch(currentPlan){
-            case Axial:
-                myPixelsZ.push_back((uint8_t *)pixelData);
-                break;
-            case Sagittal:
-                myPixelsX.push_back((uint8_t *)pixelData);
-                break;
-            case Coronal:
-                myPixelsY.push_back((uint8_t *)pixelData);
-                break;
+//            switch(currentPlan){
+//            case Axial:
+//                myPixelsZ.push_back((uint8_t *)pixelData);
+//                break;
+//            case Sagittal:
+//                myPixelsX.push_back((uint8_t *)pixelData);
+//                break;
+//            case Coronal:
+//                myPixelsY.push_back((uint8_t *)pixelData);
+//                break;
 
-            }
+//            }
 
             if (pixelData != NULL){
 
                 // do something useful with the pixel data
                 QImage *img=new QImage (pixelData,width,height, QImage::Format_Indexed8);
 
-                switch(selectedWindow){
-                case 1:
-                    Images.push_back(img);
-                    break;
-                case 2:
-                    Images2.push_back(img);
-                    break;
-                case 3:
-                    Images3.push_back(img);
-                    break;
-                case 4:
-                    Images4.push_back(img);
-                    break;
-                }
+//                switch(selectedWindow){
+//                case 1:
+//                    Images.push_back(img);
+//                    break;
+//                case 2:
+//                    Images2.push_back(img);
+//                    break;
+//                case 3:
+//                    Images3.push_back(img);
+//                    break;
+//                case 4:
+//                    Images4.push_back(img);
+//                    break;
+//                }
 
 
 
@@ -622,11 +623,6 @@ void MainWindow::createDefaultPlan(){
       cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
 
 
-//    cout << "nb of images " << Images.size() << endl;
-
-  //  Index[0]= (int)Images.size()/2;
-
-    //creating scene
 
     createScene();
 
@@ -650,16 +646,11 @@ void MainWindow::createScene(){
 
     switch(selectedWindow){
     case 1:
-//        windowSerieNb[0]= currentSerieNumber;
-//        windowDefaultPlan[0]= seriesPlan[currentSerieNumber-1];
-//        windowCurrentPlan[0]=seriesPlan[currentSerieNumber-1];
-//        windowNbImg[0]=serieNbImages[currentSerieNumber-1];
-
-
+        myScene= new QGraphicsScene(this);
         if(creation[0]==0){
-             creation[0] =1;
+            creation[0] =1;
 
-             myScene= new QGraphicsScene(this);
+
              myScene->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[0])));
            // myScene->addPixmap(QPixmap::fromImage(QImage (myPixelsZ[Index[0]],pixelXdepth,pixelYdepth, QImage::Format_Indexed8)));
 
@@ -697,7 +688,7 @@ void MainWindow::createScene(){
         }else {
 
             cout << "there" << endl;
-            myScene->clear();
+           // myScene->clear();
             //myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
             myScene->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[0])));
 
@@ -715,12 +706,8 @@ void MainWindow::createScene(){
 
         break;
     case 2:
-//        windowSerieNb[1]= currentSerieNumber;
-//        windowDefaultPlan[1]= seriesPlan[currentSerieNumber-1];
-//        windowCurrentPlan[1]=seriesPlan[currentSerieNumber-1];
-//        windowNbImg[1]=serieNbImages[currentSerieNumber-1];
 
-        myScene2->clear();
+        myScene2= new QGraphicsScene(this);
         //myScene2->addPixmap( QPixmap::fromImage( *Images2[Index[1]] ) );
         myScene2->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[1])));
 
@@ -738,7 +725,7 @@ void MainWindow::createScene(){
         break;
     case 3:
 
-        myScene3->clear();
+        myScene3= new QGraphicsScene(this);
         //myScene3->addPixmap( QPixmap::fromImage( *Images3[Index[2]] ) );
         myScene3->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[2])));
 
@@ -759,7 +746,7 @@ void MainWindow::createScene(){
 //        windowCurrentPlan[3]=seriesPlan[currentSerieNumber-1];
 //        windowNbImg[3]=serieNbImages[currentSerieNumber-1];
 
-        myScene4->clear();
+        myScene4= new QGraphicsScene(this);
         //myScene4->addPixmap( QPixmap::fromImage( *Images4[Index[3]] ) );
         myScene4->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[3])));
 
@@ -782,181 +769,15 @@ void MainWindow::createScene(){
 
 void MainWindow::constructSagittalPlan(){
     cout << "construct sagittal" << endl;
-    //construct Sagittal from Axial view
-    if(currentPlan == Axial){
-
-        //X fixed <-> width
-        for (int x=0; x<pixelXdepth; x++){
-           uint8_t *mypixel= new uint8_t[pixelYdepth*pixelZdepth];
-           int countX=0;
-            for(int z=0; z<pixelZdepth; z++){
-                for(int y=x; y<pixelXdepth*pixelYdepth ; y+=pixelXdepth){
-                    mypixel[countX]=myPixelsZ[z][y];
-                    countX +=1;
-                }
-            }
-
-            myPixelsX.push_back(mypixel);
-            QImage *img= new QImage(mypixel,pixelYdepth, pixelZdepth, QImage::Format_Indexed8);
-
-            //CHECK FOR THE RIGTH SCALING
-
-            QImage *copy =  new QImage(img->scaled(QSize(pixelYdepth,rescaleFactor*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
-            delete img;
-
-            switch(selectedWindow){
-            case 1:
-                Images.push_back(copy);
-                break;
-            case 2:
-                Images2.push_back(copy);
-                break;
-            case 3:
-                Images3.push_back(copy);
-                break;
-            case 4:
-                Images4.push_back(copy);
-            }
-        }
-    }else if(currentPlan == Coronal){
-        cout << "sagittal from coronal" << endl;
-        for (int x=0; x<pixelXdepth; x++){
-           uint8_t *mypixel= new uint8_t[pixelYdepth*pixelZdepth];
-           int countX=0;
-            for(int z=x; z<pixelXdepth*pixelZdepth; z+=pixelXdepth){
-                for(int y=0; y<pixelYdepth ; y++){
-                    mypixel[countX]=myPixelsY[y][z];
-                    countX +=1;
-                }
-            }
-                myPixelsX.push_back(mypixel);
-                QImage *img = new QImage (mypixel,pixelYdepth, pixelZdepth, QImage::Format_Indexed8);
-                QImage *copy =  new QImage(img->scaled(QSize(rescaleFactor*pixelYdepth,pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
-                delete img;
-
-
-
-                switch(selectedWindow){
-                case 1:
-                    Images.push_back(copy);
-                    break;
-                case 2:
-                    Images2.push_back(copy);
-                    break;
-                case 3:
-                    Images3.push_back(copy);
-                    break;
-                case 4:
-                    Images4.push_back(copy);
-                }
-
-        }
-
-    }
-
-    switch(selectedWindow){
-    case 1:
-        Index[0]=(int)Images.size()/2;
-        break;
-    case 2:
-        Index[1]=(int)Images2.size()/2;
-        break;
-    case 3:
-        Index[2]=(int)Images3.size()/2;
-        break;
-    case 4:
-        Index[3]=(int)Images4.size()/2;
-    }
-
+    Series[currentSerieNumber-1]->constructSagittalPlan();
     windowCurrentPlan[selectedWindow-1]=Sagittal;
     createScene();
-
 }
 
 
 
 void MainWindow::constructAxialPlan(){
-    if(currentPlan == Sagittal){
-        for (int z=0; z<pixelZdepth; z++){
-           uint8_t *mypixel= new uint8_t[pixelYdepth*pixelXdepth];
-           int countZ=0;
-            for(int y=z*pixelYdepth; y<(z+1)*pixelYdepth; y++){
-                for(int x=0; x<pixelXdepth ; x++){
-                    mypixel[countZ]=myPixelsX[x][y];
-                    countZ +=1;
-                }
-            }
-
-            myPixelsZ.push_back(mypixel);
-            QImage *img= new QImage(mypixel,pixelXdepth, pixelYdepth, QImage::Format_Indexed8);
-
-            QImage *copy =  new QImage(img->scaled(QSize(rescaleFactor*pixelXdepth,pixelYdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
-            delete img;
-
-            switch(selectedWindow){
-            case 1:
-                Images.push_back(copy);
-                break;
-            case 2:
-                Images2.push_back(copy);
-                break;
-            case 3:
-                Images3.push_back(copy);
-                break;
-            case 4:
-                Images4.push_back(copy);
-            }
-        }
-    }else if(currentPlan == Coronal){
-        cout << "axial from coronal" << endl;
-        for (int z=0; z<pixelZdepth; z++){
-           uint8_t *mypixel= new uint8_t[pixelYdepth*pixelXdepth];
-           int countZ=0;
-            for(int y=0; y<pixelYdepth; y++){
-                for(int x=z*pixelXdepth; x<(z+1)*pixelXdepth ; x++){
-                    mypixel[countZ]=myPixelsY[y][x];
-                    countZ +=1;
-                }
-            }
-
-            myPixelsZ.push_back(mypixel);
-            QImage *img= new QImage(mypixel,pixelXdepth, pixelYdepth, QImage::Format_Indexed8);
-
-
-            QImage *copy =  new QImage(img->scaled(QSize(pixelXdepth,rescaleFactor*pixelYdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
-            delete img;
-
-            switch(selectedWindow){
-            case 1:
-                Images.push_back(copy);
-                break;
-            case 2:
-                Images2.push_back(copy);
-                break;
-            case 3:
-                Images3.push_back(copy);
-                break;
-            case 4:
-                Images4.push_back(copy);
-            }
-        }
-
-    }
-    switch(selectedWindow){
-    case 1:
-        Index[0]=(int)Images.size()/2;
-        break;
-    case 2:
-        Index[1]=(int)Images2.size()/2;
-        break;
-    case 3:
-        Index[2]=(int)Images3.size()/2;
-        break;
-    case 4:
-        Index[3]=(int)Images4.size()/2;
-        break;
-    }
-
+    Series[currentSerieNumber-1]->constructAxialPlan();
     windowCurrentPlan[selectedWindow-1]=Axial;
     createScene();
 
@@ -964,91 +785,10 @@ void MainWindow::constructAxialPlan(){
 }
 
 void MainWindow::constructCoronalPlan(){
-    if(currentPlan == Axial){
-        //Y fixed <-> width
-        for (int y=0; y<pixelYdepth; y++){
-           uint8_t *mypixel= new uint8_t[pixelXdepth*pixelZdepth];
-           int countY=0;
-            for(int z=0; z<pixelZdepth; z++){
-
-                for(int x=y*pixelXdepth; x<(y+1)*pixelXdepth ; x++){
-                    mypixel[countY]=myPixelsZ[z][x];
-                    countY +=1;
-                }
-            }
-                myPixelsY.push_back(mypixel);
-                QImage *img = new QImage (mypixel,pixelXdepth, pixelZdepth, QImage::Format_Indexed8);
-                QImage *copy =  new QImage(img->scaled(QSize(pixelXdepth,rescaleFactor*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
-                delete img;
-
-                switch(selectedWindow){
-                case 1:
-                    Images.push_back(copy);
-                    break;
-                case 2:
-                    Images2.push_back(copy);
-                    break;
-                case 3:
-                    Images3.push_back(copy);
-                    break;
-                case 4:
-                    Images4.push_back(copy);
-                }
-
-        }
-    }else if(currentPlan == Sagittal){
-        cout << "coronal from sagittal" << endl;
-        for (int y=0; y<pixelYdepth; y++){
-           uint8_t *mypixel= new uint8_t[pixelXdepth*pixelZdepth];
-           int countY=0;
-            for(int z=y; z<pixelYdepth*pixelZdepth; z+=pixelYdepth){
-                for(int x=0; x<pixelXdepth ; x++){
-                    mypixel[countY]=myPixelsX[x][z];
-                    countY +=1;
-                }
-            }
-                myPixelsY.push_back(mypixel);
-                QImage *img = new QImage (mypixel,pixelXdepth, pixelZdepth, QImage::Format_Indexed8);
-                QImage *copy =  new QImage(img->scaled(QSize(rescaleFactor*pixelXdepth,pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
-                delete img;
-
-
-                switch(selectedWindow){
-                case 1:
-                    Images.push_back(copy);
-                    break;
-                case 2:
-                    Images2.push_back(copy);
-                    break;
-                case 3:
-                    Images3.push_back(copy);
-                    break;
-                case 4:
-                    Images4.push_back(copy);
-                }
-
-        }
-
-    }
-    switch(selectedWindow){
-    case 1:
-        Index[0]=(int)Images.size()/2;
-        break;
-    case 2:
-        Index[1]=(int)Images2.size()/2;
-        break;
-    case 3:
-        Index[2]=(int)Images3.size()/2;
-        break;
-    case 4:
-        Index[3]=(int)Images4.size()/2;
-        break;
-    }
-
+    Series[currentSerieNumber-1]->constructCoronalPlan();
     windowCurrentPlan[selectedWindow-1]=Coronal;
     cout <<"current plan " << windowCurrentPlan[selectedWindow-1] << "selected window "<< selectedWindow<<  endl;
     createScene();
-
 }
 
 
@@ -1217,9 +957,6 @@ void MainWindow::createButtons(){
     connect(Hide,SIGNAL(triggered(bool)),this,SLOT(hide_advanced()) );
 
 
-
-
-
     ui->Informations->setLayout(ui->SeriesLayout);
 
 
@@ -1227,11 +964,21 @@ void MainWindow::createButtons(){
 
 
 void MainWindow::updateWindowInfo(){
-    currentNbImages=serieNbImages[currentSerieNumber-1];
+    if(currentSerieNumber != -1)
+        currentNbImages=Series[currentSerieNumber-1]->getNbImages();
+    else
+        currentNbImages=0;
+
     currentPlan=windowCurrentPlan[selectedWindow-1];
 
-//    cout <<"update" << endl;
+     cout <<"update window" <<  endl;
 //    cout << "default " << windowDefaultPlan[selectedWindow-1]<< "current " <<windowCurrentPlan[selectedWindow-1] << endl;
+
+     cout << "current plan " << currentPlan <<endl;
+
+     cout << "jpp" << endl;
+
+     cout <<"default plan " << windowDefaultPlan[selectedWindow-1] << endl;
 
 
     if(currentPlan != windowDefaultPlan[selectedWindow-1] || currentNbImages <10){
@@ -1254,12 +1001,13 @@ void MainWindow::updateWindowInfo(){
             SagittalAction->setEnabled(false);
             break;
         default:
-            AxialAction->setEnabled(true);
-            SagittalAction->setEnabled(true);
-            CoronalAction->setEnabled(true);
+            AxialAction->setEnabled(false);
+            SagittalAction->setEnabled(false);
+            CoronalAction->setEnabled(false);
             break;
         }
     }
+    cout << "jpp" << endl;
 
 
 
@@ -1325,8 +1073,10 @@ void MainWindow::mousePressEvent(QMouseEvent* e){
     }
 
     currentSerieNumber=windowSerieNb[selectedWindow-1];
-    updateWindowInfo();
 
+    cout << "currenterie nb " << currentSerieNumber << endl;
+    updateWindowInfo();
+    cout <<" eh ca beug" << endl;
 
 }
 
@@ -1338,6 +1088,7 @@ void MainWindow::wheelEvent(QWheelEvent *event)
     else {
         Series[currentSerieNumber-1]->setPreviousIndex(currentPlan);
     }
+
         if(selectedWindow==1){
             myScene->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[0])));
             ui->graphicsView->setScene(myScene);
@@ -1353,97 +1104,26 @@ void MainWindow::wheelEvent(QWheelEvent *event)
             myScene4->addPixmap( QPixmap::fromImage( Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[3]) ));
             ui->graphicsView_4->setScene(myScene4);
         }
-
-//    if(selectedWindow==1){
-//        Index[0]+=1;
-//        if(Index[0]+1 > Images.size())
-//            Index[0]=0;
-//        myScene->addPixmap(QPixmap::fromImage(QImage (myPixelsZ[Index[0]],pixelXdepth,pixelYdepth, QImage::Format_Indexed8)));
-//        //myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
-//        ui->graphicsView->setScene(myScene);
-//    }else if(selectedWindow==2){
-//        Index[1]+=1;
-//        if(Index[1]+1 > Images2.size())
-//            Index[1]=0;
-
-//        myScene2->addPixmap( QPixmap::fromImage( *Images2[Index[1]] ) );
-//        ui->graphicsView_2->setScene(myScene2);
-//    }
-//    else if(selectedWindow==3){
-//        Index[2]+=1;
-//        if(Index[2]+1 > Images3.size())
-//            Index[2]=0;
-
-//        myScene3->addPixmap( QPixmap::fromImage( *Images3[Index[2]] ) );
-//        ui->graphicsView_3->setScene(myScene3);
-//    }
-
-//    }
-//    else if(event->delta() < 0){
-//        if(selectedWindow==1){
-//            Index[0]-=1;
-//            if(Index[0]<0)
-//                Index[0]= (int)Images.size()-1;
-
-//            myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
-//            ui->graphicsView->setScene(myScene);
-//        }else if(selectedWindow==2){
-//            Index[1]-=1;
-//            if(Index[1]<0)
-//                Index[1]=(int)Images2.size()-1;;
-
-//            myScene2->addPixmap( QPixmap::fromImage( *Images2[Index[1]] ) );
-//            ui->graphicsView_2->setScene(myScene2);
-//        }
-//        else if(selectedWindow==3){
-//            Index[2]+=1;
-//            if(Index[2]<0)
-//                Index[2]=(int)Images3.size()-1;;
-
-//            myScene3->addPixmap( QPixmap::fromImage( *Images3[Index[2]] ) );
-//            ui->graphicsView_3->setScene(myScene3);
-//        }
-
-
-//    }
 }
 
-
-void MainWindow::clearImagesVector(){
-    switch(selectedWindow){
-    case 1:
-        Images.clear();
-        break;
-    case 2:
-        Images2.clear();
-        break;
-    case 3:
-        Images3.clear();
-        break;
-    case 4:
-        Images4.clear();
-        break;
-    default:
-        break;
-    }
-
-}
 
 void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     currentSerieNumber = b->property("Id").toInt();
-    currentPlan = seriesPlan[currentSerieNumber-1];
+    currentPlan = Series[currentSerieNumber-1]->getdefaultPlan();
+
     cout << "property number  " << currentSerieNumber<<endl;
     string buttonName = b->text().toLocal8Bit().constData();
-    cout << "button " << buttonName << " clicked, associated serie size: "<< this->allPath[buttonName].size() << endl;
+    //cout << "button " << buttonName << " clicked, associated serie size: "<< this->allPath[buttonName].size() << endl;
     currentSerie=buttonName;
 
     if(windowSerieNb[selectedWindow-1] == currentSerieNumber)
         windowSerieNb[selectedWindow-1]=-1;
 
 
-    clearImagesVector();
+    cout << "fatigue " << endl;
+    //clearImagesVector();
     createDefaultPlan();
-
+    cout << "heo " << endl;
     updateWindowInfo();
 
 
@@ -1458,24 +1138,24 @@ void MainWindow::hide_advanced()
 
 void MainWindow::invert_grayscale()
 {
-    if(invertGrayScale ==0){
-        for(int j=0; j<Images.size(); j++){
-//            for( int i = 0; i < 256; ++i )
-//                Images[j]->setColor(255-i, qRgb(i,i,i));
-            Images[j]->invertPixels();
-    }
-    invertGrayScale=1;
-    }else {
-        for(int j=0; j<Images.size(); j++){
-//            for( int i = 0; i < 256; ++i )
-//                Images[j]->setColor(i, qRgb(i,i,i));
-            Images[j]->invertPixels();
-        }
-        invertGrayScale=0;
-    }
+//    if(invertGrayScale ==0){
+//        for(int j=0; j<Images.size(); j++){
+////            for( int i = 0; i < 256; ++i )
+////                Images[j]->setColor(255-i, qRgb(i,i,i));
+//            Images[j]->invertPixels();
+//    }
+//    invertGrayScale=1;
+//    }else {
+//        for(int j=0; j<Images.size(); j++){
+////            for( int i = 0; i < 256; ++i )
+////                Images[j]->setColor(i, qRgb(i,i,i));
+//            Images[j]->invertPixels();
+//        }
+//        invertGrayScale=0;
+//    }
 
-    myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
-    ui->graphicsView->setScene(myScene);
+//    myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
+//    ui->graphicsView->setScene(myScene);
 }
 
 void MainWindow::show_advanced()
@@ -1563,33 +1243,33 @@ void MainWindow::rotate(int rotation){
 
 
 
-    switch(selectedWindow){
-    case 1:
-        for(int i =0; i< Images.size(); i ++)
-            *Images[i] = Images[i]->transformed(rotating);
-        myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
-        break;
-    case 2:
-        for(int i =0; i< Images2.size(); i ++)
-            *Images2[i] = Images2[i]->transformed(rotating);
-        myScene2->addPixmap( QPixmap::fromImage( *Images2[Index[1]] ) );
-        break;
-    case 3:
-        for(int i =0; i< Images3.size(); i ++)
-            *Images3[i] = Images3[i]->transformed(rotating);
-        myScene3->addPixmap( QPixmap::fromImage( *Images3[Index[2]] ) );
-        break;
-    case 4:
-        for(int i =0; i< Images4.size(); i ++)
-            *Images4[i] = Images4[i]->transformed(rotating);
-        myScene4->addPixmap( QPixmap::fromImage( *Images4[Index[3]] ) );
-        break;
-    default:
-        break;
+//    switch(selectedWindow){
+//    case 1:
+//        for(int i =0; i< Images.size(); i ++)
+//            *Images[i] = Images[i]->transformed(rotating);
+//        myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
+//        break;
+//    case 2:
+//        for(int i =0; i< Images2.size(); i ++)
+//            *Images2[i] = Images2[i]->transformed(rotating);
+//        myScene2->addPixmap( QPixmap::fromImage( *Images2[Index[1]] ) );
+//        break;
+//    case 3:
+//        for(int i =0; i< Images3.size(); i ++)
+//            *Images3[i] = Images3[i]->transformed(rotating);
+//        myScene3->addPixmap( QPixmap::fromImage( *Images3[Index[2]] ) );
+//        break;
+//    case 4:
+//        for(int i =0; i< Images4.size(); i ++)
+//            *Images4[i] = Images4[i]->transformed(rotating);
+//        myScene4->addPixmap( QPixmap::fromImage( *Images4[Index[3]] ) );
+//        break;
+//    default:
+//        break;
 
 
 
-    }
+//    }
 
 
 }
@@ -1606,7 +1286,6 @@ void MainWindow::rotate_right(){
 
 
 void MainWindow::default_contrast(){
-    Images.clear();
     if(contrast[0] !=0){
         contrast[0]=0;
         createDefaultPlan();
@@ -1615,7 +1294,6 @@ void MainWindow::default_contrast(){
 
 
 void MainWindow::minmax_contrast(){
-    Images.clear();
     if(contrast[0] !=1){
         contrast[0]=1;
         createDefaultPlan();
@@ -1623,7 +1301,6 @@ void MainWindow::minmax_contrast(){
 }
 
 void MainWindow::histo_contrast(){
-    Images.clear();
     if(contrast[0] !=2){
         contrast[0]=2;
         createDefaultPlan();
@@ -1636,41 +1313,41 @@ void MainWindow::on_showReport_clicked()
 }
 
 void MainWindow::callAxial(){
-    clearImagesVector();
+   // clearImagesVector();
     constructAxialPlan();
 }
 
 void MainWindow::callCoronal(){
-    clearImagesVector();
+   // clearImagesVector();
     constructCoronalPlan();
 }
 
 void MainWindow::callSagittal(){
-    clearImagesVector();
+    //clearImagesVector();
     constructSagittalPlan();
 }
 
 void MainWindow::callTest(){
     cout << "callTest"<< endl;
-    QPixmap pixmap = QPixmap::fromImage( *Images[Index[0]] );
-    QPainter p(&pixmap);
+//    QPixmap pixmap = QPixmap::fromImage( *Images[Index[0]] );
+//    QPainter p(&pixmap);
 
 
-    p.setRenderHint(QPainter::Antialiasing);
-    p.setPen(QPen(Qt::red, 2));
-    p.drawLine(0, 0,0, height);
-    p.end(); // Don't forget this line!
+//    p.setRenderHint(QPainter::Antialiasing);
+//    p.setPen(QPen(Qt::red, 2));
+//    p.drawLine(0, 0,0, height);
+//    p.end(); // Don't forget this line!
 
-    myScene->addPixmap( pixmap );
+//    myScene->addPixmap( pixmap );
 
+
+   // currentPlan=Sagittal;
+    constructAxialPlan();
 
 }
 
 void MainWindow::link_views(){
     viewConnected= true;
-
-
-
 
 }
 

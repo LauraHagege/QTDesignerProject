@@ -81,7 +81,7 @@ public:
 
     void updateWindowInfo();
 
-    void clearImagesVector();
+    //void clearImagesVector();
 
 
 private slots:
@@ -120,10 +120,10 @@ private:
     int currentSerieNumber; // asociated in for the current displayed serie
     string currentSerie; //name of the current selected serie
 
-    vector<int> serieNbImages;
+   // vector<int> serieNbImages;
     int currentNbImages;
 
-    map<string, vector <string>> allPath; // store all path for all series to reach them when selected;
+    //map<string, vector <string>> allPath; // store all path for all series to reach them when selected;
     Ui::MainWindow *ui;
 
     //Store from wich serie comes the current displayed plan
@@ -132,15 +132,15 @@ private:
     Plan windowCurrentPlan[4];
     int windowNbImg[4];
 
-    vector<QImage*> Images; //store QImages for the current selected serie
-    vector<QImage*> Images2;
-    vector<QImage*> Images3;
-    vector<QImage*> Images4;
+//    vector<QImage*> Images; //store QImages for the current selected serie
+//    vector<QImage*> Images2;
+//    vector<QImage*> Images3;
+//    vector<QImage*> Images4;
 
 
-    vector<uint8_t *> myPixelsZ;
-    vector<uint8_t *> myPixelsX;
-    vector<uint8_t *> myPixelsY;
+//    vector<uint8_t *> myPixelsZ;
+//    vector<uint8_t *> myPixelsX;
+//    vector<uint8_t *> myPixelsY;
 
 
     QButtonGroup *buttonGroup; //button to choose the displayed serie
@@ -151,31 +151,31 @@ private:
     QGraphicsScene *myScene3;
     QGraphicsScene *myScene4;
 
-    vector<int> WW;
-    vector<int> WC;
+//    vector<int> WW;
+//    vector<int> WC;
 
     // height and with are the default argument defined for the default plan of the Image
     int width;
     int height;
 
     // Those three value are used to recreate the views
-    int pixelXdepth;
-    int pixelYdepth;
-    int pixelZdepth;
+//    int pixelXdepth;
+//    int pixelYdepth;
+//    int pixelZdepth;
 
-    double rescaleFactor;
-    vector <double> seriesRescaleFactor;
+//    double rescaleFactor;
+//    vector <double> seriesRescaleFactor;
 
     int creation[4];
     int contrast[4];
 
-    map <string, int >nbOfFrame;
-    unsigned long  indexFrame;
+//    map <string, int >nbOfFrame;
+//    unsigned long  indexFrame;
 
     ReportWindow *report;
 
     Plan currentPlan;
-    vector< Plan> seriesPlan; // store the "inherant"/obvious plan for eaxh serie
+   // vector< Plan> seriesPlan; // store the "inherant"/obvious plan for eaxh serie
 
     bool PlanContruction ; // set to true if possible to recreate other plan from the current images, sest to false othewise
 

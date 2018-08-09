@@ -23,7 +23,10 @@ private:
     int nbImages;
     int nbFrames;
 
-    double rescaleFactor;
+    double rescaleXFactor;
+    double rescaleYFactor;
+    double rescaleZFactor;
+
     int WW;
     int WC;
 
@@ -51,7 +54,6 @@ public:
     int getId();
     int getNbImages();
     int getNbFrames();
-    double getRescaleFactor();
     int getWW();
     int getWC();
 
@@ -74,6 +76,11 @@ public:
 
     void setNextIndex(Plan plan);
     void setPreviousIndex(Plan plan);
+
+    void constructAxialPlan();
+    void constructCoronalPlan();
+    void constructSagittalPlan();
+
 };
 
 #endif // SERIE_H

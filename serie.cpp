@@ -14,7 +14,23 @@ Serie::Serie(int id, Plan plan, vector<string> &paths, int nbframes, double resc
     WW=ww;
     WC=wc;
 
-    rescaleFactor=rescale;
+    rescaleXFactor=1;
+    rescaleYFactor=1;
+    rescaleZFactor=1;
+    switch(plan){
+    case Axial:
+        rescaleZFactor=rescale;
+        break;
+    case Coronal:
+        rescaleYFactor=rescale;
+        break;
+    case Sagittal:
+        rescaleXFactor=rescale;
+        break;
+
+    }
+
+
     nbFrames=nbframes;
 
     if(nbFrames !=0)
@@ -48,13 +64,41 @@ QImage Serie::getCurrentImg(Plan currentPlan){
 //    cout << "Ydepth " << pixelYdepth << endl;
 //    cout << "Zdepth " << pixelZdepth << endl;
 
+   cout << "current window Plan" << currentPlan << endl;
+   cout << "defaultPlan" << defaultPlan << endl;
+
     switch(currentPlan){
     case Axial:
-        return QImage (myPixelsZ[imgZIndex],pixelXdepth,pixelYdepth, QImage::Format_Indexed8);
+        switch(defaultPlan){
+        case Coronal:
+            return QImage (myPixelsZ[imgYIndex],pixelXdepth,pixelYdepth, QImage::Format_Indexed8).scaled(QSize(pixelXdepth,rescaleYFactor*pixelYdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+        case Axial:
+            return QImage (myPixelsZ[imgZIndex],pixelXdepth,pixelYdepth, QImage::Format_Indexed8);
+        case Sagittal:
+            return (QImage (myPixelsZ[imgZIndex],pixelXdepth,pixelYdepth, QImage::Format_Indexed8)).scaled(QSize(rescaleXFactor*pixelXdepth,pixelYdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+        }
+
     case Coronal:
-        return QImage (myPixelsY[imgYIndex],pixelZdepth,pixelXdepth, QImage::Format_Indexed8);
+        switch(defaultPlan){
+        case Coronal:
+            return QImage (myPixelsY[imgYIndex],pixelXdepth,pixelZdepth, QImage::Format_Indexed8);
+        case Axial:
+            cout << "coronal from axial !" << endl;
+            return (QImage (myPixelsY[imgYIndex],pixelXdepth,pixelZdepth, QImage::Format_Indexed8)).scaled(QSize(pixelXdepth,rescaleZFactor*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+        case Sagittal:
+            return (QImage (myPixelsY[imgYIndex],pixelXdepth,pixelZdepth, QImage::Format_Indexed8)).scaled(QSize(rescaleXFactor*pixelXdepth,pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+        }
+
     case Sagittal:
-        return QImage (myPixelsZ[imgXIndex],pixelZdepth,pixelYdepth, QImage::Format_Indexed8);
+        switch(defaultPlan){
+        case Coronal:
+            return (QImage (myPixelsX[imgXIndex],pixelYdepth,pixelZdepth, QImage::Format_Indexed8)).scaled(QSize(rescaleYFactor*pixelYdepth,pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+        case Axial:
+            return (QImage (myPixelsX[imgXIndex],pixelYdepth,pixelZdepth, QImage::Format_Indexed8)).scaled(QSize(pixelYdepth,rescaleZFactor*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+        case Sagittal:
+           return QImage (myPixelsX[imgXIndex],pixelYdepth,pixelZdepth, QImage::Format_Indexed8);
+        }
+
     default:
         //find a better default
         return QImage (myPixelsZ[imgZIndex],pixelXdepth,pixelYdepth, QImage::Format_Indexed8);
@@ -109,9 +153,6 @@ int Serie::getZIndex(){
     return imgZIndex;
 }
 
-double Serie::getRescaleFactor(){
-    return rescaleFactor;
-}
 
 int Serie::getWW(){
     return WW;
@@ -187,21 +228,119 @@ void Serie::storePixel(uint8_t *pixelData){
     switch(defaultPlan){
     case Axial:
         myPixelsZ.push_back(pixelData);
-        imgZIndex=myPixelsZ.size()/2;
+        imgZIndex=(int)myPixelsZ.size()/2;
         break;
     case Sagittal:
         myPixelsX.push_back(pixelData);
-        imgXIndex=myPixelsX.size()/2;
+        imgXIndex=(int)myPixelsX.size()/2;
         break;
     case Coronal:
         myPixelsY.push_back(pixelData);
-        imgYIndex=myPixelsY.size()/2;
+        imgYIndex=(int)myPixelsY.size()/2;
         break;
 
     }
 
 }
 
+
+void Serie::constructAxialPlan(){
+    if(defaultPlan == Sagittal){
+        cout << "axial from sagittal" << endl;
+        for (int z=0; z<pixelZdepth; z++){
+           uint8_t *mypixel= new uint8_t[pixelYdepth*pixelXdepth];
+           int countZ=0;
+            for(int y=z*pixelYdepth; y<(z+1)*pixelYdepth; y++){
+                for(int x=0; x<pixelXdepth ; x++){
+                    mypixel[countZ]=myPixelsX[x][y];
+                    countZ +=1;
+                }
+            }
+            myPixelsZ.push_back(mypixel);
+        }
+    }
+    else if(defaultPlan == Coronal){
+        cout << "axial from coronal" << endl;
+        for (int z=0; z<pixelZdepth; z++){
+           uint8_t *mypixel= new uint8_t[pixelYdepth*pixelXdepth];
+           int countZ=0;
+            for(int y=0; y<pixelYdepth; y++){
+                for(int x=z*pixelXdepth; x<(z+1)*pixelXdepth ; x++){
+                    mypixel[countZ]=myPixelsY[y][x];
+                    countZ +=1;
+                }
+            }
+            myPixelsZ.push_back(mypixel);
+        }
+    }
+    imgZIndex=(int)myPixelsZ.size()/2;
+}
+
+void Serie::constructCoronalPlan(){
+    if(defaultPlan == Axial){
+        cout << "coronal from axial" << endl;
+        for (int y=0; y<pixelYdepth; y++){
+           uint8_t *mypixel= new uint8_t[pixelXdepth*pixelZdepth];
+           int countY=0;
+            for(int z=0; z<pixelZdepth; z++){
+                for(int x=y*pixelXdepth; x<(y+1)*pixelXdepth ; x++){
+                    mypixel[countY]=myPixelsZ[z][x];
+                    countY +=1;
+                }
+            }
+            myPixelsY.push_back(mypixel);
+        }
+
+    }else if(defaultPlan == Sagittal){
+        cout << "coronal from sagittal" << endl;
+        for (int y=0; y<pixelYdepth; y++){
+           uint8_t *mypixel= new uint8_t[pixelXdepth*pixelZdepth];
+           int countY=0;
+            for(int z=y; z<pixelYdepth*pixelZdepth; z+=pixelYdepth){
+                for(int x=0; x<pixelXdepth ; x++){
+                    mypixel[countY]=myPixelsX[x][z];
+                    countY +=1;
+                }
+            }
+            myPixelsY.push_back(mypixel);
+        }
+    }
+    imgYIndex=(int)myPixelsY.size()/2;
+
+}
+
+void Serie::constructSagittalPlan(){
+    if(defaultPlan == Axial){
+        for (int x=0; x<pixelXdepth; x++){
+           uint8_t *mypixel= new uint8_t[pixelYdepth*pixelZdepth];
+           int countX=0;
+            for(int z=0; z<pixelZdepth; z++){
+                for(int y=x; y<pixelXdepth*pixelYdepth ; y+=pixelXdepth){
+                    mypixel[countX]=myPixelsZ[z][y];
+                    countX +=1;
+                }
+            }
+            myPixelsX.push_back(mypixel);
+        }
+
+
+    }
+    else if(defaultPlan == Coronal){
+        cout << "sagittal from coronal" << endl;
+        for (int x=0; x<pixelXdepth; x++){
+           uint8_t *mypixel= new uint8_t[pixelYdepth*pixelZdepth];
+           int countX=0;
+            for(int z=x; z<pixelXdepth*pixelZdepth; z+=pixelXdepth){
+                for(int y=0; y<pixelYdepth ; y++){
+                    mypixel[countX]=myPixelsY[y][z];
+                    countX +=1;
+                }
+            }
+            myPixelsX.push_back(mypixel);
+        }
+    }
+    imgXIndex=(int)myPixelsX.size()/2;
+}
 
 void Serie::setNextIndex(Plan plan){
     switch(plan){
@@ -232,12 +371,12 @@ void Serie::setPreviousIndex(Plan plan){
             imgZIndex=pixelZdepth-1;
         break;
     case Sagittal:
-        imgXIndex+=1;
+        imgXIndex-=1;
         if(imgXIndex<0)
             imgXIndex=pixelXdepth-1;
         break;
     case Coronal:
-        imgYIndex+=1;
+        imgYIndex-=1;
         if(imgYIndex<0)
             imgYIndex=pixelYdepth-1;
         break;
