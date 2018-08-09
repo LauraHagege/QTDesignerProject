@@ -72,7 +72,6 @@ public:
     void updateWindowInfo();
 
     void displayImagesinScene();
-    void displayinInvert();
 
 
 

@@ -122,8 +122,8 @@ QImage Serie::getCurrentImg(Plan currentPlan){
     }
 
     cout << "invert pixel " <<invertgrayScale <<  endl;
-    //if(invertgrayScale)
-      //  Image.invertPixels();
+    if(invertgrayScale)
+        Image.invertPixels();
 
     return Image;
 

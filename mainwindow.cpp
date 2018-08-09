@@ -54,37 +54,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-//    for(int i=0; i< Images.size() ; i++){
-//        if(Images[i]!=NULL)
-//            delete Images[i];
-//    }
-
-//    for(int i=0; i< Images2.size() ; i++){
-//        if(Images2[i]!=NULL)
-//            delete Images2[i];
-//    }
-
-//    for(int i=0; i< Images3.size() ; i++){
-//        if(Images3[i]!=NULL)
-//            delete Images3[i];
-//    }
-
-//    for(int i=0; i< myPixelsZ.size() ; i++){
-//        if(myPixelsZ[i]!=NULL)
-//            delete myPixelsZ[i];
-//    }
-
-//    for(int i=0; i< myPixelsX.size() ; i++){
-//        if(myPixelsX[i]!=NULL)
-//            delete myPixelsX[i];
-//    }
-
-//    for(int i=0; i< myPixelsY.size() ; i++){
-//        if(myPixelsY[i]!=NULL)
-//            delete myPixelsY[i];
-//    }
-
-
     delete ui;
 }
 
@@ -109,17 +78,8 @@ void MainWindow::constructWindow(QString path){
     processDicom(dicomdirPath,filepath);
 
 
-
-    //display images for the first serie found
-    // displayImages();
-
     display_one_window(); // by default show only one window
     createDefaultPlan();
-
-
-
-    // constructPlans();
-
 
     delete filepath;
 }
@@ -325,30 +285,11 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                                     cout << tmpString.c_str() << " " << endl;
                                 }
 
-
-//                                WC.push_back(WC1);
-//                                WW.push_back(WW1);
-
                                 //create a new serie of images
                                 Serie *serie = new Serie(series, seriePlan,paths, nbFrame,rescale, desc, WW1, WC1);
 
                                 //create a button for the new serie
                                 addSerieButton(serie);
-
-                                //cout << "Serie " << series << " plan " << seriePlan << endl;
-
-
-                                //SUPPOSSE HERE I HAVE A WAY TO DET THE SERIE CURRENT PLAN
-                                // FOR NOW BY DEFAULT I PU AXIAL FOR ALL SERIES
-                                //seriesPlan.push_back(seriePlan);
-                                //seriesRescaleFactor.push_back(rescale);
-                                //serieNbImages.push_back(paths.size());
-
-
-                                //storing paths for the current serie
-                                //allPath.insert(pair<string,vector<string>>("Series"+to_string(series),paths));
-
-                                //nbOfFrame.insert(pair<string,int>("Series"+to_string(series), nbFrame));
 
                                 Series.push_back(serie);
 
@@ -412,10 +353,7 @@ void MainWindow::addSerieButton(Serie *serie){
 
     QLabel *SerieDesc= new QLabel(this);
 
-
     SerieDesc->setMaximumHeight(50);
-
-
     SerieDesc->setText(serie->getDescription()) ;
 
 
@@ -520,15 +458,7 @@ void MainWindow::createDefaultPlan(){
 
     cout << "nb images "<< currentNbImages << endl;
 
-//    Index = new int[4];
-//    for(int i=0; i<4; i++){
-//        Index[i]=0;
-//    }
-
     vector<DicomImage*> DicomImages;
-//    myPixelsZ.clear();
-//    myPixelsX.clear();
-//    myPixelsY.clear();
 
     int nbFrame = Series[currentSerieNumber-1]->getNbFrames();
 
@@ -550,11 +480,6 @@ void MainWindow::createDefaultPlan(){
 
 
     Series[currentSerieNumber-1]->setDepths(width,height);
-
-    //to be removed
-//    pixelXdepth =  Series[currentSerieNumber-1]->getXdepth();
-//    pixelYdepth =  Series[currentSerieNumber-1]->getYdepth();
-//    pixelZdepth =  Series[currentSerieNumber-1]->getZdepth();
 
     cout << "width " << width <<" height " << height << endl;
 
@@ -579,44 +504,9 @@ void MainWindow::createDefaultPlan(){
 
             Uint8* pixelData = (Uint8 *)(DicomImages[i]->getOutputData(8 )); // bits per sample
 
+            // if (pixelData != NULL)
             Series[currentSerieNumber-1]->storePixel((uint8_t *)pixelData);
 
-//            switch(currentPlan){
-//            case Axial:
-//                myPixelsZ.push_back((uint8_t *)pixelData);
-//                break;
-//            case Sagittal:
-//                myPixelsX.push_back((uint8_t *)pixelData);
-//                break;
-//            case Coronal:
-//                myPixelsY.push_back((uint8_t *)pixelData);
-//                break;
-
-//            }
-
-            if (pixelData != NULL){
-
-                // do something useful with the pixel data
-                QImage *img=new QImage (pixelData,width,height, QImage::Format_Indexed8);
-
-//                switch(selectedWindow){
-//                case 1:
-//                    Images.push_back(img);
-//                    break;
-//                case 2:
-//                    Images2.push_back(img);
-//                    break;
-//                case 3:
-//                    Images3.push_back(img);
-//                    break;
-//                case 4:
-//                    Images4.push_back(img);
-//                    break;
-//                }
-
-
-
-            }
        }
    }
    else
@@ -686,10 +576,6 @@ void MainWindow::createScene(){
              ui->graphicsView_3->setScene(myScene3);
              ui->graphicsView_4->setScene(myScene4);
         }else {
-
-            cout << "there" << endl;
-           // myScene->clear();
-            //myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
             myScene->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[0])));
 
             ui->graphicsView->setBackgroundBrush(QBrush(Qt::black));
@@ -706,9 +592,8 @@ void MainWindow::createScene(){
 
         break;
     case 2:
-
         myScene2= new QGraphicsScene(this);
-        //myScene2->addPixmap( QPixmap::fromImage( *Images2[Index[1]] ) );
+
         myScene2->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[1])));
 
         ui->graphicsView_2->setScene(myScene2);
@@ -724,9 +609,8 @@ void MainWindow::createScene(){
         }
         break;
     case 3:
-
         myScene3= new QGraphicsScene(this);
-        //myScene3->addPixmap( QPixmap::fromImage( *Images3[Index[2]] ) );
+
         myScene3->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[2])));
 
         ui->graphicsView_3->setScene(myScene3);
@@ -741,13 +625,8 @@ void MainWindow::createScene(){
         }
         break;
     case 4:
-//        windowSerieNb[3]= currentSerieNumber;
-//        windowDefaultPlan[3]= seriesPlan[currentSerieNumber-1];
-//        windowCurrentPlan[3]=seriesPlan[currentSerieNumber-1];
-//        windowNbImg[3]=serieNbImages[currentSerieNumber-1];
-
         myScene4= new QGraphicsScene(this);
-        //myScene4->addPixmap( QPixmap::fromImage( *Images4[Index[3]] ) );
+
         myScene4->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[3])));
 
          ui->graphicsView_4->setScene(myScene4);
@@ -768,7 +647,6 @@ void MainWindow::createScene(){
 }
 
 void MainWindow::constructSagittalPlan(){
-    cout << "construct sagittal" << endl;
     Series[currentSerieNumber-1]->constructSagittalPlan();
     windowCurrentPlan[selectedWindow-1]=Sagittal;
     createScene();
@@ -971,16 +849,6 @@ void MainWindow::updateWindowInfo(){
 
     currentPlan=windowCurrentPlan[selectedWindow-1];
 
-     cout <<"update window" <<  endl;
-//    cout << "default " << windowDefaultPlan[selectedWindow-1]<< "current " <<windowCurrentPlan[selectedWindow-1] << endl;
-
-     cout << "current plan " << currentPlan <<endl;
-
-     cout << "jpp" << endl;
-
-     cout <<"default plan " << windowDefaultPlan[selectedWindow-1] << endl;
-
-
     if(currentPlan != windowDefaultPlan[selectedWindow-1] || currentNbImages <10){
         AxialAction->setEnabled(false);
         SagittalAction->setEnabled(false);
@@ -1007,10 +875,6 @@ void MainWindow::updateWindowInfo(){
             break;
         }
     }
-    cout << "jpp" << endl;
-
-
-
 
 }
 
@@ -1086,25 +950,35 @@ void MainWindow::wheelEvent(QWheelEvent *event)
         Series[currentSerieNumber-1]->setNextIndex(currentPlan);
 }
     else {
-        Series[currentSerieNumber-1]->setPreviousIndex(currentPlan);
+        Series[currentSerieNumber-1]->setNextIndex(currentPlan);
     }
 
-        if(selectedWindow==1){
-            myScene->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[0])));
-            ui->graphicsView->setScene(myScene);
-        }else if(selectedWindow==2){
-            myScene2->addPixmap( QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[1])));
-            ui->graphicsView_2->setScene(myScene2);
-        }
-        else if(selectedWindow==3){
-            myScene3->addPixmap( QPixmap::fromImage( Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[2]) ));
-            ui->graphicsView_3->setScene(myScene3);
-        }
-        else if(selectedWindow==4){
-            myScene4->addPixmap( QPixmap::fromImage( Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[3]) ));
-            ui->graphicsView_4->setScene(myScene4);
-        }
+    displayImagesinScene();
+
+
 }
+
+void MainWindow::displayImagesinScene(){
+    switch(selectedWindow){
+    case 1:
+        myScene->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[0])));
+        ui->graphicsView->setScene(myScene);
+        break;
+    case 2:
+        myScene2->addPixmap( QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[1])));
+        ui->graphicsView_2->setScene(myScene2);
+        break;
+    case 3:
+        myScene3->addPixmap( QPixmap::fromImage( Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[2]) ));
+        ui->graphicsView_3->setScene(myScene3);
+        break;
+    case 4:
+        myScene4->addPixmap( QPixmap::fromImage( Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[3]) ));
+        ui->graphicsView_4->setScene(myScene4);
+        break;
+    }
+}
+
 
 
 void MainWindow::buttonInGroupClicked(QAbstractButton *b){
@@ -1120,10 +994,8 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
         windowSerieNb[selectedWindow-1]=-1;
 
 
-    cout << "fatigue " << endl;
-    //clearImagesVector();
     createDefaultPlan();
-    cout << "heo " << endl;
+
     updateWindowInfo();
 
 
@@ -1138,10 +1010,16 @@ void MainWindow::hide_advanced()
 
 void MainWindow::invert_grayscale()
 {
+    Series[currentSerieNumber-1]->invertGrayScale();
+
+
+    displayImagesinScene();
+
+
+
+
 //    if(invertGrayScale ==0){
 //        for(int j=0; j<Images.size(); j++){
-////            for( int i = 0; i < 256; ++i )
-////                Images[j]->setColor(255-i, qRgb(i,i,i));
 //            Images[j]->invertPixels();
 //    }
 //    invertGrayScale=1;
@@ -1313,17 +1191,14 @@ void MainWindow::on_showReport_clicked()
 }
 
 void MainWindow::callAxial(){
-   // clearImagesVector();
     constructAxialPlan();
 }
 
 void MainWindow::callCoronal(){
-   // clearImagesVector();
     constructCoronalPlan();
 }
 
 void MainWindow::callSagittal(){
-    //clearImagesVector();
     constructSagittalPlan();
 }
 
