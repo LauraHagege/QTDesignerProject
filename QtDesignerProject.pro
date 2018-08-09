@@ -35,12 +35,14 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     dialog.cpp \
-    reportwindow.cpp
+    reportwindow.cpp \
+    serie.cpp
 
 HEADERS += \
         mainwindow.h \
     dialog.h \
-    reportwindow.h
+    reportwindow.h \
+    serie.h
 
 FORMS += \
         mainwindow.ui \

@@ -11,6 +11,7 @@
 #include <QPushButton>
 
 #include "qimage.h"
+#include "serie.h"
 
 //#include <dcmtk/config/cfunix.h>
 //#include <dcmtk/config/osconfig.h>
@@ -30,12 +31,11 @@
 #include <string>
 #include <QWheelEvent>
 #include "reportwindow.h"
+#include <QPixmap>
 
 
 
 using namespace std;
-
-enum Plan {Axial, Coronal, Sagittal, Unknown};
 
 namespace Ui {
 class MainWindow;
@@ -52,7 +52,7 @@ public:
     void constructWindow(QString path);
 
     void processDicom(const char *dicomdirPath,char *filepath);
-    void addSerieButton(int serieNumber, char *serieDescription, int imgNb, string firstPath);
+    void addSerieButton(Serie* serie);
     void setPatientInfo(char *studydesc, char * date, char* patientName, char* birthdate);
 
 
@@ -142,6 +142,7 @@ private:
     vector<uint8_t *> myPixelsX;
     vector<uint8_t *> myPixelsY;
 
+
     QButtonGroup *buttonGroup; //button to choose the displayed serie
 
 
@@ -189,6 +190,9 @@ private:
     QAction *CoronalAction;
     QAction *SagittalAction;
 
+
+
+    vector<Serie *> Series;
 };
 
 
