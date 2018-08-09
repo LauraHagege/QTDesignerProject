@@ -79,6 +79,10 @@ public:
     double getPixelNb(const char* pixelArray);
     void rotate(int rotation);
 
+    void updateWindowInfo();
+
+    void clearImagesVector();
+
 
 private slots:
     void mousePressEvent(QMouseEvent *e);
@@ -116,11 +120,17 @@ private:
     int currentSerieNumber; // asociated in for the current displayed serie
     string currentSerie; //name of the current selected serie
 
+    vector<int> serieNbImages;
+    int currentNbImages;
+
     map<string, vector <string>> allPath; // store all path for all series to reach them when selected;
     Ui::MainWindow *ui;
 
     //Store from wich serie comes the current displayed plan
-    int WindowSerieNb[4];
+    int windowSerieNb[4];
+    Plan windowDefaultPlan[4];
+    Plan windowCurrentPlan[4];
+    int windowNbImg[4];
 
     vector<QImage*> Images; //store QImages for the current selected serie
     vector<QImage*> Images2;
@@ -165,9 +175,19 @@ private:
 
     Plan currentPlan;
     vector< Plan> seriesPlan; // store the "inherant"/obvious plan for eaxh serie
+
     bool PlanContruction ; // set to true if possible to recreate other plan from the current images, sest to false othewise
 
     bool viewConnected;
+
+    bool defaultPlan; // var to know if the plan of the current selected window is the default one
+    // usefull to enable, disable plan construction button
+
+
+    //QAction
+    QAction *AxialAction;
+    QAction *CoronalAction;
+    QAction *SagittalAction;
 
 };
 

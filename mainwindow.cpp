@@ -42,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent) :
     for(int i=0 ; i<4; i++){
         creation[i]=0;
         contrast[i]=0;
-
+        windowSerieNb[i]=-1;
     }
 
 }
@@ -339,12 +339,14 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
                                 // FOR NOW BY DEFAULT I PU AXIAL FOR ALL SERIES
                                 seriesPlan.push_back(seriePlan);
                                 seriesRescaleFactor.push_back(rescale);
+                                serieNbImages.push_back(paths.size());
 
 
                                 //storing paths for the current serie
                                 allPath.insert(pair<string,vector<string>>("Series"+to_string(series),paths));
 
                                 nbOfFrame.insert(pair<string,int>("Series"+to_string(series), nbFrame));
+
 
                             }
                         }
@@ -528,6 +530,8 @@ void MainWindow::createDefaultPlan(){
     //initializing index for images
     currentPlan = seriesPlan[currentSerieNumber-1];
     rescaleFactor=seriesRescaleFactor[currentSerieNumber-1];
+    currentNbImages=serieNbImages[currentSerieNumber-1];
+
     Index = new int[4];
     for(int i=0; i<4; i++){
         Index[i]=0;
@@ -642,9 +646,6 @@ void MainWindow::createDefaultPlan(){
                 case 4:
                     Images4.push_back(img);
                     break;
-
-
-
                 }
 
 
@@ -670,19 +671,33 @@ void MainWindow::createScene(){
 //    QPixmap pixmap;
 //     pixmap = QPixmap::fromImage( *Images[Index[0]] );
 //    QPainter p(&pixmap);
+
+    if(windowSerieNb[selectedWindow-1]==-1 || windowSerieNb[selectedWindow-1] != currentSerieNumber ){
+        windowSerieNb[selectedWindow-1]= currentSerieNumber;
+        windowDefaultPlan[selectedWindow-1]= seriesPlan[currentSerieNumber-1];
+        windowCurrentPlan[selectedWindow-1]=seriesPlan[currentSerieNumber-1];
+        windowNbImg[selectedWindow-1]=serieNbImages[currentSerieNumber-1];
+    }
+
+
     switch(selectedWindow){
     case 1:
-        windowSerieNb[0]= currentSerieNumber;
+//        windowSerieNb[0]= currentSerieNumber;
+//        windowDefaultPlan[0]= seriesPlan[currentSerieNumber-1];
+//        windowCurrentPlan[0]=seriesPlan[currentSerieNumber-1];
+//        windowNbImg[0]=serieNbImages[currentSerieNumber-1];
 
-        myScene= new QGraphicsScene(this);
-        myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
-
-        ui->graphicsView->setBackgroundBrush(QBrush(Qt::black));
-        ui->graphicsView->setScene(myScene);
 
         if(creation[0]==0){
              creation[0] =1;
 
+             myScene= new QGraphicsScene(this);
+
+             myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
+
+             ui->graphicsView->setAlignment(Qt::AlignCenter);
+             ui->graphicsView->setBackgroundBrush(QBrush(Qt::black));
+             ui->graphicsView->setScene(myScene);
 
 
              ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
@@ -709,12 +724,26 @@ void MainWindow::createScene(){
              ui->graphicsView_2->setScene(myScene2);
              ui->graphicsView_3->setScene(myScene3);
              ui->graphicsView_4->setScene(myScene4);
+        }else {
+
+            cout << "there" << endl;
+            myScene->clear();
+            myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
+
+            ui->graphicsView->setBackgroundBrush(QBrush(Qt::black));
+
+            ui->graphicsView->setScene(myScene);
+
         }
 
         break;
     case 2:
-        windowSerieNb[1]= currentSerieNumber;
+//        windowSerieNb[1]= currentSerieNumber;
+//        windowDefaultPlan[1]= seriesPlan[currentSerieNumber-1];
+//        windowCurrentPlan[1]=seriesPlan[currentSerieNumber-1];
+//        windowNbImg[1]=serieNbImages[currentSerieNumber-1];
 
+        myScene2->clear();
         myScene2->addPixmap( QPixmap::fromImage( *Images2[Index[1]] ) );
 
         ui->graphicsView_2->setScene(myScene2);
@@ -730,8 +759,8 @@ void MainWindow::createScene(){
         }
         break;
     case 3:
-        windowSerieNb[2]= currentSerieNumber;
 
+        myScene3->clear();
         myScene3->addPixmap( QPixmap::fromImage( *Images3[Index[2]] ) );
 
         ui->graphicsView_3->setScene(myScene3);
@@ -746,8 +775,12 @@ void MainWindow::createScene(){
         }
         break;
     case 4:
-        windowSerieNb[3]= currentSerieNumber;
+//        windowSerieNb[3]= currentSerieNumber;
+//        windowDefaultPlan[3]= seriesPlan[currentSerieNumber-1];
+//        windowCurrentPlan[3]=seriesPlan[currentSerieNumber-1];
+//        windowNbImg[3]=serieNbImages[currentSerieNumber-1];
 
+        myScene4->clear();
         myScene4->addPixmap( QPixmap::fromImage( *Images4[Index[3]] ) );
 
          ui->graphicsView_4->setScene(myScene3);
@@ -764,7 +797,7 @@ void MainWindow::createScene(){
 
     }
 
-
+    updateWindowInfo();
 }
 
 void MainWindow::constructSagittalPlan(){
@@ -854,6 +887,8 @@ void MainWindow::constructSagittalPlan(){
     case 4:
         Index[3]=(int)Images4.size()/2;
     }
+
+    windowCurrentPlan[selectedWindow-1]=Sagittal;
     createScene();
 
 }
@@ -941,6 +976,11 @@ void MainWindow::constructAxialPlan(){
         Index[3]=(int)Images4.size()/2;
         break;
     }
+
+    windowCurrentPlan[selectedWindow-1]=Axial;
+    createScene();
+
+
 }
 
 void MainWindow::constructCoronalPlan(){
@@ -993,7 +1033,6 @@ void MainWindow::constructCoronalPlan(){
                 delete img;
 
 
-
                 switch(selectedWindow){
                 case 1:
                     Images.push_back(copy);
@@ -1025,6 +1064,9 @@ void MainWindow::constructCoronalPlan(){
         Index[3]=(int)Images4.size()/2;
         break;
     }
+
+    windowCurrentPlan[selectedWindow-1]=Coronal;
+    cout <<"current plan " << windowCurrentPlan[selectedWindow-1] << "selected window "<< selectedWindow<<  endl;
     createScene();
 
 }
@@ -1082,17 +1124,41 @@ void MainWindow::createButtons(){
 
     ui->mainToolBar->addSeparator();
 
-    QAction *Axial = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/axial.png"),"Show top/bottom view (Axial)", this);
-    ui->mainToolBar->addAction(Axial);
-    connect(Axial, SIGNAL(triggered(bool)), SLOT(callAxial()));
+    AxialAction = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/axial.png"),"Show top/bottom view (Axial)", this);
+    ui->mainToolBar->addAction(AxialAction);
+    connect(AxialAction, SIGNAL(triggered(bool)), SLOT(callAxial()));
 
-    QAction *Coronal = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/coronal.png"),"Show front/back view (Coronal)", this);
-    ui->mainToolBar->addAction(Coronal);
-    connect(Coronal, SIGNAL(triggered(bool)), SLOT(callCoronal()));
+    CoronalAction = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/coronal.png"),"Show front/back view (Coronal)", this);
+    ui->mainToolBar->addAction(CoronalAction);
+    connect(CoronalAction, SIGNAL(triggered(bool)), SLOT(callCoronal()));
 
-    QAction *Sagittal = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/sagittal.png"),"Show left/right view (Sagittal)", this);
-    ui->mainToolBar->addAction(Sagittal);
-    connect(Sagittal, SIGNAL(triggered(bool)), SLOT(callSagittal()));
+    SagittalAction = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/sagittal.png"),"Show left/right view (Sagittal)", this);
+    ui->mainToolBar->addAction(SagittalAction);
+    connect(SagittalAction, SIGNAL(triggered(bool)), SLOT(callSagittal()));
+
+    if(currentNbImages <10){
+        AxialAction->setEnabled(false);
+        SagittalAction->setEnabled(false);
+        CoronalAction->setEnabled(false);
+    }else {
+        switch(currentPlan){
+        case Axial:
+            AxialAction->setEnabled(false);
+            break;
+        case Coronal:
+            CoronalAction->setEnabled(false);
+            break;
+        case Sagittal:
+            SagittalAction->setEnabled(false);
+            break;
+        default:
+            AxialAction->setEnabled(true);
+            SagittalAction->setEnabled(true);
+            CoronalAction->setEnabled(true);
+            break;
+        }
+
+    }
 
 
 
@@ -1180,6 +1246,46 @@ void MainWindow::createButtons(){
 }
 
 
+void MainWindow::updateWindowInfo(){
+    currentNbImages=serieNbImages[currentSerieNumber-1];
+    currentPlan=windowCurrentPlan[selectedWindow-1];
+
+//    cout <<"update" << endl;
+//    cout << "default " << windowDefaultPlan[selectedWindow-1]<< "current " <<windowCurrentPlan[selectedWindow-1] << endl;
+
+
+    if(currentPlan != windowDefaultPlan[selectedWindow-1] || currentNbImages <10){
+        AxialAction->setEnabled(false);
+        SagittalAction->setEnabled(false);
+        CoronalAction->setEnabled(false);
+    }else {
+        AxialAction->setEnabled(true);
+        SagittalAction->setEnabled(true);
+        CoronalAction->setEnabled(true);
+
+        switch(currentPlan){
+        case Axial:
+            AxialAction->setEnabled(false);
+            break;
+        case Coronal:
+            CoronalAction->setEnabled(false);
+            break;
+        case Sagittal:
+            SagittalAction->setEnabled(false);
+            break;
+        default:
+            AxialAction->setEnabled(true);
+            SagittalAction->setEnabled(true);
+            CoronalAction->setEnabled(true);
+            break;
+        }
+    }
+
+
+
+
+}
+
 
 
 //********************************************************************************//
@@ -1237,6 +1343,11 @@ void MainWindow::mousePressEvent(QMouseEvent* e){
         ui->graphicsView_3->setStyleSheet("color:black");
         ui->graphicsView_4->setStyleSheet("color:orange");
     }
+
+    currentSerieNumber=windowSerieNb[selectedWindow-1];
+    updateWindowInfo();
+
+
 }
 
 void MainWindow::wheelEvent(QWheelEvent *event)
@@ -1297,6 +1408,27 @@ void MainWindow::wheelEvent(QWheelEvent *event)
     }
 }
 
+
+void MainWindow::clearImagesVector(){
+    switch(selectedWindow){
+    case 1:
+        Images.clear();
+        break;
+    case 2:
+        Images2.clear();
+        break;
+    case 3:
+        Images3.clear();
+        break;
+    case 4:
+        Images4.clear();
+        break;
+    default:
+        break;
+    }
+
+}
+
 void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     currentSerieNumber = b->property("Id").toInt();
     currentPlan = seriesPlan[currentSerieNumber-1];
@@ -1305,32 +1437,14 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     cout << "button " << buttonName << " clicked, associated serie size: "<< this->allPath[buttonName].size() << endl;
     currentSerie=buttonName;
 
-    cout << "currentSeriesize " <<this->allPath[currentSerie].size() << endl;
-
-    switch(selectedWindow){
-    case 1:
-        Images.clear();
-        createDefaultPlan();
-        break;
-    case 2:
-        Images2.clear();
-        createDefaultPlan();
-        break;
-    case 3:
-        Images3.clear();
-        createDefaultPlan();
-        break;
-    case 4:
-        Images4.clear();
-        createDefaultPlan();
-        break;
-    default:
-        break;
-    }
+    if(windowSerieNb[selectedWindow-1] == currentSerieNumber)
+        windowSerieNb[selectedWindow-1]=-1;
 
 
+    clearImagesVector();
+    createDefaultPlan();
 
-
+    updateWindowInfo();
 
 
 }
@@ -1522,14 +1636,17 @@ void MainWindow::on_showReport_clicked()
 }
 
 void MainWindow::callAxial(){
+    clearImagesVector();
     constructAxialPlan();
 }
 
 void MainWindow::callCoronal(){
+    clearImagesVector();
     constructCoronalPlan();
 }
 
 void MainWindow::callSagittal(){
+    clearImagesVector();
     constructSagittalPlan();
 }
 
