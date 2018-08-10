@@ -576,139 +576,7 @@ void MainWindow::buildViews(){
     ui->graphicsView_2->setScene(myScene2);
     ui->graphicsView_3->setScene(myScene3);
     ui->graphicsView_4->setScene(myScene4);
-
-
-
-
 }
-
-//---------------------------------------------===------------------//
-//-------------------------- CREATE SCENE --------=-----------------//
-//------ This function is called on first creation of a serie ----- //
-//------------------------------------------------------------------//
-void MainWindow::createScene(){
-    //Local var for convenience, containing the serie to be rendered in the selected window
-    Serie *serie = Series[currentSerieNumber-1];
-
-    //Update information about the serie for the current selected window
-    if(windowSerieNb[selectedWindow-1]==-1 || windowSerieNb[selectedWindow-1] != currentSerieNumber ){
-        windowSerieNb[selectedWindow-1]= currentSerieNumber;
-        windowDefaultPlan[selectedWindow-1]= serie->getdefaultPlan();
-        windowCurrentPlan[selectedWindow-1]= serie->getdefaultPlan();
-        windowNbImg[selectedWindow-1]=  serie->getNbImages();
-    }
-
-    //This is a "casual" update
-    //All serie must store information to know in which plan is displayed in which window
-    //Variable used to link views of the same serie together
-    serie->setPlanWindows(windowSerieNb, windowCurrentPlan);
-
-    //While creating the scene only one image will be displayed
-    //GetCurrent image return the image corresponding to the window plan
-    QPixmap img = serie->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
-    //QPixmap img = serie->getCurrentImg(currentPlan); // CHECK THERE IF ANY TROUBLE !!!!!!!!!!
-
-    //If views are marked linked
-    if(Series[currentSerieNumber-1]->getViewLinked())
-        paintLinkedLines();
-
-
-    switch(selectedWindow){
-    case 1:
-        myScene= new QGraphicsScene(this);
-        if(creation[0]==0){
-            creation[0] =1;
-
-             myScene->addPixmap(img);
-
-
-             ui->graphicsView->setBackgroundBrush(QBrush(Qt::black));
-             ui->graphicsView->setScene(myScene);
-
-
-             ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
-
-             ui->graphicsView->fitInView(QRectF(0,0,ui->graphicsView->width(), ui->graphicsView->height()),Qt::KeepAspectRatio);
-
-             ui->graphicsView->setFrameRect(QRect(0,0,ui->graphicsView->width(), ui->graphicsView->height()));
-             ui->graphicsView->setFrameStyle(3);
-
-             ui->graphicsView->setStyleSheet("color:orange");
-             ui->graphicsView_2->setStyleSheet("color:black");
-             ui->graphicsView_3->setStyleSheet("color:black");
-             ui->graphicsView_4->setStyleSheet("color:black");
-
-
-             myScene2= new QGraphicsScene(this);
-             myScene3= new QGraphicsScene(this);
-             myScene4= new QGraphicsScene(this);
-
-             ui->graphicsView_2->setBackgroundBrush(QBrush(Qt::black));
-             ui->graphicsView_3->setBackgroundBrush(QBrush(Qt::black));
-             ui->graphicsView_4->setBackgroundBrush(QBrush(Qt::black));
-
-             ui->graphicsView_2->setScene(myScene2);
-             ui->graphicsView_3->setScene(myScene3);
-             ui->graphicsView_4->setScene(myScene4);
-        }else {
-            myScene->addPixmap(img);
-
-            ui->graphicsView->setBackgroundBrush(QBrush(Qt::black));
-            ui->graphicsView->setScene(myScene);
-
-
-            ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
-            ui->graphicsView->fitInView(QRectF(0,0,ui->graphicsView->width(), ui->graphicsView->height()),Qt::KeepAspectRatio);
-            ui->graphicsView->setFrameRect(QRect(0,0,ui->graphicsView->width(), ui->graphicsView->height()));
-        }
-
-        break;
-    case 2:
-        myScene2= new QGraphicsScene(this);
-
-        myScene2->addPixmap(img);
-        ui->graphicsView_2->setScene(myScene2);
-
-       // if(creation[1]==0){
-         //    creation[1] =1;
-
-             ui->graphicsView_2->fitInView(myScene2->sceneRect(),Qt::KeepAspectRatioByExpanding);
-             ui->graphicsView_2->fitInView(QRectF(0,0,ui->graphicsView_2->width(), ui->graphicsView_2->height()),Qt::KeepAspectRatio);
-             ui->graphicsView_2->setFrameRect(QRect(0,0,ui->graphicsView_2->width(), ui->graphicsView_2->height()));
-        //}
-        break;
-    case 3:
-        myScene3= new QGraphicsScene(this);
-
-        myScene3->addPixmap(img);
-        ui->graphicsView_3->setScene(myScene3);
-
-        // if(creation[2]==0)
-       //       creation[2] =1;
-             ui->graphicsView_3->fitInView(myScene3->sceneRect(),Qt::KeepAspectRatioByExpanding);
-             ui->graphicsView_3->fitInView(QRectF(0,0,ui->graphicsView_3->width(), ui->graphicsView_3->height()),Qt::KeepAspectRatio);
-             ui->graphicsView_3->setFrameRect(QRect(0,0,ui->graphicsView_3->width(), ui->graphicsView_3->height()));
-        //}
-        break;
-    case 4:
-        myScene4= new QGraphicsScene(this);
-
-        myScene4->addPixmap(img);
-        ui->graphicsView_4->setScene(myScene4);
-
-        // if(creation[3]==0){
-          //   creation[3] =1;
-             ui->graphicsView_4->fitInView(myScene4->sceneRect(),Qt::KeepAspectRatioByExpanding);
-             ui->graphicsView_4->fitInView(QRectF(0,0,ui->graphicsView_4->width(), ui->graphicsView_4->height()),Qt::KeepAspectRatio);
-             ui->graphicsView_4->setFrameRect(QRect(0,0,ui->graphicsView_4->width(), ui->graphicsView_4->height()));
-         //}
-        break;
-
-    }
-
-    updateWindowInfo();
-}
-
 
 
 void MainWindow::displayInScene(QPixmap img){
@@ -880,7 +748,12 @@ void MainWindow::createButtons(){
 
     }
 
+    ui->mainToolBar->addSeparator();
 
+    Link = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/link.png"),"Link views scrolling", this);
+    ui->mainToolBar->addAction(Link);
+    connect(Link,SIGNAL(triggered(bool)),this,SLOT(link_views()) );
+    Link->setCheckable(true);
 
     ui->mainToolBar->addSeparator();
 
@@ -889,8 +762,10 @@ void MainWindow::createButtons(){
 
     ui->mainToolBar->addSeparator();
 
-    QAction *Scroll = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/scroll.png"),"Scroll Images", this);
+    Scroll = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/scroll.png"),"Scroll Images", this);
     ui->mainToolBar->addAction(Scroll);
+    Scroll->setCheckable(true);
+    Scroll->setChecked(true);
 
     ui->mainToolBar->addSeparator();
 
@@ -935,10 +810,6 @@ void MainWindow::createButtons(){
 
     QAction *AddStudy = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/study.png"),"Compare my other study", this);
     ui->AdvancedSettings->addAction(AddStudy);
-
-    QAction *Link = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/link.png"),"Link views scrolling", this);
-    ui->AdvancedSettings->addAction(Link);
-    connect(Link,SIGNAL(triggered(bool)),this,SLOT(link_views()) );
 
     QAction *Measure = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/measure.png"),"Measure", this);
     ui->AdvancedSettings->addAction(Measure);
@@ -1009,13 +880,6 @@ void MainWindow::updateWindowInfo(){
 //---------------------ALL PRIVATE SLOTS FOLLOWING -----------------------------//
 //********************************************************************************//
 void MainWindow::mousePressEvent(QMouseEvent* e){
-
-    if(Series[currentSerieNumber-1]->getViewLinked()){
-        cout << "views linked " << endl;
-        //if views are linked I need to update the previous window on click, only meaning removing the plan line
-        displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
-    }
-
     if(ui->graphicsView->underMouse()){
         selectedWindow=1;
         ui->graphicsView->setFrameStyle(3);
@@ -1070,36 +934,36 @@ void MainWindow::mousePressEvent(QMouseEvent* e){
 
     currentSerieNumber=windowSerieNb[selectedWindow-1];
 
-
-
+    if(windowSerieNb[selectedWindow-1]!= -1 && Series[currentSerieNumber-1]->getViewLinked())
+        displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
 
     updateWindowInfo();
 
-    if(windowSerieNb[selectedWindow-1]!= -1 && Series[currentSerieNumber-1]->getViewLinked())
-        paintLinkedLines();
+
+
+    //if(windowSerieNb[selectedWindow-1]!= -1 && Series[currentSerieNumber-1]->getViewLinked())
+      //  paintLinkedLines();
 
 
 
 }
 
-void MainWindow::wheelEvent(QWheelEvent *event)
-{
-    if(event->delta() >0){
-        Series[currentSerieNumber-1]->setNextIndex(currentPlan);
-}
-    else {
-        Series[currentSerieNumber-1]->setPreviousIndex(currentPlan);
+void MainWindow::wheelEvent(QWheelEvent *event){
+    if(Scroll->isChecked()){
+        if(event->delta() >0)
+            Series[currentSerieNumber-1]->setNextIndex(currentPlan);
+
+        else
+            Series[currentSerieNumber-1]->setPreviousIndex(currentPlan);
+
+        QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+
+        if(Series[currentSerieNumber-1]->getViewLinked())
+            paintLinkedLines();
+
+
+        displayInScene(img);
     }
-
-    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
-
-    if(Series[currentSerieNumber-1]->getViewLinked())
-        paintLinkedLines();
-
-
-    displayInScene(img);
-
-
 }
 
 
@@ -1146,25 +1010,26 @@ void MainWindow::invert_grayscale()
 
     //if(invertGrayScale)
        // img.invertPixels();
+    displayInScene(img);
 
-    switch(selectedWindow){
-    case 1:
-        myScene->addPixmap(img);
-        ui->graphicsView->setScene(myScene);
-        break;
-    case 2:
-        myScene2->addPixmap(img);
-        ui->graphicsView_2->setScene(myScene2);
-        break;
-    case 3:
-        myScene3->addPixmap(img);
-        ui->graphicsView_3->setScene(myScene3);
-        break;
-    case 4:
-        myScene4->addPixmap(img);
-        ui->graphicsView_4->setScene(myScene4);
-        break;
-    }
+//    switch(selectedWindow){
+//    case 1:
+//        myScene->addPixmap(img);
+//        ui->graphicsView->setScene(myScene);
+//        break;
+//    case 2:
+//        myScene2->addPixmap(img);
+//        ui->graphicsView_2->setScene(myScene2);
+//        break;
+//    case 3:
+//        myScene3->addPixmap(img);
+//        ui->graphicsView_3->setScene(myScene3);
+//        break;
+//    case 4:
+//        myScene4->addPixmap(img);
+//        ui->graphicsView_4->setScene(myScene4);
+//        break;
+//    }
 
 }
 
@@ -1377,26 +1242,23 @@ void MainWindow::callSagittal(){
 void MainWindow::callTest(){
   cout << "callTest"<< endl;
 
-  Series[currentSerieNumber-1]->setViewLinked(true);
+ // Series[currentSerieNumber-1]->setViewLinked(true);
 
-  //paintLinkedLines();
-
-
-   // currentPlan=Sagittal;
-   // constructAxialPlan();
-
-
-    //createDefaultPlan();
     paintLinkedLines();
 
 }
 
 void MainWindow::link_views(){
-    Series[currentSerieNumber-1]->setViewLinked(true);
+    Series[currentSerieNumber-1]->setViewLinked();
+    if(Link->isChecked())
+        paintLinkedLines();
+    else{
+
+    }
 }
 
 void MainWindow::paintLinkedLines(){
-    cout << "paint on linked views" << endl;
+    //cout << "paint on linked views" << endl;
     Serie *serie = Series[currentSerieNumber-1];
 
     int axialWindow=serie->getAxialWindow();
@@ -1411,7 +1273,6 @@ void MainWindow::paintLinkedLines(){
         bx=0;
         by = ey = serie->getZIndex();
         if(coronalWindow != -1){
-            cout << "coronal window " << coronalWindow <<endl;
             Coronalmap =serie->getCurrentImg(Coronal);
             ex=Coronalmap.width();
             paintOnScene(Coronalmap,coronalWindow,bx,by,ex,ey);

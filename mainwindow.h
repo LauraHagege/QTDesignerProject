@@ -109,6 +109,7 @@ private slots:
     void link_views();
 
 
+
 private:
     int selectedWindow; // store the number of the current selected graphic window --> for mouse events
     bool invertGrayScale ; // boolean variable to sepcify if Grayscaled is inverted
@@ -140,6 +141,7 @@ private:
     QGraphicsScene *myScene4;
 
     bool windowCreation;
+    bool scroll;
 
 
     int creation[4];
@@ -162,6 +164,8 @@ private:
     QAction *AxialAction;
     QAction *CoronalAction;
     QAction *SagittalAction;
+    QAction *Scroll;
+    QAction *Link;
 
 
 

@@ -431,9 +431,14 @@ void Serie::setPreviousIndex(Plan plan){
 }
 
 
-void Serie::setViewLinked(bool linked){
-    if(MultiPlan)
-        viewLinked = linked;
+void Serie::setViewLinked(){
+    if(MultiPlan){
+        if(viewLinked)
+            viewLinked=false;
+        else
+            viewLinked=true;
+    }
+
 }
 
 //might be useless
@@ -483,4 +488,16 @@ int Serie::getSagittalWindow(){
     return sagittalWindow;
 }
 
+int Serie::getwindow(Plan plan){
+    switch(plan){
+    case Axial:
+        return axialWindow;
+    case Coronal:
+        return coronalWindow;
+    case Sagittal:
+        return sagittalWindow;
+    default:
+        return -1;
+    }
+}
 

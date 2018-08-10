@@ -96,7 +96,7 @@ public:
     void constructCoronalPlan();
     void constructSagittalPlan();
 
-    void setViewLinked(bool linked);
+    void setViewLinked();
     bool getViewLinked();
 
     void setPlanWindows(int windowSerieNb[], Plan windowCurrentPlan[]);
@@ -104,6 +104,7 @@ public:
     int getAxialWindow();
     int getCoronalWindow();
     int getSagittalWindow();
+    int getwindow(Plan plan);
 
 
 
