@@ -63,16 +63,21 @@ public:
 
     void setSelectedWindow(int nb);
 
+    void buildViews();
     void createScene();
 
     Plan findSeriePlan(const char * orientation);
-    double getPixelNb(const char* pixelArray);
+    double getPixelSpacingNb(const char* pixelArray);
     void rotate(int rotationIndice);
 
     void updateWindowInfo();
 
     void updateContrast();
 
+    void paintLinkedLines();
+    void paintOnScene(QPixmap &pixmap, int sceneNb, int beginX,int beginY,int endX, int endY );
+
+    void displayInScene(QPixmap img);
 
 
 private slots:
@@ -102,6 +107,8 @@ private slots:
     void callTest();
 
     void link_views();
+
+
 private:
     int selectedWindow; // store the number of the current selected graphic window --> for mouse events
     bool invertGrayScale ; // boolean variable to sepcify if Grayscaled is inverted
@@ -132,9 +139,8 @@ private:
     QGraphicsScene *myScene3;
     QGraphicsScene *myScene4;
 
-    // height and with are the default argument defined for the default plan of the Image
-    int width;
-    int height;
+    bool windowCreation;
+
 
     int creation[4];
     int contrast[4];

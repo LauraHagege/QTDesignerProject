@@ -59,7 +59,12 @@ MainWindow::~MainWindow()
 }
 
 
+//--------------------------------------------------------------------------//
+//------------------------------  CONSTRUCT WINDOW  ------------------------//
+//------------ Calling all related function to create the main window-------//
+//-------------------------------------------------------------------------//
 void MainWindow::constructWindow(QString path){
+    windowCreation=true;
     //call function to create button architecture
     createButtons();
 
@@ -67,7 +72,7 @@ void MainWindow::constructWindow(QString path){
     QByteArray ba = path.toLatin1();
     const char *dicomdirPath = ba.data();
 
-    int size = strlen(dicomdirPath);
+    int size =(int) strlen(dicomdirPath);
     char *filepath=new char[130];
 
     for(int i=0; i<size-8; i++){
@@ -85,11 +90,20 @@ void MainWindow::constructWindow(QString path){
     delete filepath;
 }
 
+
+//-------------------------------------------------------------------------------//
+//------------------------------  PROCESS DICOM FUNCTION ------------------------//
+//----- Going down DICOMDIR tree structure to get all required informations -----//
+//-------------------------------------------------------------------------------//
+
 void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
     //counter for the number of series found in the file
     series=0;
+    //information for the first serie to be displayed on the main window
+    currentSerie = "Series2";
+    currentSerieNumber =2;
 
-    cout <<"path " << filepath << endl;
+    //cout <<"path " << filepath << endl;
 
     //Open DICOMDIR with given path
     //DcmDicomDir class to deal with DicomDir element
@@ -105,222 +119,203 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath){
 
     DcmDirectoryRecord *   ImageRecord = NULL;
 
-    currentSerie = "Series2";
-    currentSerieNumber =2;
+    //Local variable declaration
     int nbFrame=0;
+    int WC1,WW1;
+    double rescale =1;
     Plan seriePlan = Unknown;
 
-    int WC1,WW1;
+    //Going down DICOMDIR tree structur to get the path to all images stored in the given Directory
+    if(root != NULL){
+        //First depth give goes in the DICOMDAT folder
+        //Allows to get information about the patient
+        //While loop  if there are more than one subfile
+        while (((PatientRecord = root->nextSub(PatientRecord)) != NULL)){
+            while (((StudyRecord = PatientRecord->nextSub(StudyRecord)) != NULL)){
+                //local var to store patient information
+                char *date=new char[11];
+                char *studydesc=new char[30];
+                char *patientName=new char[50];
+                char *birthdate=new char[11];
 
-    double rescale =1;
+                //Get Patient Name
+                if (StudyRecord->findAndGetOFString(DCM_PatientName, tmpString).good()) {
+//                  cout << "PatientName 1: " << tmpString.c_str() << endl ;
+                    strcpy(patientName,tmpString.c_str());
+                    int count=0;
+                    while(patientName[count] != '\0'){
+                        if(patientName[count] == '^')
+                            patientName[count] = ' ';
+                        count ++;
+                    }
+                }
+                else{
+                    string noname= "No patient name found";
+                    strcpy(patientName,noname.c_str());
+                }
 
-    string firstpath;
+                //Patient Birthdate information
+                if (StudyRecord->findAndGetOFString(DCM_PatientBirthDate, tmpString).good()) {
+//                    cout << "birthdate 1 : " << tmpString.c_str() << endl ;
+                    int count=0;
+                    for(int i=0 ; i< 8; i++){
+                        if(i==4 || i ==6 ){
+                            birthdate[count]= '\\';
+                            count ++;
+                        }
+                        birthdate[count]=tmpString[i];
+
+                        count ++;
+                    }
+                    birthdate[count]='\0';
+                }
+
+                //Study Description
+                if (StudyRecord->findAndGetOFString(DCM_StudyDescription, tmpString).good()) {
+                    strcpy(studydesc,tmpString.c_str());
+                }else{
+                    string nodesc= "No description found";
+                    strcpy(studydesc,nodesc.c_str());
+                }
+
+                //Study Date
+                if (StudyRecord->findAndGetOFString(DCM_StudyDate, tmpString).good()){
+                    int count=0;
+                    for(int i=0 ; i< 8; i++){
+                        if(i==4 || i ==6 ){
+                            date[count]= '\\';
+                            count ++;
+                        }
+                        date[count]=tmpString[i];
+                        count ++;
+                    }
+                    date[count]='\0';
+                }
+
+                //Set Patient information to be displayed on the screen
+                setPatientInfo(studydesc,date,patientName,birthdate);
+
+                //Going down the tree to find the series
+                while (((SeriesRecord = StudyRecord->nextSub(SeriesRecord)) != NULL)){
+                    //local variable, vector to store paths to files for each serie
+                    vector<string> paths;
+
+                    // counter for images within a serie
+                    int count =0;
+
+                    //going down the tree to find images from each serie
+                    while((FileRecord = SeriesRecord->nextSub(FileRecord)) != NULL){
+                        //store full path to each image
+                        string fullpath;
+
+                        //increment image counter, storing the number of images in the serie (multi frame or not)
+                        count +=1;
+                        //Dicom images File are File containing Image information = ImageRecord
+                        //This is the same depth
+
+                        //DCM_ReferencedFileID give the path to the Image from the current DICOM directory
+                        if(FileRecord->findAndGetOFStringArray(DCM_ReferencedFileID,tmpString).good()){
+                            //add image inner path to file path to get the full path
+                            fullpath = filepath + string(tmpString.c_str());
+                        }
 
 
-    if(root != NULL)
-            {
-                //Find next folder
-                while (((PatientRecord = root->nextSub(PatientRecord)) != NULL))
-                {
-                    while (((StudyRecord = PatientRecord->nextSub(StudyRecord)) != NULL))
-                    {
-                        char *date=new char[11];
-                        char *studydesc=new char[30];
-                        char *patientName=new char[50];
-                        char *birthdate=new char[11];
 
-                        if (StudyRecord->findAndGetOFString(DCM_PatientName, tmpString).good()) {
-                            cout << "PatientName 1: " << tmpString.c_str() << endl ;
-                            strcpy(patientName,tmpString.c_str());
-                            int count=0;
-                            while(patientName[count] != '\0'){
-                                if(patientName[count] == '^')
-                                    patientName[count] = ' ';
-                                count ++;
+                        //Check file status, if not EIS_Normal the file is not an Image
+                        //If not normal status the "parent" is not a serie
+
+                        if(count ==1){
+                            // If the file is not an image, don't store it, ie don't create a serie
+                            if (DicomImage(fullpath.c_str()).getStatus() != EIS_Normal){
+                                count =0;
+                                //cout << "statu not normal" << endl;
+
+                            }
+                        }
+                        // add image path to the local vector
+                        paths.push_back(fullpath);
+
+                        //storing basic information common to all images of the serie
+                        //count <= 3 is a security in case the first image is just a "reference plan"
+                        if(count <=3){
+                            if(FileRecord->findAndGetOFString(DCM_WindowCenter,tmpString).good()){
+                                WC1=atoi(tmpString.c_str());
                             }
 
-
-                        }
-                        else{
-                            string noname= "No patient name found";
-                            strcpy(patientName,noname.c_str());
-                        }
-
-                        if (StudyRecord->findAndGetOFString(DCM_PatientBirthDate, tmpString).good()) {
-                            cout << "birthdate 1 : " << tmpString.c_str() << endl ;
-                            int count=0;
-                            for(int i=0 ; i< 8; i++){
-                                if(i==4 || i ==6 ){
-                                    birthdate[count]= '\\';
-                                    count ++;
-                                }
-
-                                birthdate[count]=tmpString[i];
-                                count ++;
-                            }
-                            birthdate[count]='\0';
-
-                        }
-                        if (StudyRecord->findAndGetOFString(DCM_StudyDescription, tmpString).good()) {
-                            cout <<"Study Description: " << tmpString.c_str() << endl ;
-                            strcpy(studydesc,tmpString.c_str());
-                        }else{
-                            string nodesc= "No description found";
-                            strcpy(studydesc,nodesc.c_str());
-                        }
-
-                        if (StudyRecord->findAndGetOFString(DCM_StudyDate, tmpString).good()){
-                            cout << "date " << tmpString.c_str() << endl ;
-                            int count=0;
-                            for(int i=0 ; i< 8; i++){
-                                if(i==4 || i ==6 ){
-                                    date[count]= '\\';
-                                    count ++;
-                                }
-
-                                date[count]=tmpString[i];
-                                count ++;
-                            }
-                            date[count]='\0';
-
-                            cout << "date " << date <<  endl;
-                            //strcpy(date,tmpString.c_str());
-                        }
-
-                        setPatientInfo(studydesc,date,patientName,birthdate);
-
-
-
-
-
-                        while (((SeriesRecord = StudyRecord->nextSub(SeriesRecord)) != NULL))
-                        {
-                            //local variable, vector to store paths to files for each serie
-                            vector<string> paths;
-
-                            // counter for images within a serie
-                            int count =0;
-
-                            //going down the tree to find images
-                            while((FileRecord = SeriesRecord->nextSub(FileRecord)) != NULL){
-                                //full path to each image
-                                string fullpath;
-
-                                //increment image counter
-                                count +=1;
-
-                                if((ImageRecord = FileRecord->nextSub(ImageRecord)) != NULL)
-                                    cout <<"tree keep going" << endl;
-
-                                //DCM_ReferencedFileID give the name of the DICOM Image file
-                                if(FileRecord->findAndGetOFStringArray(DCM_ReferencedFileID,tmpString).good()){
-                                    //add image name to file path to get the full path
-                                    fullpath = filepath + string(tmpString.c_str());
-                                    if(count ==1)
-                                        firstpath =  filepath + string(tmpString.c_str());
-                                }
-
-                                //Check file status, if not EIS_Normal the file is not an Image
-                                //If not normal status the "parent" is not a serie
-
-                                if(count ==1){
-                                    if (DicomImage(fullpath.c_str()).getStatus() != EIS_Normal){
-                                        count =0;
-                                        cout << "statu not normal" << endl;
-                                    }
-                                }
-
-                                // add path to the local vector
-                                 paths.push_back(fullpath);
-
-
-                                 if(count <=3){
-                                    if(FileRecord->findAndGetOFString(DCM_WindowCenter,tmpString).good()){
-                                        //cout << "window center " << tmpString.c_str() << endl;
-                                        WC1=atoi(tmpString.c_str());
-
-                                    }
-                                    if(FileRecord->findAndGetOFString(DCM_WindowWidth,tmpString).good()){
-                                       // cout << "window width " << tmpString.c_str() << endl;
-                                        WW1= atoi(tmpString.c_str());
-                                    }
-                                 }
-
-
-                                 if(count<=2 ){
-                                     if(FileRecord->findAndGetOFStringArray(DCM_NumberOfFrames,tmpString).good()){
-                                          cout << "Nb of Frames " << tmpString.c_str() << endl;
-                                          nbFrame = atoi(tmpString.c_str());
-                                     }
-
-                                     if(FileRecord->findAndGetOFStringArray(DCM_ImageOrientationPatient,tmpString).good()){
-                                         cout << "image orientation patient " << tmpString.c_str() << endl;
-                                         seriePlan = findSeriePlan(tmpString.c_str());
-                                     }
-                                     if(FileRecord->findAndGetOFString(DCM_SliceThickness,tmpString).good()){
-                                         //cout << "image orientation patient " << tmpString.c_str() << endl;
-                                         rescale = atoi(tmpString.c_str()) ;
-                                         //cout << "RESCALE FACTOR " << rescaleFactor << endl;
-                                     }
-                                     if(FileRecord->findAndGetOFStringArray(DCM_PixelSpacing,tmpString).good()){
-                                         double pixelspacing = getPixelNb(tmpString.c_str());
-                                         rescale = rescale*pixelspacing;
-                                         cout << "pixel spacing " << pixelspacing << endl;
-                                         cout << "RESCALE FACTOR " << rescale << endl;
-                                     }
-
-                                 }
-
+                            if(FileRecord->findAndGetOFString(DCM_WindowWidth,tmpString).good()){
+                                WW1= atoi(tmpString.c_str());
 
                             }
 
-                            //count !=0 means the folder contain DICOM images so this is a serie
-                            if(count !=0){
-                                series +=1;
-                                cout << "series nb " <<series << "with "<< count <<" images" << endl;
+                            if(FileRecord->findAndGetOFStringArray(DCM_NumberOfFrames,tmpString).good()){
+                                 //cout << "Nb of Frames " << tmpString.c_str() << endl;
+                                 nbFrame = atoi(tmpString.c_str());
+                            }
 
-                                //get serie description
-                                char *desc=new char[100];
-                                if (SeriesRecord->findAndGetOFString(DCM_SeriesDescription, tmpString).good()){
-                                    strcpy(desc,tmpString.c_str());
-                                    cout << tmpString.c_str() << " " << endl;
-                                }
-
-                                //create a new serie of images
-                                Serie *serie = new Serie(series, seriePlan,paths, nbFrame,rescale, desc, WW1, WC1);
-
-                                //create a button for the new serie
-                                addSerieButton(serie);
-
-                                Series.push_back(serie);
-
+                            if(FileRecord->findAndGetOFStringArray(DCM_ImageOrientationPatient,tmpString).good()){
+                                //cout << "image orientation patient " << tmpString.c_str() << endl;
+                                seriePlan = findSeriePlan(tmpString.c_str());
+                            }
+                            if(FileRecord->findAndGetOFString(DCM_SliceThickness,tmpString).good()){
+                                rescale = atoi(tmpString.c_str()) ;
+                            }
+                            if(FileRecord->findAndGetOFStringArray(DCM_PixelSpacing,tmpString).good()){
+                                //use pixel spacing and slice thickness to get the final rescale factor
+                                //rescale factor used for other plan contruction
+                                double pixelspacing = getPixelSpacingNb(tmpString.c_str());
+                                rescale = rescale*pixelspacing;
                             }
                         }
                     }
+
+                    //count !=0 means the folder contain DICOM images so this is a serie
+                    if(count !=0){
+                        series +=1;
+                        //cout << "series nb " <<series << "with "<< count <<" images" << endl;
+
+                        //get serie description
+                        char *desc=new char[100];
+                        if (SeriesRecord->findAndGetOFString(DCM_SeriesDescription, tmpString).good()){
+                            strcpy(desc,tmpString.c_str());
+                            cout << tmpString.c_str() << " " << endl;
+                        }
+
+                        //create a new serie of images
+                        Serie *serie = new Serie(series, seriePlan,paths, nbFrame,rescale, desc, WW1, WC1);
+
+                        //create a button for the new serie
+                        addSerieButton(serie);
+
+                        //add the serie to the current window
+                        Series.push_back(serie);
+                    }
                 }
             }
-
+        }
+    }
 }
 
+
+//----------------------------------------------------------//
+//----- CREATION OF THE WIDGET TO DISPLAY PATIENT INFO -----//
+//----------------------------------------------------------//
 void MainWindow::setPatientInfo(char *studydesc, char *date, char *patientName, char *birthdate){
-    //Personnal Information
-    //QWidget *personalInfo = new QWidget(this);
     string str = string("<b>Personal Information:</b>") + string("<br>") + string(studydesc) + string("<br>") +  string(date) +  string("<br>") +  string(patientName) +  string("<br>") +  string("Birthdate: ") +  string(birthdate);
 
     QLabel *perso =new  QLabel( str.c_str()); //+ studydesc );//+ "\n" + date + "\n" + patientName + "\n" + "Birthdate: " + birthdate);
-
     perso->setMaximumHeight(120);
-
     ui->PersonalInfo->addWidget(perso);
-
 }
 
 
+//-------------------------------------------------------------//
+//----- ADD A BUTTON FOR EACH SERIE ON THE CURRENT WINDOW -----//
+//-------------------------------------------------------------//
 void MainWindow::addSerieButton(Serie *serie){
-    //adding button for each serie
+    //creating/adding button for each serie in the serieWidget
     QPushButton *button = new QPushButton(this);
 
-    // display first Image of the serie as seriebutton
+    // display first Image of the serie near the button
 //    DicomImage *serieImg;
 //    int nbFrame = serie->getNbFrames();
 
@@ -330,17 +325,12 @@ void MainWindow::addSerieButton(Serie *serie){
 //        serieImg = new DicomImage(serie->getPath(0).c_str(),0,0,1);
 //    }
 
-
 //    serieImg->setWindow(serie->getWC(),serie->getWW());
-
-
 //    uint8_t * pixel = (uint8_t *)serieImg->getOutputData(8);
-
 
 //    QImage *img = new QImage(pixel, serieImg->getWidth(), serieImg->getHeight(),QImage::Format_Indexed8);
 //    QPixmap pixmap = QPixmap::fromImage( QImage(img->scaled(QSize(50,50), Qt::IgnoreAspectRatio,Qt::SmoothTransformation)) );
 //    QIcon ButtonIcon(pixmap);
-
 
 //    button->setIcon(ButtonIcon);
 //    button->setIconSize(pixmap.rect().size());
@@ -357,7 +347,6 @@ void MainWindow::addSerieButton(Serie *serie){
     SerieDesc->setMaximumHeight(50);
     SerieDesc->setText(serie->getDescription()) ;
 
-
     QFrame *SerieFrame = new QFrame(this);
     SerieFrame->setFrameShape(QFrame::HLine);
     SerieFrame->setFrameShadow(QFrame::Sunken);
@@ -369,7 +358,12 @@ void MainWindow::addSerieButton(Serie *serie){
 
 }
 
+//---------------------------------------------------------------------------------//
+//----- DETERMINE THE DEFAULT PLAN FOR A GIVEN SERIE ------------------------------//
+//----- DEFAULT PLAN meaning the one created without "treatment on DICOM files ----//
+//---------------------------------------------------------------------------------//
 Plan MainWindow::findSeriePlan(const char *orientation){
+
     int count=0;
     int str=0;
     int coordinate=0;
@@ -428,7 +422,10 @@ Plan MainWindow::findSeriePlan(const char *orientation){
     }
 }
 
-double MainWindow::getPixelNb(const char* pixelArray){
+//----------------------------------------------------//
+//- Treat DICOM given information to render a number -//
+//----------------------------------------------------//
+double MainWindow::getPixelSpacingNb(const char* pixelArray){
     char *nb= new char[30];
     double number=0;
 
@@ -441,50 +438,60 @@ double MainWindow::getPixelNb(const char* pixelArray){
     nb[count]='\0';
     number=stod(nb);
 
-   // cout << "test " << nb < " " << number << endl;
-
     delete nb;
     return number;
 }
 
 
-
-
+//----------------------------------------------------------------------------------//
+//----------------------------CREATE DEFAULT PLAN ----------------------------------//
+//------------------------ Render Images according to the default plan -------------//
+//----------------------------------------------------------------------------------//
 void MainWindow::createDefaultPlan(){
-    //initializing index for images
-    currentPlan = Series[currentSerieNumber-1]->getdefaultPlan();
-    //rescaleFactor = Series[currentSerieNumber-1]->getRescaleFactor();
-    currentNbImages = Series[currentSerieNumber-1]->getNbImages();
+    Serie *serie=Series[currentSerieNumber-1];
+    //CurrentSerieNumber contains the number/id of the serie displayed in the current selected window
 
+    // currentPlan stores the serie plan displayed relatively to the selected window
+    // by default this is the default plan of the serie
+    currentPlan = serie->getdefaultPlan();
 
-    cout << "nb images "<< currentNbImages << endl;
+    //currentNbImages is the number of current displyed serie
+    currentNbImages = serie->getNbImages();
 
+    //local var to treat DICOM Images
+    //Information relative to the images will be stored add Pixel
     vector<DicomImage*> DicomImages;
 
-    int nbFrame = Series[currentSerieNumber-1]->getNbFrames();
+    //local variable containing the number of Frames
+    int nbFrame =serie->getNbFrames();
 
+    //Creating DICOM Images depending on the type:
+    //Single frame Images are stored separately
+    //Multiframe are stored in one DicomImage element
 
     for(int i=0; i< currentNbImages ; i++){
         if(nbFrame ==0)
-            DicomImages.push_back(new DicomImage(Series[currentSerieNumber-1]->getPath(i).c_str()));
+            DicomImages.push_back(new DicomImage(serie->getPath(i).c_str()));
         else {
              for(int j=0; j<nbFrame ; j++)
-                DicomImages.push_back(new DicomImage(Series[currentSerieNumber-1]->getPath(i).c_str(),0,j,1));
+                DicomImages.push_back(new DicomImage(serie->getPath(i).c_str(),0,j,1));
         }
 
 
     }
 
-    //**********DEALING WITH ALL IMAGES OF THE SERIE**********//
-    width = DicomImages[0]->getWidth(); // height and with are the default argument defined for the default plan of the Image
-    height =  DicomImages[0]->getHeight();
 
+    // height and with are the default argument defined for the default plan of the Image
+    int width = DicomImages[0]->getWidth();
+    int height =  DicomImages[0]->getHeight();
 
-    Series[currentSerieNumber-1]->setDepths(width,height);
-    Series[currentSerieNumber-1]->clearPixels();
+    // Update current serie information
+    serie->setDepths(width,height);
+    serie->clearPixels();
 
-    cout << "width " << width <<" height " << height << endl;
+    //cout << "width " << width <<" height " << height << endl;
 
+    // Checking status to know if all DICOM Images have been created without any trouble
     int check=true;
     for(int i=0; i<DicomImages.size(); i++){
         if(DicomImages[i] == NULL)
@@ -494,50 +501,116 @@ void MainWindow::createDefaultPlan(){
     }
 
 
-    if (check){
-        for(int i=0; i<DicomImages.size(); i++){
 
+    //Process images to render pixels
+    if (check){
+
+        for(int i=0; i<DicomImages.size(); i++){
+            //Contrast display depends on the selected one for each window
             if (contrast[0]==0)
-                DicomImages[i]->setWindow(Series[currentSerieNumber-1]->getWC(),Series[currentSerieNumber-1]->getWW());
+                DicomImages[i]->setWindow(serie->getWC(),serie->getWW());
             else if (contrast[0] ==1)
                 DicomImages[i] ->setMinMaxWindow();
             else
                 DicomImages[i] ->setHistogramWindow();
 
-            Uint8* pixelData = (Uint8 *)(DicomImages[i]->getOutputData(8 )); // bits per sample
+            //Getting pixel information from the DicomImage
+            // 8 is the number of pixel per sample
+
+            uint8_t* pixelData = (uint8_t *)(DicomImages[i]->getOutputData(8));
 
             // if (pixelData != NULL)
 
-            Series[currentSerieNumber-1]->storePixel((uint8_t *)pixelData);
+            //storing the pixel for the current serie
+            //according to the default plan of the serie pixel will be stored in a different vector
+            serie->storePixel((uint8_t *)pixelData);
+
 
        }
-
-
    }
    else
       cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
 
+    cout << "MDR " <<windowCreation <<endl;
+    //Call for window scene creation
+    if(windowCreation){
+        cout << "build views" << endl;
+        buildViews();
+        windowCreation=false;
+    }
+
+    cout<< "view built" << endl;
+    displayInScene(serie->getCurrentImg(currentPlan));
+
+    //createScene();
 
 
-    createScene();
+    //If the serie contains multiple images, the other corresponding plan can be created
+    //The function is called by default and stored
+    //As asked plan will only need to be rendered
     Series[currentSerieNumber-1]->constructPlans();
 
 }
 
+void MainWindow::buildViews(){
+
+    myScene= new QGraphicsScene(this);
+    myScene2= new QGraphicsScene(this);
+    myScene3= new QGraphicsScene(this);
+    myScene4= new QGraphicsScene(this);
+
+    //while building for the first time the selected window is the first and only one displayed
+    ui->graphicsView->setFrameStyle(3);
+
+    ui->graphicsView->setStyleSheet("color:orange");
+    ui->graphicsView_2->setStyleSheet("color:black");
+    ui->graphicsView_3->setStyleSheet("color:black");
+    ui->graphicsView_4->setStyleSheet("color:black");
+
+    ui->graphicsView->setBackgroundBrush(QBrush(Qt::black));
+    ui->graphicsView_2->setBackgroundBrush(QBrush(Qt::black));
+    ui->graphicsView_3->setBackgroundBrush(QBrush(Qt::black));
+    ui->graphicsView_4->setBackgroundBrush(QBrush(Qt::black));
+
+    ui->graphicsView->setScene(myScene);
+    ui->graphicsView_2->setScene(myScene2);
+    ui->graphicsView_3->setScene(myScene3);
+    ui->graphicsView_4->setScene(myScene4);
+
+
+
+
+}
+
+//---------------------------------------------===------------------//
+//-------------------------- CREATE SCENE --------=-----------------//
+//------ This function is called on first creation of a serie ----- //
+//------------------------------------------------------------------//
 void MainWindow::createScene(){
-//    QPixmap pixmap;
-//     pixmap = QPixmap::fromImage( *Images[Index[0]] );
-//    QPainter p(&pixmap);
+    //Local var for convenience, containing the serie to be rendered in the selected window
+    Serie *serie = Series[currentSerieNumber-1];
 
-
+    //Update information about the serie for the current selected window
     if(windowSerieNb[selectedWindow-1]==-1 || windowSerieNb[selectedWindow-1] != currentSerieNumber ){
         windowSerieNb[selectedWindow-1]= currentSerieNumber;
-        windowDefaultPlan[selectedWindow-1]= Series[currentSerieNumber-1]->getdefaultPlan();
-        windowCurrentPlan[selectedWindow-1]= Series[currentSerieNumber-1]->getdefaultPlan();
-        windowNbImg[selectedWindow-1]=  Series[currentSerieNumber-1]->getNbImages();
+        windowDefaultPlan[selectedWindow-1]= serie->getdefaultPlan();
+        windowCurrentPlan[selectedWindow-1]= serie->getdefaultPlan();
+        windowNbImg[selectedWindow-1]=  serie->getNbImages();
     }
 
-    cout << "windowCurrentPlan" << windowCurrentPlan[selectedWindow-1] << endl;
+    //This is a "casual" update
+    //All serie must store information to know in which plan is displayed in which window
+    //Variable used to link views of the same serie together
+    serie->setPlanWindows(windowSerieNb, windowCurrentPlan);
+
+    //While creating the scene only one image will be displayed
+    //GetCurrent image return the image corresponding to the window plan
+    QPixmap img = serie->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+    //QPixmap img = serie->getCurrentImg(currentPlan); // CHECK THERE IF ANY TROUBLE !!!!!!!!!!
+
+    //If views are marked linked
+    if(Series[currentSerieNumber-1]->getViewLinked())
+        paintLinkedLines();
 
 
     switch(selectedWindow){
@@ -546,11 +619,7 @@ void MainWindow::createScene(){
         if(creation[0]==0){
             creation[0] =1;
 
-
-             myScene->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[0])));
-           // myScene->addPixmap(QPixmap::fromImage(QImage (myPixelsZ[Index[0]],pixelXdepth,pixelYdepth, QImage::Format_Indexed8)));
-
-            // myScene->addPixmap( QPixmap::fromImage( *Images[Index[0]] ) );
+             myScene->addPixmap(img);
 
 
              ui->graphicsView->setBackgroundBrush(QBrush(Qt::black));
@@ -582,17 +651,14 @@ void MainWindow::createScene(){
              ui->graphicsView_3->setScene(myScene3);
              ui->graphicsView_4->setScene(myScene4);
         }else {
-            myScene->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[0])));
+            myScene->addPixmap(img);
 
             ui->graphicsView->setBackgroundBrush(QBrush(Qt::black));
-
             ui->graphicsView->setScene(myScene);
 
 
             ui->graphicsView->fitInView(myScene->sceneRect(),Qt::KeepAspectRatioByExpanding);
-
             ui->graphicsView->fitInView(QRectF(0,0,ui->graphicsView->width(), ui->graphicsView->height()),Qt::KeepAspectRatio);
-
             ui->graphicsView->setFrameRect(QRect(0,0,ui->graphicsView->width(), ui->graphicsView->height()));
         }
 
@@ -600,51 +666,42 @@ void MainWindow::createScene(){
     case 2:
         myScene2= new QGraphicsScene(this);
 
-        myScene2->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[1])));
-
+        myScene2->addPixmap(img);
         ui->graphicsView_2->setScene(myScene2);
 
-        if(creation[1]==0){
-             creation[1] =1;
+       // if(creation[1]==0){
+         //    creation[1] =1;
 
              ui->graphicsView_2->fitInView(myScene2->sceneRect(),Qt::KeepAspectRatioByExpanding);
-
              ui->graphicsView_2->fitInView(QRectF(0,0,ui->graphicsView_2->width(), ui->graphicsView_2->height()),Qt::KeepAspectRatio);
-
              ui->graphicsView_2->setFrameRect(QRect(0,0,ui->graphicsView_2->width(), ui->graphicsView_2->height()));
-        }
+        //}
         break;
     case 3:
         myScene3= new QGraphicsScene(this);
 
-        myScene3->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[2])));
-
+        myScene3->addPixmap(img);
         ui->graphicsView_3->setScene(myScene3);
 
-        if(creation[2]==0){
-             creation[2] =1;
+        // if(creation[2]==0)
+       //       creation[2] =1;
              ui->graphicsView_3->fitInView(myScene3->sceneRect(),Qt::KeepAspectRatioByExpanding);
-
              ui->graphicsView_3->fitInView(QRectF(0,0,ui->graphicsView_3->width(), ui->graphicsView_3->height()),Qt::KeepAspectRatio);
-
              ui->graphicsView_3->setFrameRect(QRect(0,0,ui->graphicsView_3->width(), ui->graphicsView_3->height()));
-        }
+        //}
         break;
     case 4:
         myScene4= new QGraphicsScene(this);
 
-        myScene4->addPixmap(QPixmap::fromImage(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[3])));
+        myScene4->addPixmap(img);
+        ui->graphicsView_4->setScene(myScene4);
 
-         ui->graphicsView_4->setScene(myScene4);
-
-         if(creation[3]==0){
-             creation[3] =1;
+        // if(creation[3]==0){
+          //   creation[3] =1;
              ui->graphicsView_4->fitInView(myScene4->sceneRect(),Qt::KeepAspectRatioByExpanding);
-
              ui->graphicsView_4->fitInView(QRectF(0,0,ui->graphicsView_4->width(), ui->graphicsView_4->height()),Qt::KeepAspectRatio);
-
              ui->graphicsView_4->setFrameRect(QRect(0,0,ui->graphicsView_4->width(), ui->graphicsView_4->height()));
-         }
+         //}
         break;
 
     }
@@ -652,27 +709,85 @@ void MainWindow::createScene(){
     updateWindowInfo();
 }
 
+
+
+void MainWindow::displayInScene(QPixmap img){
+    Serie *serie = Series[currentSerieNumber-1];
+    //Set the information if the window wasnt containing any Serie
+    if(windowSerieNb[selectedWindow-1]==-1 || windowSerieNb[selectedWindow-1] != currentSerieNumber ){
+        windowSerieNb[selectedWindow-1]= currentSerieNumber;
+        windowDefaultPlan[selectedWindow-1]= serie->getdefaultPlan();
+        windowCurrentPlan[selectedWindow-1]= serie->getdefaultPlan();
+        windowNbImg[selectedWindow-1]=  serie->getNbImages();
+    }
+
+    //This is a "casual" update
+    //All serie must store information to know in which plan is displayed in which window
+    //Variable used to link views of the same serie together
+    serie->setPlanWindows(windowSerieNb, windowCurrentPlan);
+
+
+    //If views are marked linked
+    if(serie->getViewLinked())
+        paintLinkedLines();
+
+
+    switch(selectedWindow){
+    case 1:
+        myScene= new QGraphicsScene(this);
+        myScene->addPixmap(img);
+        ui->graphicsView->setScene(myScene);
+        break;
+    case 2:
+        myScene2= new QGraphicsScene(this);
+        myScene2->addPixmap(img);
+        ui->graphicsView_2->setScene(myScene2);
+        break;
+    case 3:
+        myScene3= new QGraphicsScene(this);
+        myScene3->addPixmap(img);
+        ui->graphicsView_3->setScene(myScene3);
+        break;
+    case 4:
+        myScene4= new QGraphicsScene(this);
+        myScene4->addPixmap(img);
+        ui->graphicsView_4->setScene(myScene4);
+        break;
+    }
+}
+
 void MainWindow::constructSagittalPlan(){
    // Series[currentSerieNumber-1]->constructSagittalPlan();
     windowCurrentPlan[selectedWindow-1]=Sagittal;
-    createScene();
+ //   createScene();
+   displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
+
+   updateWindowInfo();
 }
 
 
 
 void MainWindow::constructAxialPlan(){
    // Series[currentSerieNumber-1]->constructAxialPlan();
-    windowCurrentPlan[selectedWindow-1]=Axial;
-    createScene();
+   windowCurrentPlan[selectedWindow-1]=Axial;
+   // createScene();
 
+    displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
+
+    updateWindowInfo();
 
 }
 
 void MainWindow::constructCoronalPlan(){
     //Series[currentSerieNumber-1]->constructCoronalPlan();
-    windowCurrentPlan[selectedWindow-1]=Coronal;
+
   //  cout <<"current plan " << windowCurrentPlan[selectedWindow-1] << "selected window "<< selectedWindow<<  endl;
-    createScene();
+   // createScene();
+
+    windowCurrentPlan[selectedWindow-1]=Coronal;
+    displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
+
+    updateWindowInfo();
 }
 
 
@@ -883,6 +998,9 @@ void MainWindow::updateWindowInfo(){
         }
     }
 
+//    cout << "current window " << selectedWindow << endl;
+//    cout << " displayed plan " << windowCurrentPlan[selectedWindow-1] << endl;
+
 }
 
 
@@ -891,6 +1009,13 @@ void MainWindow::updateWindowInfo(){
 //---------------------ALL PRIVATE SLOTS FOLLOWING -----------------------------//
 //********************************************************************************//
 void MainWindow::mousePressEvent(QMouseEvent* e){
+
+    if(Series[currentSerieNumber-1]->getViewLinked()){
+        cout << "views linked " << endl;
+        //if views are linked I need to update the previous window on click, only meaning removing the plan line
+        displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
+    }
+
     if(ui->graphicsView->underMouse()){
         selectedWindow=1;
         ui->graphicsView->setFrameStyle(3);
@@ -945,9 +1070,15 @@ void MainWindow::mousePressEvent(QMouseEvent* e){
 
     currentSerieNumber=windowSerieNb[selectedWindow-1];
 
-    cout << "currenterie nb " << currentSerieNumber << endl;
+
+
+
     updateWindowInfo();
-    cout <<" eh ca beug" << endl;
+
+    if(windowSerieNb[selectedWindow-1]!= -1 && Series[currentSerieNumber-1]->getViewLinked())
+        paintLinkedLines();
+
+
 
 }
 
@@ -960,37 +1091,25 @@ void MainWindow::wheelEvent(QWheelEvent *event)
         Series[currentSerieNumber-1]->setPreviousIndex(currentPlan);
     }
 
-    QImage img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
 
-    if(invertGrayScale)
-        img.invertPixels();
+    if(Series[currentSerieNumber-1]->getViewLinked())
+        paintLinkedLines();
 
-    switch(selectedWindow){
-    case 1:
-        myScene->addPixmap(QPixmap::fromImage(img));
-        ui->graphicsView->setScene(myScene);
-        break;
-    case 2:
-        myScene2->addPixmap( QPixmap::fromImage(img));
-        ui->graphicsView_2->setScene(myScene2);
-        break;
-    case 3:
-        myScene3->addPixmap( QPixmap::fromImage(img));
-        ui->graphicsView_3->setScene(myScene3);
-        break;
-    case 4:
-        myScene4->addPixmap( QPixmap::fromImage(img));
-        ui->graphicsView_4->setScene(myScene4);
-        break;
-    }
+
+    displayInScene(img);
 
 
 }
 
 
+
+
 void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     currentSerieNumber = b->property("Id").toInt();
-    currentPlan = Series[currentSerieNumber-1]->getdefaultPlan();
+
+    Serie *serie= Series[currentSerieNumber-1];
+    currentPlan = serie->getdefaultPlan();
 
     cout << "property number  " << currentSerieNumber<<endl;
     string buttonName = b->text().toLocal8Bit().constData();
@@ -1001,7 +1120,10 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
         windowSerieNb[selectedWindow-1]=-1;
 
 
-    createDefaultPlan();
+    if(serie->isBuilt())
+        displayInScene(serie->getCurrentImg(serie->getdefaultPlan()));
+    else
+        createDefaultPlan();
 
     updateWindowInfo();
 
@@ -1017,28 +1139,29 @@ void MainWindow::hide_advanced()
 
 void MainWindow::invert_grayscale()
 {
+    //To redo
     invertGrayScale=(1-invertGrayScale)%2;
 
-    QImage img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
 
-    if(invertGrayScale)
-        img.invertPixels();
+    //if(invertGrayScale)
+       // img.invertPixels();
 
     switch(selectedWindow){
     case 1:
-        myScene->addPixmap(QPixmap::fromImage(img));
+        myScene->addPixmap(img);
         ui->graphicsView->setScene(myScene);
         break;
     case 2:
-        myScene2->addPixmap( QPixmap::fromImage(img));
+        myScene2->addPixmap(img);
         ui->graphicsView_2->setScene(myScene2);
         break;
     case 3:
-        myScene3->addPixmap( QPixmap::fromImage(img));
+        myScene3->addPixmap(img);
         ui->graphicsView_3->setScene(myScene3);
         break;
     case 4:
-        myScene4->addPixmap( QPixmap::fromImage(img));
+        myScene4->addPixmap(img);
         ui->graphicsView_4->setScene(myScene4);
         break;
     }
@@ -1149,24 +1272,24 @@ void MainWindow::rotate(int rotationIndice){
     QTransform rotating;
     rotating.rotate(rotation);
 
-    QImage img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
 
 
     switch(selectedWindow){
     case 1:
-        myScene->addPixmap(QPixmap::fromImage(img.transformed(rotating)));
+        myScene->addPixmap(img.transformed(rotating));
         ui->graphicsView->setScene(myScene);
         break;
     case 2:
-        myScene2->addPixmap( QPixmap::fromImage(img.transformed(rotating)));
+        myScene2->addPixmap(img.transformed(rotating));
         ui->graphicsView_2->setScene(myScene2);
         break;
     case 3:
-        myScene3->addPixmap( QPixmap::fromImage(img.transformed(rotating)));
+        myScene3->addPixmap(img.transformed(rotating));
         ui->graphicsView_3->setScene(myScene3);
         break;
     case 4:
-        myScene4->addPixmap( QPixmap::fromImage(img.transformed(rotating)));
+        myScene4->addPixmap(img.transformed(rotating));
         ui->graphicsView_4->setScene(myScene4);
         break;
     }
@@ -1252,31 +1375,116 @@ void MainWindow::callSagittal(){
 }
 
 void MainWindow::callTest(){
-    cout << "callTest"<< endl;
+  cout << "callTest"<< endl;
 
-    QImage img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+  Series[currentSerieNumber-1]->setViewLinked(true);
 
-    QPixmap pixmap = QPixmap::fromImage(img);
-    QPainter p(&pixmap);
-
-    int index=250;
-
-
-    p.setRenderHint(QPainter::Antialiasing);
-    p.setPen(QPen(Qt::red, 2));
-    p.drawLine(index, 0,index, height);
-    p.end(); // Don't forget this line!
-
-    myScene->addPixmap( pixmap );
+  //paintLinkedLines();
 
 
    // currentPlan=Sagittal;
    // constructAxialPlan();
 
+
+    //createDefaultPlan();
+    paintLinkedLines();
+
 }
 
 void MainWindow::link_views(){
-    viewConnected= true;
+    Series[currentSerieNumber-1]->setViewLinked(true);
+}
+
+void MainWindow::paintLinkedLines(){
+    cout << "paint on linked views" << endl;
+    Serie *serie = Series[currentSerieNumber-1];
+
+    int axialWindow=serie->getAxialWindow();
+    int coronalWindow=serie->getCoronalWindow();
+    int sagittalWindow=serie->getSagittalWindow();
+
+    QPixmap Axialmap, Sagittalmap,Coronalmap;
+    int bx,by,ex,ey;
+
+    switch(currentPlan){
+    case Axial:
+        bx=0;
+        by = ey = serie->getZIndex();
+        if(coronalWindow != -1){
+            cout << "coronal window " << coronalWindow <<endl;
+            Coronalmap =serie->getCurrentImg(Coronal);
+            ex=Coronalmap.width();
+            paintOnScene(Coronalmap,coronalWindow,bx,by,ex,ey);
+        }
+        if(sagittalWindow != -1){
+            Sagittalmap = serie->getCurrentImg(Sagittal);
+            ex=Sagittalmap.width();
+            paintOnScene(Sagittalmap,sagittalWindow,bx,by,ex,ey);
+        }
+        break;
+    case Coronal:
+        if(axialWindow != -1){
+            Axialmap =serie->getCurrentImg(Axial);
+            bx=0;
+            by = ey = serie->getYIndex();
+            ex=Axialmap.width();
+            paintOnScene(Axialmap,axialWindow,bx,by,ex,ey);
+        }
+        if(sagittalWindow != -1){
+            Sagittalmap = serie->getCurrentImg(Sagittal);
+            bx= ex = serie->getYIndex();
+            by=0;
+            ey=Sagittalmap.height();
+            paintOnScene(Sagittalmap,sagittalWindow,bx,by,ex,ey);
+        }
+        break;
+    case Sagittal:
+        bx = ex = serie->getXIndex();
+        by=0;
+        if(axialWindow != -1){
+            Axialmap =serie->getCurrentImg(Axial);
+            ey=Axialmap.height();
+            paintOnScene(Axialmap,axialWindow,bx,by,ex,ey);
+        }
+        if(coronalWindow != -1){
+            Coronalmap = serie->getCurrentImg(Coronal);
+            ey=Coronalmap.height();
+            paintOnScene(Coronalmap,coronalWindow,bx,by,ex,ey);
+        }
+        break;
+    default:
+        break;
+
+    }
+}
+
+void MainWindow::paintOnScene(QPixmap &pixmap, int sceneNb,int beginX,int beginY,int endX, int endY ){
+    QPainter p(&pixmap);
+
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(QPen(Qt::red, 2));
+    p.drawLine(beginX,beginY,endX, endY);
+    p.end(); // Don't forget this line!
+
+    //cout << "window nb " << sceneNb << endl;
+    //cout << "bx " << beginX << " by " << beginY << " ex " << endX << " ey " << endY << endl;
+
+    switch(sceneNb){
+    case 1:
+        myScene->addPixmap(pixmap);
+        break;
+    case 2:
+        myScene2->addPixmap(pixmap);
+        break;
+    case 3:
+        myScene3->addPixmap(pixmap);
+        break;
+    case 4:
+        myScene4->addPixmap(pixmap);
+        break;
+    default:
+        break;
+    }
 
 }
 

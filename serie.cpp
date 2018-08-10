@@ -1,12 +1,15 @@
 #include "serie.h"
 
 #include <string>
+#include <QPainter>
 
 
 
 Serie::Serie(int id, Plan plan, vector<string> &paths, int nbframes, double rescale, char *description, int ww, int wc)
 {
     defaultPlan=plan;
+    built=false;
+    MultiPlan=false;
 
     imgPaths = paths;
 
@@ -14,7 +17,7 @@ Serie::Serie(int id, Plan plan, vector<string> &paths, int nbframes, double resc
     WW=ww;
     WC=wc;
 
-    invertgrayScale=0;
+    viewLinked = false;
 
     rescaleXFactor=1;
     rescaleYFactor=1;
@@ -54,20 +57,18 @@ Serie::Serie(int id, Plan plan, vector<string> &paths, int nbframes, double resc
     pixelYdepth=0;
     pixelZdepth=0;
 
-//    cout << "creatin serie nb " << id << endl;
-//    cout << "first img path "<<imgPaths[0] << endl;
-//    cout << "serie plan " << defaultPlan <<endl;
+    axialWindow=-1;
+    coronalWindow=-1;
+    sagittalWindow=-1;
+
 
 }
 
-QImage Serie::getCurrentImg(Plan currentPlan){
+QPixmap Serie::getCurrentImg(Plan currentPlan){
 //    cout << serieName << endl;
 //    cout << "Xdepth " << pixelXdepth << endl;
 //    cout << "Ydepth " << pixelYdepth << endl;
 //    cout << "Zdepth " << pixelZdepth << endl;
-
-//   cout << "current window Plan" << currentPlan << endl;
-//   cout << "defaultPlan" << defaultPlan << endl;
 
     QImage Image;
 
@@ -120,11 +121,7 @@ QImage Serie::getCurrentImg(Plan currentPlan){
         break;
     }
 
-    //cout << "invert pixel " <<invertgrayScale <<  endl;
-    if(invertgrayScale){
-      Image.invertPixels();
-    }
-    return Image;
+    return QPixmap::fromImage(Image);
 
 }
 
@@ -136,7 +133,9 @@ string Serie::getPath(int pathNb){
 
 }
 
-
+bool Serie::isBuilt(){
+    return built;
+}
 
 char* Serie::getName(){
     return serieName;
@@ -197,8 +196,7 @@ int Serie::getZdepth(){
 
 
 void Serie::setDepths(int width, int height){
-    cout << serieName << endl;
-    cout << "setDepth" << endl;
+    built=true;
     switch(defaultPlan){
     case Axial:
         setXdepth(width);
@@ -272,6 +270,7 @@ void Serie::clearPixels(){
 
 }
 void Serie::constructPlans(){
+    MultiPlan=true;
     switch(defaultPlan){
     case Axial:
         constructCoronalPlan();
@@ -431,7 +430,57 @@ void Serie::setPreviousIndex(Plan plan){
 
 }
 
-void Serie::invertGrayScale(){
-    invertgrayScale = (1-invertgrayScale)%2;
+
+void Serie::setViewLinked(bool linked){
+    if(MultiPlan)
+        viewLinked = linked;
 }
+
+//might be useless
+bool Serie::getViewLinked(){
+    return viewLinked;
+}
+
+void Serie::setPlanWindows(int windowSerieNb[4], Plan windowCurrentPlan[4]){
+    axialWindow=-1;
+    coronalWindow=-1;
+    sagittalWindow=-1;
+
+    for(int i =0; i<4; i++){
+        if(windowSerieNb[i]==serieId){
+            switch(windowCurrentPlan[i]){
+            case Axial:
+                axialWindow=i+1;
+                break;
+            case Sagittal:
+                sagittalWindow=i+1;
+                break;
+            case Coronal:
+                coronalWindow=i+1;
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+//    cout << " axial window " << axialWindow << endl;
+//    cout << "coronal " << coronalWindow << endl;
+//    cout << "sagtt " << sagittalWindow << endl;
+
+}
+
+
+int Serie::getAxialWindow(){
+    return axialWindow;
+}
+
+int Serie::getCoronalWindow(){
+    return coronalWindow;
+}
+
+int Serie::getSagittalWindow(){
+    return sagittalWindow;
+}
+
 

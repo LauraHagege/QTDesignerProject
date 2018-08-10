@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <QImage>
+#include <QPixmap>
+#include <QPainter>
 
 
 using namespace std;
@@ -13,6 +15,8 @@ enum Plan {Axial, Coronal, Sagittal, Unknown};
 class Serie
 {
 private:
+    bool built;
+
     char serieName[30];
     char serieDesc[100];
     Plan defaultPlan;
@@ -42,13 +46,19 @@ private:
     int pixelYdepth;
     int pixelZdepth;
 
-    bool invertgrayScale;
+    bool viewLinked;
+    bool MultiPlan;
+
+    int axialWindow;
+    int coronalWindow;
+    int sagittalWindow;
 
 public:
     Serie(int id, Plan plan, vector <string> &Path, int nbframes, double rescale, char * description, int ww, int wc);
-    QImage getCurrentImg(Plan currentPlan);
+    QPixmap getCurrentImg(Plan currentPlan);
     string getPath(int pathNb);
 
+    bool isBuilt();
     char* getName();
     char *getDescription();
     Plan getdefaultPlan();
@@ -86,7 +96,17 @@ public:
     void constructCoronalPlan();
     void constructSagittalPlan();
 
-    void invertGrayScale();
+    void setViewLinked(bool linked);
+    bool getViewLinked();
+
+    void setPlanWindows(int windowSerieNb[], Plan windowCurrentPlan[]);
+
+    int getAxialWindow();
+    int getCoronalWindow();
+    int getSagittalWindow();
+
+
+
 
 };
 
