@@ -42,11 +42,12 @@ private:
     int pixelYdepth;
     int pixelZdepth;
 
-    bool invertgrayScale;
+
+    
 
 public:
     Serie(int id, Plan plan, vector <string> &Path, int nbframes, double rescale, char * description, int ww, int wc);
-    QImage getCurrentImg(Plan currentPlan);
+    QPixmap getCurrentImg(Plan currentPlan);
     string getPath(int pathNb);
 
     char* getName();
@@ -86,7 +87,6 @@ public:
     void constructCoronalPlan();
     void constructSagittalPlan();
 
-    void invertGrayScale();
 
 };
 

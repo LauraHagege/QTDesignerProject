@@ -92,7 +92,6 @@ QImage Serie::getCurrentImg(Plan currentPlan){
             Image= QImage (myPixelsY[imgYIndex],pixelXdepth,pixelZdepth, QImage::Format_Indexed8);
             break;
         case Axial:
-            cout << "coronal from axial !" << endl;
             Image= (QImage (myPixelsY[imgYIndex],pixelXdepth,pixelZdepth, QImage::Format_Indexed8)).scaled(QSize(pixelXdepth,rescaleZFactor*pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
             break;
         case Sagittal:
@@ -121,10 +120,10 @@ QImage Serie::getCurrentImg(Plan currentPlan){
         break;
     }
 
-    cout << "invert pixel " <<invertgrayScale <<  endl;
-    //if(invertgrayScale)
-      //  Image.invertPixels();
-
+    //cout << "invert pixel " <<invertgrayScale <<  endl;
+    if(invertgrayScale){
+      Image.invertPixels();
+    }
     return Image;
 
 }
@@ -247,6 +246,7 @@ void Serie::setZdepth(int depth){
 }
 
 void Serie::storePixel(uint8_t *pixelData){
+    //cout << "storePixels" << endl;
     switch(defaultPlan){
     case Axial:
         myPixelsZ.push_back(pixelData);
@@ -265,6 +265,31 @@ void Serie::storePixel(uint8_t *pixelData){
 
 }
 
+void Serie::clearPixels(){
+    myPixelsX.clear();
+    myPixelsY.clear();
+    myPixelsZ.clear();
+
+}
+void Serie::constructPlans(){
+    switch(defaultPlan){
+    case Axial:
+        constructCoronalPlan();
+        constructSagittalPlan();
+        break;
+    case Coronal:
+        constructAxialPlan();
+        constructSagittalPlan();
+        break;
+    case Sagittal:
+        constructAxialPlan();
+        constructCoronalPlan();
+        break;
+    default:
+        break;
+    }
+
+}
 
 void Serie::constructAxialPlan(){
     if(defaultPlan == Sagittal){

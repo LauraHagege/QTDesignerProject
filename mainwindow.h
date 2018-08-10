@@ -67,12 +67,11 @@ public:
 
     Plan findSeriePlan(const char * orientation);
     double getPixelNb(const char* pixelArray);
-    void rotate(int rotation);
+    void rotate(int rotationIndice);
 
     void updateWindowInfo();
 
-    void displayImagesinScene();
-    void displayinInvert();
+    void updateContrast();
 
 
 
@@ -123,6 +122,7 @@ private:
     Plan windowDefaultPlan[4];
     Plan windowCurrentPlan[4];
     int windowNbImg[4];
+    int windowRotation[4]; // four step rotation, 1,2,3,4 adding 45 degree each time
 
     QButtonGroup *buttonGroup; //button to choose the displayed serie
 

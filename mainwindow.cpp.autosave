@@ -1276,8 +1276,7 @@ void MainWindow::callTest(){
 }
 
 void MainWindow::link_views(){
-    viewConnected= true;
-
+    
 }
 
 
