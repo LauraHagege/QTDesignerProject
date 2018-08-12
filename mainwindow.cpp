@@ -40,7 +40,6 @@ MainWindow::MainWindow(QWidget *parent) :
     report = new ReportWindow();
 
     for(int i=0 ; i<4; i++){
-        creation[i]=0;
         contrast[i]=0;
         windowSerieNb[i]=-1;
         windowCurrentPlan[i]=Unknown;
@@ -539,11 +538,7 @@ void MainWindow::createDefaultPlan(){
         windowCreation=false;
     }
 
-    cout<< "view built" << endl;
     displayInScene(serie->getCurrentImg(currentPlan));
-
-    //createScene();
-
 
     //If the serie contains multiple images, the other corresponding plan can be created
     //The function is called by default and stored
@@ -552,6 +547,10 @@ void MainWindow::createDefaultPlan(){
 
 }
 
+//-----------------------------------------------------------------------//
+//--------------------------- BUILD VIEWS -------------------------------//
+//----- Initializing QGraphicsScene and graphicsView for the window -----//
+//-----------------------------------------------------------------------//
 void MainWindow::buildViews(){
 
     myScene= new QGraphicsScene(this);
@@ -578,7 +577,10 @@ void MainWindow::buildViews(){
     ui->graphicsView_4->setScene(myScene4);
 }
 
-
+//----------------------------------------------------------------------------------//
+//----------------------------- DISPLAY IN SCENE -----------------------------------//
+//--- Function to display the image given as a parameter in the "selectedWindow" ---//
+//----------------------------------------------------------------------------------//
 void MainWindow::displayInScene(QPixmap img){
     Serie *serie = Series[currentSerieNumber-1];
     //Set the information if the window wasnt containing any Serie
@@ -624,33 +626,35 @@ void MainWindow::displayInScene(QPixmap img){
     }
 }
 
-void MainWindow::constructSagittalPlan(){
-   // Series[currentSerieNumber-1]->constructSagittalPlan();
+
+//----------------------------------------------------------------------//
+//--------------------------- DISPPLAY SAGITTAL PLAN  ------------------//
+//----------------------------------------------------------------------//
+void MainWindow::displaySagittalPlan(){
     windowCurrentPlan[selectedWindow-1]=Sagittal;
- //   createScene();
    displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
 
    updateWindowInfo();
 }
 
-
-
-void MainWindow::constructAxialPlan(){
-   // Series[currentSerieNumber-1]->constructAxialPlan();
+//------------------------------------------------------------------//
+//--------------------------- DISPLAY AXIAL PLAN  ------------------//
+//------------------------------------------------------------------//
+void MainWindow::displayAxialPlan(){
    windowCurrentPlan[selectedWindow-1]=Axial;
-   // createScene();
 
     displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
-
     updateWindowInfo();
 
 }
 
-void MainWindow::constructCoronalPlan(){
-    //Series[currentSerieNumber-1]->constructCoronalPlan();
+
+//--------------------------------------------------------------------//
+//--------------------------- DISPLAY CORONAL PLAN  ------------------//
+//--------------------------------------------------------------------//
+void MainWindow::displayCoronalPlan(){
 
   //  cout <<"current plan " << windowCurrentPlan[selectedWindow-1] << "selected window "<< selectedWindow<<  endl;
-   // createScene();
 
     windowCurrentPlan[selectedWindow-1]=Coronal;
     displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
@@ -658,9 +662,9 @@ void MainWindow::constructCoronalPlan(){
     updateWindowInfo();
 }
 
-
-
-
+//--------------------------------------------------------------------//
+//---------------------------- CREATE BUTTONS  -----------------------//
+//--------------------------------------------------------------------//
 void MainWindow::createButtons(){
     ui->mainToolBar->setIconSize(QSize(33,33));
     ui->AdvancedSettings->setIconSize(QSize(33,33));
@@ -833,7 +837,9 @@ void MainWindow::createButtons(){
 
 }
 
-
+//---------------------------------------------------------------//
+//------------------------ UPDATE WINDOW INFO  ------------------//
+//---------------------------------------------------------------//
 void MainWindow::updateWindowInfo(){
     if(currentSerieNumber != -1)
         currentNbImages=Series[currentSerieNumber-1]->getNbImages();
@@ -874,389 +880,9 @@ void MainWindow::updateWindowInfo(){
 
 }
 
-
-
-//********************************************************************************//
-//---------------------ALL PRIVATE SLOTS FOLLOWING -----------------------------//
-//********************************************************************************//
-void MainWindow::mousePressEvent(QMouseEvent* e){
-    if(ui->graphicsView->underMouse()){
-        selectedWindow=1;
-        ui->graphicsView->setFrameStyle(3);
-        ui->graphicsView_2->setFrameStyle(1);
-        ui->graphicsView_3->setFrameStyle(1);
-        ui->graphicsView_4->setFrameStyle(1);
-
-        ui->graphicsView->setStyleSheet("color:orange");
-        ui->graphicsView_2->setStyleSheet("color:black");
-        ui->graphicsView_3->setStyleSheet("color:black");
-        ui->graphicsView_4->setStyleSheet("color:black");
-
-    }
-    else if(ui->graphicsView_2->underMouse()){
-        selectedWindow=2;
-        ui->graphicsView->setFrameStyle(1);
-        ui->graphicsView_2->setFrameStyle(3);
-        ui->graphicsView_3->setFrameStyle(1);
-        ui->graphicsView_4->setFrameStyle(1);
-
-        ui->graphicsView->setStyleSheet("color:black");
-        ui->graphicsView_2->setStyleSheet("color:orange");
-        ui->graphicsView_3->setStyleSheet("color:black");
-        ui->graphicsView_4->setStyleSheet("color:black");
-
-    }
-    else if(ui->graphicsView_3->underMouse()){
-        selectedWindow=3;
-        ui->graphicsView->setFrameStyle(1);
-        ui->graphicsView_2->setFrameStyle(1);
-        ui->graphicsView_3->setFrameStyle(3);
-        ui->graphicsView_4->setFrameStyle(1);
-
-        ui->graphicsView->setStyleSheet("color:black");
-        ui->graphicsView_2->setStyleSheet("color:black");
-        ui->graphicsView_3->setStyleSheet("color:orange");
-        ui->graphicsView_4->setStyleSheet("color:black");
-    }
-    else if(ui->graphicsView_4->underMouse()){
-        selectedWindow=4;
-        ui->graphicsView->setFrameStyle(1);
-        ui->graphicsView_2->setFrameStyle(1);
-        ui->graphicsView_3->setFrameStyle(1);
-        ui->graphicsView_4->setFrameStyle(3);
-
-
-        ui->graphicsView->setStyleSheet("color:black");
-        ui->graphicsView_2->setStyleSheet("color:orange");
-        ui->graphicsView_3->setStyleSheet("color:black");
-        ui->graphicsView_4->setStyleSheet("color:orange");
-    }
-
-    currentSerieNumber=windowSerieNb[selectedWindow-1];
-
-    if(windowSerieNb[selectedWindow-1]!= -1 && Series[currentSerieNumber-1]->getViewLinked())
-        displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
-
-    updateWindowInfo();
-
-
-
-    //if(windowSerieNb[selectedWindow-1]!= -1 && Series[currentSerieNumber-1]->getViewLinked())
-      //  paintLinkedLines();
-
-
-
-}
-
-void MainWindow::wheelEvent(QWheelEvent *event){
-    if(Scroll->isChecked()){
-        if(event->delta() >0)
-            Series[currentSerieNumber-1]->setNextIndex(currentPlan);
-
-        else
-            Series[currentSerieNumber-1]->setPreviousIndex(currentPlan);
-
-        QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
-
-        if(Series[currentSerieNumber-1]->getViewLinked())
-            paintLinkedLines();
-
-
-        displayInScene(img);
-    }
-}
-
-
-
-
-void MainWindow::buttonInGroupClicked(QAbstractButton *b){
-    currentSerieNumber = b->property("Id").toInt();
-
-    Serie *serie= Series[currentSerieNumber-1];
-    currentPlan = serie->getdefaultPlan();
-
-    cout << "property number  " << currentSerieNumber<<endl;
-    string buttonName = b->text().toLocal8Bit().constData();
-    //cout << "button " << buttonName << " clicked, associated serie size: "<< this->allPath[buttonName].size() << endl;
-    currentSerie=buttonName;
-
-    if(windowSerieNb[selectedWindow-1] == currentSerieNumber)
-        windowSerieNb[selectedWindow-1]=-1;
-
-
-    if(serie->isBuilt())
-        displayInScene(serie->getCurrentImg(serie->getdefaultPlan()));
-    else
-        createDefaultPlan();
-
-    updateWindowInfo();
-
-
-}
-
-
-
-void MainWindow::hide_advanced()
-{
-    ui->AdvancedSettings->setVisible(false);
-}
-
-void MainWindow::invert_grayscale()
-{
-    //To redo
-    invertGrayScale=(1-invertGrayScale)%2;
-
-    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
-
-    //if(invertGrayScale)
-       // img.invertPixels();
-    displayInScene(img);
-
-//    switch(selectedWindow){
-//    case 1:
-//        myScene->addPixmap(img);
-//        ui->graphicsView->setScene(myScene);
-//        break;
-//    case 2:
-//        myScene2->addPixmap(img);
-//        ui->graphicsView_2->setScene(myScene2);
-//        break;
-//    case 3:
-//        myScene3->addPixmap(img);
-//        ui->graphicsView_3->setScene(myScene3);
-//        break;
-//    case 4:
-//        myScene4->addPixmap(img);
-//        ui->graphicsView_4->setScene(myScene4);
-//        break;
-//    }
-
-}
-
-void MainWindow::show_advanced()
-{
-      ui->AdvancedSettings->setVisible(true);
-}
-
-void MainWindow::display_one_window()
-{
-    //set default selected window
-    selectedWindow=1;
-
-    //update frame for selected window
-    ui->graphicsView->setFrameStyle(3);
-    ui->graphicsView_2->setFrameStyle(1);
-    ui->graphicsView_3->setFrameStyle(1);
-    ui->graphicsView_4->setFrameStyle(1);
-
-    ui->graphicsView_2->setVisible(false);
-    ui->graphicsView_3->setVisible(false);
-    ui->graphicsView_4->setVisible(false);
-}
-
-void MainWindow::display_two_window()
-{
-    if(selectedWindow==3 || selectedWindow==4){
-        selectedWindow=1;
-        ui->graphicsView->setFrameStyle(3);
-        ui->graphicsView_2->setFrameStyle(1);
-        ui->graphicsView_3->setFrameStyle(1);
-        ui->graphicsView_4->setFrameStyle(1);
-    }
-
-     ui->graphicsView_2->setVisible(true);
-     ui->graphicsView_3->setVisible(false);
-     ui->graphicsView_4->setVisible(false);
-}
-
-void MainWindow::display_four_window()
-{
-    ui->graphicsView_2->setVisible(true);
-    ui->graphicsView_3->setVisible(true);
-    ui->graphicsView_4->setVisible(true);
-}
-
-void MainWindow::zoom_plus(){
-    cout << "zoom clicked" << endl;
-    switch(selectedWindow){
-    case 1:
-        ui->graphicsView->scale(1.1,1.1);
-        break;
-    case 2:
-        ui->graphicsView_2->scale(1.1,1.1);
-        break;
-    case 3:
-        ui->graphicsView_3->scale(1.1,1.1);
-        break;
-    case 4:
-        ui->graphicsView_4->scale(1.1,1.1);
-        break;
-    }
-
-}
-
-void MainWindow::zoom_minus(){
-    switch(selectedWindow){
-    case 1:
-        ui->graphicsView->scale(0.9,0.9);
-        break;
-    case 2:
-        ui->graphicsView_2->scale(0.9,0.9);
-        break;
-    case 3:
-        ui->graphicsView_3->scale(0.9,0.9);
-        break;
-    case 4:
-        ui->graphicsView_4->scale(0.9,0.9);
-        break;
-    }
-}
-
-void MainWindow::rotate(int rotationIndice){
-    int rotation;
-    cout <<"rotation Indice " << rotationIndice << endl;
-    switch(rotationIndice){
-    case 0:
-        rotation=0;
-        break;
-    case 1:
-        rotation =90;
-        break;
-    case 2:
-        rotation = 180;
-        break;
-    case 3:
-        rotation=270;
-        break;
-    default:
-        break;
-    }
-
-
-
-    QTransform rotating;
-    rotating.rotate(rotation);
-
-    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
-
-
-    switch(selectedWindow){
-    case 1:
-        myScene->addPixmap(img.transformed(rotating));
-        ui->graphicsView->setScene(myScene);
-        break;
-    case 2:
-        myScene2->addPixmap(img.transformed(rotating));
-        ui->graphicsView_2->setScene(myScene2);
-        break;
-    case 3:
-        myScene3->addPixmap(img.transformed(rotating));
-        ui->graphicsView_3->setScene(myScene3);
-        break;
-    case 4:
-        myScene4->addPixmap(img.transformed(rotating));
-        ui->graphicsView_4->setScene(myScene4);
-        break;
-    }
-
-}
-
-
-void MainWindow::rotate_left(){
-    windowRotation[selectedWindow-1]=(windowRotation[selectedWindow-1]+3)%4;
-    rotate(windowRotation[selectedWindow-1]);
-}
-
-void MainWindow::rotate_right(){
-    windowRotation[selectedWindow-1]=(windowRotation[selectedWindow-1]+1)%4;
-    rotate(windowRotation[selectedWindow-1]);
-
-}
-
-
-void MainWindow::default_contrast(){
-    if(contrast[0] !=0){
-        contrast[0]=0;
-        createDefaultPlan();
-        updateContrast();
-    }
-}
-
-
-void MainWindow::minmax_contrast(){
-    if(contrast[0] !=1){
-        contrast[0]=1;
-        createDefaultPlan();
-        updateContrast();
-
-    }
-}
-
-
-
-void MainWindow::histo_contrast(){
-    if(contrast[0] !=2){
-        contrast[0]=2;
-        createDefaultPlan();
-        updateContrast();
-    }
-}
-
-void MainWindow::updateContrast(){
-    if(windowCurrentPlan[selectedWindow-1] != windowDefaultPlan[selectedWindow-1] ){
-        switch(windowCurrentPlan[selectedWindow-1]){
-        case Axial:
-            constructAxialPlan();
-            break;
-        case Coronal:
-            constructCoronalPlan();
-            break;
-        case Sagittal:
-            constructSagittalPlan();
-            break;
-        default:
-            break;
-        }
-
-    }
-
-}
-
-void MainWindow::on_showReport_clicked()
-{
-    report->show();
-}
-
-void MainWindow::callAxial(){
-    constructAxialPlan();
-}
-
-void MainWindow::callCoronal(){
-    constructCoronalPlan();
-}
-
-void MainWindow::callSagittal(){
-    constructSagittalPlan();
-}
-
-void MainWindow::callTest(){
-  cout << "callTest"<< endl;
-
- // Series[currentSerieNumber-1]->setViewLinked(true);
-
-    paintLinkedLines();
-
-}
-
-void MainWindow::link_views(){
-    Series[currentSerieNumber-1]->setViewLinked();
-    if(Link->isChecked())
-        paintLinkedLines();
-    else{
-
-    }
-}
-
+//---------------------------------------------------------------//
+//------------------------ PAINT LINKED LINES  ------------------//
+//---------------------------------------------------------------//
 void MainWindow::paintLinkedLines(){
     //cout << "paint on linked views" << endl;
     Serie *serie = Series[currentSerieNumber-1];
@@ -1319,6 +945,10 @@ void MainWindow::paintLinkedLines(){
     }
 }
 
+
+//---------------------------------------------------------------//
+//-------------------------- PAINT ON SCENE  --------------------//
+//---------------------------------------------------------------//
 void MainWindow::paintOnScene(QPixmap &pixmap, int sceneNb,int beginX,int beginY,int endX, int endY ){
     QPainter p(&pixmap);
 
@@ -1348,5 +978,388 @@ void MainWindow::paintOnScene(QPixmap &pixmap, int sceneNb,int beginX,int beginY
     }
 
 }
+
+void MainWindow::rotate(int rotationIndice){
+    int rotation;
+    cout <<"rotation Indice " << rotationIndice << endl;
+    switch(rotationIndice){
+    case 0:
+        rotation=0;
+        break;
+    case 1:
+        rotation =90;
+        break;
+    case 2:
+        rotation = 180;
+        break;
+    case 3:
+        rotation=270;
+        break;
+    default:
+        break;
+    }
+
+
+
+    QTransform rotating;
+    rotating.rotate(rotation);
+
+    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+
+    displayInScene(img);
+//    switch(selectedWindow){
+//    case 1:
+//        myScene->addPixmap(img.transformed(rotating));
+//        ui->graphicsView->setScene(myScene);
+//        break;
+//    case 2:
+//        myScene2->addPixmap(img.transformed(rotating));
+//        ui->graphicsView_2->setScene(myScene2);
+//        break;
+//    case 3:
+//        myScene3->addPixmap(img.transformed(rotating));
+//        ui->graphicsView_3->setScene(myScene3);
+//        break;
+//    case 4:
+//        myScene4->addPixmap(img.transformed(rotating));
+//        ui->graphicsView_4->setScene(myScene4);
+//        break;
+//    }
+
+}
+
+void MainWindow::updateContrast(){
+    if(windowCurrentPlan[selectedWindow-1] != windowDefaultPlan[selectedWindow-1] ){
+        switch(windowCurrentPlan[selectedWindow-1]){
+        case Axial:
+            displayAxialPlan();
+            break;
+        case Coronal:
+            displayCoronalPlan();
+            break;
+        case Sagittal:
+            displaySagittalPlan();
+            break;
+        default:
+            break;
+        }
+
+    }
+
+}
+
+
+//********************************************************************************//
+//---------------------ALL PRIVATE SLOTS FOLLOWING -----------------------------//
+//********************************************************************************//
+//Change the selected window on mousePress
+void MainWindow::mousePressEvent(QMouseEvent* e){
+    if(ui->graphicsView->underMouse()){
+        selectedWindow=1;
+        ui->graphicsView->setFrameStyle(3);
+        ui->graphicsView_2->setFrameStyle(1);
+        ui->graphicsView_3->setFrameStyle(1);
+        ui->graphicsView_4->setFrameStyle(1);
+
+        ui->graphicsView->setStyleSheet("color:orange");
+        ui->graphicsView_2->setStyleSheet("color:black");
+        ui->graphicsView_3->setStyleSheet("color:black");
+        ui->graphicsView_4->setStyleSheet("color:black");
+
+    }
+    else if(ui->graphicsView_2->underMouse()){
+        selectedWindow=2;
+        ui->graphicsView->setFrameStyle(1);
+        ui->graphicsView_2->setFrameStyle(3);
+        ui->graphicsView_3->setFrameStyle(1);
+        ui->graphicsView_4->setFrameStyle(1);
+
+        ui->graphicsView->setStyleSheet("color:black");
+        ui->graphicsView_2->setStyleSheet("color:orange");
+        ui->graphicsView_3->setStyleSheet("color:black");
+        ui->graphicsView_4->setStyleSheet("color:black");
+
+    }
+    else if(ui->graphicsView_3->underMouse()){
+        selectedWindow=3;
+        ui->graphicsView->setFrameStyle(1);
+        ui->graphicsView_2->setFrameStyle(1);
+        ui->graphicsView_3->setFrameStyle(3);
+        ui->graphicsView_4->setFrameStyle(1);
+
+        ui->graphicsView->setStyleSheet("color:black");
+        ui->graphicsView_2->setStyleSheet("color:black");
+        ui->graphicsView_3->setStyleSheet("color:orange");
+        ui->graphicsView_4->setStyleSheet("color:black");
+    }
+    else if(ui->graphicsView_4->underMouse()){
+        selectedWindow=4;
+        ui->graphicsView->setFrameStyle(1);
+        ui->graphicsView_2->setFrameStyle(1);
+        ui->graphicsView_3->setFrameStyle(1);
+        ui->graphicsView_4->setFrameStyle(3);
+
+
+        ui->graphicsView->setStyleSheet("color:black");
+        ui->graphicsView_2->setStyleSheet("color:orange");
+        ui->graphicsView_3->setStyleSheet("color:black");
+        ui->graphicsView_4->setStyleSheet("color:orange");
+    }
+
+    currentSerieNumber=windowSerieNb[selectedWindow-1];
+
+    if(windowSerieNb[selectedWindow-1]!= -1 && Series[currentSerieNumber-1]->getViewLinked())
+        displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
+
+    updateWindowInfo();
+
+
+}
+
+//Scrolling images of the serie if Scroll button is activated
+void MainWindow::wheelEvent(QWheelEvent *event){
+    if(Scroll->isChecked()){
+        if(event->delta() >0)
+            Series[currentSerieNumber-1]->setNextIndex(currentPlan);
+
+        else
+            Series[currentSerieNumber-1]->setPreviousIndex(currentPlan);
+
+        QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+
+        if(Series[currentSerieNumber-1]->getViewLinked())
+            paintLinkedLines();
+
+
+        displayInScene(img);
+    }
+}
+
+//Click event for series button
+//Will display the serie according to his corresponding number
+void MainWindow::buttonInGroupClicked(QAbstractButton *b){
+    currentSerieNumber = b->property("Id").toInt();
+
+    Serie *serie= Series[currentSerieNumber-1];
+    currentPlan = serie->getdefaultPlan();
+
+    cout << "property number  " << currentSerieNumber<<endl;
+    string buttonName = b->text().toLocal8Bit().constData();
+    //cout << "button " << buttonName << " clicked, associated serie size: "<< this->allPath[buttonName].size() << endl;
+    currentSerie=buttonName;
+
+    if(windowSerieNb[selectedWindow-1] == currentSerieNumber)
+        windowSerieNb[selectedWindow-1]=-1;
+
+
+    if(serie->isBuilt())
+        displayInScene(serie->getCurrentImg(serie->getdefaultPlan()));
+    else
+        createDefaultPlan();
+
+    updateWindowInfo();
+}
+
+//Show/hide advanced settings
+void MainWindow::show_advanced()
+{
+      ui->AdvancedSettings->setVisible(true);
+}
+
+void MainWindow::hide_advanced()
+{
+    ui->AdvancedSettings->setVisible(false);
+}
+
+void MainWindow::invert_grayscale()
+{
+    //To redo
+    invertGrayScale=(1-invertGrayScale)%2;
+
+    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+
+    //if(invertGrayScale)
+       // img.invertPixels();
+    displayInScene(img);
+
+//    switch(selectedWindow){
+//    case 1:
+//        myScene->addPixmap(img);
+//        ui->graphicsView->setScene(myScene);
+//        break;
+//    case 2:
+//        myScene2->addPixmap(img);
+//        ui->graphicsView_2->setScene(myScene2);
+//        break;
+//    case 3:
+//        myScene3->addPixmap(img);
+//        ui->graphicsView_3->setScene(myScene3);
+//        break;
+//    case 4:
+//        myScene4->addPixmap(img);
+//        ui->graphicsView_4->setScene(myScene4);
+//        break;
+//    }
+
+}
+
+
+//Show, hide graphicsView depending on the corresponding number
+void MainWindow::display_one_window()
+{
+    //set default selected window
+    selectedWindow=1;
+
+    //update frame for selected window
+    ui->graphicsView->setFrameStyle(3);
+    ui->graphicsView_2->setFrameStyle(1);
+    ui->graphicsView_3->setFrameStyle(1);
+    ui->graphicsView_4->setFrameStyle(1);
+
+    ui->graphicsView_2->setVisible(false);
+    ui->graphicsView_3->setVisible(false);
+    ui->graphicsView_4->setVisible(false);
+}
+
+void MainWindow::display_two_window()
+{
+    if(selectedWindow==3 || selectedWindow==4){
+        selectedWindow=1;
+        ui->graphicsView->setFrameStyle(3);
+        ui->graphicsView_2->setFrameStyle(1);
+        ui->graphicsView_3->setFrameStyle(1);
+        ui->graphicsView_4->setFrameStyle(1);
+    }
+
+     ui->graphicsView_2->setVisible(true);
+     ui->graphicsView_3->setVisible(false);
+     ui->graphicsView_4->setVisible(false);
+}
+
+void MainWindow::display_four_window()
+{
+    ui->graphicsView_2->setVisible(true);
+    ui->graphicsView_3->setVisible(true);
+    ui->graphicsView_4->setVisible(true);
+}
+
+
+//Zoom in the image
+void MainWindow::zoom_plus(){
+    cout << "zoom clicked" << endl;
+    switch(selectedWindow){
+    case 1:
+        ui->graphicsView->scale(1.1,1.1);
+        break;
+    case 2:
+        ui->graphicsView_2->scale(1.1,1.1);
+        break;
+    case 3:
+        ui->graphicsView_3->scale(1.1,1.1);
+        break;
+    case 4:
+        ui->graphicsView_4->scale(1.1,1.1);
+        break;
+    }
+
+}
+
+void MainWindow::zoom_minus(){
+    switch(selectedWindow){
+    case 1:
+        ui->graphicsView->scale(0.9,0.9);
+        break;
+    case 2:
+        ui->graphicsView_2->scale(0.9,0.9);
+        break;
+    case 3:
+        ui->graphicsView_3->scale(0.9,0.9);
+        break;
+    case 4:
+        ui->graphicsView_4->scale(0.9,0.9);
+        break;
+    }
+}
+
+
+//call for left/right image rotation
+void MainWindow::rotate_left(){
+    windowRotation[selectedWindow-1]=(windowRotation[selectedWindow-1]+3)%4;
+    rotate(windowRotation[selectedWindow-1]);
+}
+
+void MainWindow::rotate_right(){
+    windowRotation[selectedWindow-1]=(windowRotation[selectedWindow-1]+1)%4;
+    rotate(windowRotation[selectedWindow-1]);
+
+}
+
+//set contrst to the corresponding value
+void MainWindow::default_contrast(){
+    if(contrast[0] !=0){
+        contrast[0]=0;
+        createDefaultPlan();
+        updateContrast();
+    }
+}
+
+void MainWindow::minmax_contrast(){
+    if(contrast[0] !=1){
+        contrast[0]=1;
+        createDefaultPlan();
+        updateContrast();
+
+    }
+}
+
+void MainWindow::histo_contrast(){
+    if(contrast[0] !=2){
+        contrast[0]=2;
+        createDefaultPlan();
+        updateContrast();
+    }
+}
+
+
+//Open the report window
+void MainWindow::on_showReport_clicked()
+{
+    report->show();
+}
+
+
+//Calling for corresponding displayPlan function
+void MainWindow::callAxial(){
+    displayAxialPlan();
+}
+
+void MainWindow::callCoronal(){
+    displayCoronalPlan();
+}
+
+void MainWindow::callSagittal(){
+    displaySagittalPlan();
+}
+
+void MainWindow::callTest(){
+  cout << "callTest"<< endl;
+
+ // Series[currentSerieNumber-1]->setViewLinked(true);
+
+    paintLinkedLines();
+
+}
+
+void MainWindow::link_views(){
+    Series[currentSerieNumber-1]->setViewLinked();
+    if(Link->isChecked())
+        paintLinkedLines();
+    else{
+
+    }
+}
+
+
+
 
 
