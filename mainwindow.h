@@ -91,7 +91,6 @@ private:
     Plan currentPlan;
 
 
-
     //Storing respectively, Serie number, Default and CurrentPlan, Nb of Images for each of the four graphicsView of the window
     //Variable used to update the above "current" attributes
     int windowSerieNb[4];
@@ -99,6 +98,13 @@ private:
     Plan windowCurrentPlan[4];
     int windowNbImg[4];
     int windowRotation[4]; // four step rotation, 1,2,3,4 adding 45 degree each time
+
+    //storing connection window for each window
+    //windowConnection[i][i] is always true;
+    //if windowConnection[0][1] is true, window1 and two are connected
+    //windows are connected if they contains the same plan of the same serie
+    bool windowConnection[4][4];
+
 
     //Declaring QAction as Main Window property for action that will have special treatment outside of the createButton() function
     QAction *AxialAction;
@@ -145,6 +151,9 @@ public:
     //Function to display the image given as a parameter in the "selectedWindow"
     void displayInScene(QPixmap img);
 
+    void displayInScene(QPixmap img, int scene);
+
+
     //Calling for Serie "getCurrentImg(Plan plan)", to display the relevant image in the selectedWindow
     void displayAxialPlan();
     void displayCoronalPlan();
@@ -168,6 +177,8 @@ public:
     void rotate(int rotationIndice);
 
     void updateContrast();
+
+    void updateWindowConnection();
 
 
 

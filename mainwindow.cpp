@@ -582,6 +582,11 @@ void MainWindow::buildViews(){
 //--- Function to display the image given as a parameter in the "selectedWindow" ---//
 //----------------------------------------------------------------------------------//
 void MainWindow::displayInScene(QPixmap img){
+    displayInScene(img,selectedWindow);
+
+}
+
+void MainWindow::displayInScene(QPixmap img, int window){
     Serie *serie = Series[currentSerieNumber-1];
     //Set the information if the window wasnt containing any Serie
     if(windowSerieNb[selectedWindow-1]==-1 || windowSerieNb[selectedWindow-1] != currentSerieNumber ){
@@ -601,8 +606,7 @@ void MainWindow::displayInScene(QPixmap img){
     if(serie->getViewLinked())
         paintLinkedLines();
 
-
-    switch(selectedWindow){
+    switch(window){
     case 1:
         myScene= new QGraphicsScene(this);
         myScene->addPixmap(img);
@@ -624,6 +628,8 @@ void MainWindow::displayInScene(QPixmap img){
         ui->graphicsView_4->setScene(myScene4);
         break;
     }
+
+    updateWindowConnection();
 }
 
 
@@ -887,9 +893,10 @@ void MainWindow::paintLinkedLines(){
     //cout << "paint on linked views" << endl;
     Serie *serie = Series[currentSerieNumber-1];
 
-    int axialWindow=serie->getAxialWindow();
-    int coronalWindow=serie->getCoronalWindow();
-    int sagittalWindow=serie->getSagittalWindow();
+    vector<int> axialWindow=serie->getAxialWindow();
+    vector<int> coronalWindow=serie->getCoronalWindow();
+    vector<int> sagittalWindow=serie->getSagittalWindow();
+
 
     QPixmap Axialmap, Sagittalmap,Coronalmap;
     int bx,by,ex,ey;
@@ -898,45 +905,51 @@ void MainWindow::paintLinkedLines(){
     case Axial:
         bx=0;
         by = ey = serie->getZIndex();
-        if(coronalWindow != -1){
+        if(coronalWindow[0] != -1){
             Coronalmap =serie->getCurrentImg(Coronal);
             ex=Coronalmap.width();
-            paintOnScene(Coronalmap,coronalWindow,bx,by,ex,ey);
+            for(int i=0; i<coronalWindow.size(); i++)
+                paintOnScene(Coronalmap,coronalWindow[i],bx,by,ex,ey);
         }
-        if(sagittalWindow != -1){
+        if(sagittalWindow[0] != -1){
             Sagittalmap = serie->getCurrentImg(Sagittal);
             ex=Sagittalmap.width();
-            paintOnScene(Sagittalmap,sagittalWindow,bx,by,ex,ey);
+            for(int i=0; i<sagittalWindow.size(); i++)
+                paintOnScene(Sagittalmap,sagittalWindow[i],bx,by,ex,ey);
         }
         break;
     case Coronal:
-        if(axialWindow != -1){
+        if(axialWindow[0] != -1){
             Axialmap =serie->getCurrentImg(Axial);
             bx=0;
             by = ey = serie->getYIndex();
             ex=Axialmap.width();
-            paintOnScene(Axialmap,axialWindow,bx,by,ex,ey);
+            for(int i=0; i<axialWindow.size(); i++)
+                paintOnScene(Axialmap,axialWindow[i],bx,by,ex,ey);
         }
-        if(sagittalWindow != -1){
+        if(sagittalWindow[0] != -1){
             Sagittalmap = serie->getCurrentImg(Sagittal);
             bx= ex = serie->getYIndex();
             by=0;
             ey=Sagittalmap.height();
-            paintOnScene(Sagittalmap,sagittalWindow,bx,by,ex,ey);
+            for(int i=0; i<sagittalWindow.size(); i++)
+                paintOnScene(Sagittalmap,sagittalWindow[i],bx,by,ex,ey);
         }
         break;
     case Sagittal:
         bx = ex = serie->getXIndex();
         by=0;
-        if(axialWindow != -1){
+        if(axialWindow[0] != -1){
             Axialmap =serie->getCurrentImg(Axial);
             ey=Axialmap.height();
-            paintOnScene(Axialmap,axialWindow,bx,by,ex,ey);
+            for(int i=0; i<axialWindow.size(); i++)
+                paintOnScene(Axialmap,axialWindow[i],bx,by,ex,ey);
         }
-        if(coronalWindow != -1){
+        if(coronalWindow[0] != -1){
             Coronalmap = serie->getCurrentImg(Coronal);
             ey=Coronalmap.height();
-            paintOnScene(Coronalmap,coronalWindow,bx,by,ex,ey);
+            for(int i=0; i<coronalWindow.size(); i++)
+                paintOnScene(Coronalmap,coronalWindow[i],bx,by,ex,ey);
         }
         break;
     default:
@@ -1048,6 +1061,16 @@ void MainWindow::updateContrast(){
 
 }
 
+void MainWindow::updateWindowConnection(){
+    for(int i=0; i<4; i++){
+        for(int j=0; j<4; j++){
+            windowConnection[i][j]=false;
+            if(windowCurrentPlan[i]== windowCurrentPlan[j])
+                windowConnection[i][j]=true;
+        }
+    }
+}
+
 
 //********************************************************************************//
 //---------------------ALL PRIVATE SLOTS FOLLOWING -----------------------------//
@@ -1118,21 +1141,36 @@ void MainWindow::mousePressEvent(QMouseEvent* e){
 
 //Scrolling images of the serie if Scroll button is activated
 void MainWindow::wheelEvent(QWheelEvent *event){
+    Serie *serie = Series[currentSerieNumber-1];
+    vector<int> connection;
+    for(int i=0;i<4;i++){
+        if(i!=selectedWindow && windowConnection[currentPlan][i])
+            connection.push_back(i);
+    }
+
+
     if(Scroll->isChecked()){
-        if(event->delta() >0)
-            Series[currentSerieNumber-1]->setNextIndex(currentPlan);
+        if(event->delta() >0){
+            serie->setNextIndex(currentPlan);
+        }
+        else{
+            serie->setPreviousIndex(currentPlan);
+        }
+        QPixmap img = serie->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
 
-        else
-            Series[currentSerieNumber-1]->setPreviousIndex(currentPlan);
-
-        QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
-
-        if(Series[currentSerieNumber-1]->getViewLinked())
+        if(serie->getViewLinked())
             paintLinkedLines();
 
 
         displayInScene(img);
+
+        for(int i=0; i<connection.size(); i++){
+               displayInScene(img,connection[i]);
+        }
     }
+
+
+
 }
 
 //Click event for series button

@@ -57,9 +57,9 @@ Serie::Serie(int id, Plan plan, vector<string> &paths, int nbframes, double resc
     pixelYdepth=0;
     pixelZdepth=0;
 
-    axialWindow=-1;
-    coronalWindow=-1;
-    sagittalWindow=-1;
+    //axialWindow=-1;
+    //coronalWindow=-1;
+    //sagittalWindow=-1;
 
 
 }
@@ -447,21 +447,34 @@ bool Serie::getViewLinked(){
 }
 
 void Serie::setPlanWindows(int windowSerieNb[4], Plan windowCurrentPlan[4]){
-    axialWindow=-1;
-    coronalWindow=-1;
-    sagittalWindow=-1;
+    axialWindow.clear();
+    coronalWindow.clear();
+    sagittalWindow.clear();
+
+    axialWindow.push_back(-1);
+    sagittalWindow.push_back(-1);
+    coronalWindow.push_back(-1);
 
     for(int i =0; i<4; i++){
         if(windowSerieNb[i]==serieId){
             switch(windowCurrentPlan[i]){
             case Axial:
-                axialWindow=i+1;
+                if(axialWindow[0]=-1)
+                    axialWindow[0]=i+1;
+                else
+                    axialWindow.push_back(i+1);
                 break;
             case Sagittal:
-                sagittalWindow=i+1;
+                if(sagittalWindow[0]=-1)
+                    sagittalWindow[0]=i+1;
+                else
+                    sagittalWindow.push_back(i+1);
                 break;
             case Coronal:
-                coronalWindow=i+1;
+                if(coronalWindow[0]=-1)
+                    coronalWindow[0]=i+1;
+                else
+                    coronalWindow.push_back(i+1);
                 break;
             default:
                 break;
@@ -476,19 +489,19 @@ void Serie::setPlanWindows(int windowSerieNb[4], Plan windowCurrentPlan[4]){
 }
 
 
-int Serie::getAxialWindow(){
+vector<int> Serie::getAxialWindow(){
     return axialWindow;
 }
 
-int Serie::getCoronalWindow(){
+vector<int> Serie::getCoronalWindow(){
     return coronalWindow;
 }
 
-int Serie::getSagittalWindow(){
+vector<int> Serie::getSagittalWindow(){
     return sagittalWindow;
 }
 
-int Serie::getwindow(Plan plan){
+vector<int> Serie::getwindow(Plan plan){
     switch(plan){
     case Axial:
         return axialWindow;
@@ -497,7 +510,7 @@ int Serie::getwindow(Plan plan){
     case Sagittal:
         return sagittalWindow;
     default:
-        return -1;
+        return axialWindow;
     }
 }
 
