@@ -57,9 +57,7 @@ Serie::Serie(int id, Plan plan, vector<string> &paths, int nbframes, double resc
     pixelYdepth=0;
     pixelZdepth=0;
 
-    //axialWindow=-1;
-    //coronalWindow=-1;
-    //sagittalWindow=-1;
+
 
 
 }
@@ -71,6 +69,7 @@ QPixmap Serie::getCurrentImg(Plan currentPlan){
 //    cout << "Zdepth " << pixelZdepth << endl;
 
     QImage Image;
+    QTransform rotating;
 
     switch(currentPlan){
     case Axial:
@@ -292,7 +291,7 @@ void Serie::constructPlans(){
 
 void Serie::constructAxialPlan(){
     if(defaultPlan == Sagittal){
-        cout << "axial from sagittal" << endl;
+        //cout << "axial from sagittal" << endl;
         for (int z=0; z<pixelZdepth; z++){
            uint8_t *mypixel= new uint8_t[pixelYdepth*pixelXdepth];
            int countZ=0;
@@ -306,7 +305,7 @@ void Serie::constructAxialPlan(){
         }
     }
     else if(defaultPlan == Coronal){
-        cout << "axial from coronal" << endl;
+        //cout << "axial from coronal" << endl;
         for (int z=0; z<pixelZdepth; z++){
            uint8_t *mypixel= new uint8_t[pixelYdepth*pixelXdepth];
            int countZ=0;
@@ -324,7 +323,7 @@ void Serie::constructAxialPlan(){
 
 void Serie::constructCoronalPlan(){
     if(defaultPlan == Axial){
-        cout << "coronal from axial" << endl;
+        //cout << "coronal from axial" << endl;
         for (int y=0; y<pixelYdepth; y++){
            uint8_t *mypixel= new uint8_t[pixelXdepth*pixelZdepth];
            int countY=0;
@@ -338,7 +337,7 @@ void Serie::constructCoronalPlan(){
         }
 
     }else if(defaultPlan == Sagittal){
-        cout << "coronal from sagittal" << endl;
+        //cout << "coronal from sagittal" << endl;
         for (int y=0; y<pixelYdepth; y++){
            uint8_t *mypixel= new uint8_t[pixelXdepth*pixelZdepth];
            int countY=0;
@@ -372,7 +371,7 @@ void Serie::constructSagittalPlan(){
 
     }
     else if(defaultPlan == Coronal){
-        cout << "sagittal from coronal" << endl;
+        //cout << "sagittal from coronal" << endl;
         for (int x=0; x<pixelXdepth; x++){
            uint8_t *mypixel= new uint8_t[pixelYdepth*pixelZdepth];
            int countX=0;
@@ -459,19 +458,19 @@ void Serie::setPlanWindows(int windowSerieNb[4], Plan windowCurrentPlan[4]){
         if(windowSerieNb[i]==serieId){
             switch(windowCurrentPlan[i]){
             case Axial:
-                if(axialWindow[0]=-1)
+                if(axialWindow[0]==-1)
                     axialWindow[0]=i+1;
                 else
                     axialWindow.push_back(i+1);
                 break;
             case Sagittal:
-                if(sagittalWindow[0]=-1)
+                if(sagittalWindow[0]==-1)
                     sagittalWindow[0]=i+1;
                 else
                     sagittalWindow.push_back(i+1);
                 break;
             case Coronal:
-                if(coronalWindow[0]=-1)
+                if(coronalWindow[0]==-1)
                     coronalWindow[0]=i+1;
                 else
                     coronalWindow.push_back(i+1);
@@ -481,8 +480,9 @@ void Serie::setPlanWindows(int windowSerieNb[4], Plan windowCurrentPlan[4]){
             }
         }
     }
-
-//    cout << " axial window " << axialWindow << endl;
+//    cout << "Axialwindow size " << axialWindow.size() << endl;
+//    for(int i=0; i<axialWindow.size(); i++)
+//        cout << " axial window " << axialWindow[i] << endl;
 //    cout << "coronal " << coronalWindow << endl;
 //    cout << "sagtt " << sagittalWindow << endl;
 
@@ -513,4 +513,3 @@ vector<int> Serie::getwindow(Plan plan){
         return axialWindow;
     }
 }
-

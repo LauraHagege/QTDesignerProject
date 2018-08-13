@@ -39,6 +39,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     report = new ReportWindow();
 
+    //by default one serie is displayed
+    nbDisplayedSerie=1;
+
     for(int i=0 ; i<4; i++){
         contrast[i]=0;
         windowSerieNb[i]=-1;
@@ -64,8 +67,7 @@ MainWindow::~MainWindow()
 //-------------------------------------------------------------------------//
 void MainWindow::constructWindow(QString path){
     windowCreation=true;
-    //call function to create button architecture
-    createButtons();
+
 
     //processing Qtring path, creating string element to process DicomFile reading
     QByteArray ba = path.toLatin1();
@@ -85,6 +87,9 @@ void MainWindow::constructWindow(QString path){
 
     display_one_window(); // by default show only one window
     createDefaultPlan();
+
+    //call function to create button architecture
+    createButtons();
 
     delete filepath;
 }
@@ -314,25 +319,25 @@ void MainWindow::addSerieButton(Serie *serie){
     //creating/adding button for each serie in the serieWidget
     QPushButton *button = new QPushButton(this);
 
-    // display first Image of the serie near the button
-//    DicomImage *serieImg;
-//    int nbFrame = serie->getNbFrames();
+//     display first Image of the serie near the button
+    DicomImage *serieImg;
+    int nbFrame = serie->getNbFrames();
 
-//    if(nbFrame ==0)
-//        serieImg = new DicomImage(serie->getPath(0).c_str());
-//    else {
-//        serieImg = new DicomImage(serie->getPath(0).c_str(),0,0,1);
-//    }
+    if(nbFrame ==0)
+        serieImg = new DicomImage(serie->getPath(0).c_str());
+    else {
+        serieImg = new DicomImage(serie->getPath(0).c_str(),0,0,1);
+    }
 
-//    serieImg->setWindow(serie->getWC(),serie->getWW());
-//    uint8_t * pixel = (uint8_t *)serieImg->getOutputData(8);
+    serieImg->setWindow(serie->getWC(),serie->getWW());
+    uint8_t * pixel = (uint8_t *)serieImg->getOutputData(8);
 
-//    QImage *img = new QImage(pixel, serieImg->getWidth(), serieImg->getHeight(),QImage::Format_Indexed8);
-//    QPixmap pixmap = QPixmap::fromImage( QImage(img->scaled(QSize(50,50), Qt::IgnoreAspectRatio,Qt::SmoothTransformation)) );
-//    QIcon ButtonIcon(pixmap);
+    QImage *img = new QImage(pixel, serieImg->getWidth(), serieImg->getHeight(),QImage::Format_Indexed8);
+    QPixmap pixmap = QPixmap::fromImage( QImage(img->scaled(QSize(50,50), Qt::IgnoreAspectRatio,Qt::SmoothTransformation)) );
+    QIcon ButtonIcon(pixmap);
 
-//    button->setIcon(ButtonIcon);
-//    button->setIconSize(pixmap.rect().size());
+    button->setIcon(ButtonIcon);
+    button->setIconSize(pixmap.rect().size());
 
 
     button->setText(tr(serie->getName()));
@@ -530,7 +535,7 @@ void MainWindow::createDefaultPlan(){
    else
       cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
 
-    cout << "MDR " <<windowCreation <<endl;
+    //cout << "MDR " <<windowCreation <<endl;
     //Call for window scene creation
     if(windowCreation){
         cout << "build views" << endl;
@@ -605,6 +610,10 @@ void MainWindow::displayInScene(QPixmap img, int window){
     //If views are marked linked
     if(serie->getViewLinked())
         paintLinkedLines();
+
+    QTransform rotating;
+    rotating.rotate(getrotation(windowRotation[window-1]));
+    img=img.transformed(rotating);
 
     switch(window){
     case 1:
@@ -689,17 +698,17 @@ void MainWindow::createButtons(){
 
     ui->mainToolBar->addSeparator();
 
-//    QAction *RotateRight= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/rotateright.png"),"Rotate image to right",this);
-//    ui->mainToolBar->addAction(RotateRight);
+    RotateRight= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/rotateright.png"),"Rotate image to right",this);
+    ui->mainToolBar->addAction(RotateRight);
 
-//    connect(RotateRight, SIGNAL(triggered(bool)), SLOT(rotate_right()));
+    connect(RotateRight, SIGNAL(triggered(bool)), SLOT(rotate_right()));
 
-//    QAction *RotateLeft= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/rotateleft.png"),"Rotate image to left",this);
-//    ui->mainToolBar->addAction(RotateLeft);
+    RotateLeft= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/rotateleft.png"),"Rotate image to left",this);
+    ui->mainToolBar->addAction(RotateLeft);
 
-//    connect(RotateLeft, SIGNAL(triggered(bool)), SLOT(rotate_left()));
+    connect(RotateLeft, SIGNAL(triggered(bool)), SLOT(rotate_left()));
 
-//    ui->mainToolBar->addSeparator();
+    ui->mainToolBar->addSeparator();
 
 
     QAction *Flag = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/flag.png"),"Get me to the relevant image", this);
@@ -733,6 +742,8 @@ void MainWindow::createButtons(){
     SagittalAction = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/sagittal.png"),"Show left/right view (Sagittal)", this);
     ui->mainToolBar->addAction(SagittalAction);
     connect(SagittalAction, SIGNAL(triggered(bool)), SLOT(callSagittal()));
+
+    cout <<"nb images" <<  currentNbImages << endl;
 
     if(currentNbImages <10){
         AxialAction->setEnabled(false);
@@ -841,12 +852,14 @@ void MainWindow::createButtons(){
     ui->Informations->setLayout(ui->SeriesLayout);
 
 
+
 }
 
 //---------------------------------------------------------------//
 //------------------------ UPDATE WINDOW INFO  ------------------//
 //---------------------------------------------------------------//
 void MainWindow::updateWindowInfo(){
+   // cout << "updateWindowinfo" << endl;
     if(currentSerieNumber != -1)
         currentNbImages=Series[currentSerieNumber-1]->getNbImages();
     else
@@ -881,8 +894,28 @@ void MainWindow::updateWindowInfo(){
         }
     }
 
-//    cout << "current window " << selectedWindow << endl;
-//    cout << " displayed plan " << windowCurrentPlan[selectedWindow-1] << endl;
+    //update the number of different series displayed;
+//    int nb=4;
+//    for(int i=0; i<4; i++){
+//        if(windowSerieNb[i]==-1)
+//            nb-=1;
+//        else {
+//            for(int j=i+1; j<4; j++){
+//                if(windowSerieNb[i] == windowSerieNb[j])
+//                    nb-=1;
+//            }
+//        }
+//    }
+//    nbDisplayedSerie = nb;
+
+
+//    for(int i=0; i<4 ; i++){
+//        cout << "serie nb " << windowSerieNb[i] << endl;
+//        cout << "plan " << windowCurrentPlan[i] << endl;
+//    }
+
+    updateWindowConnection();
+    //cout << "there are currently " << nbDisplayedSerie << " different series displayed on screen" << endl;
 
 }
 
@@ -992,34 +1025,39 @@ void MainWindow::paintOnScene(QPixmap &pixmap, int sceneNb,int beginX,int beginY
 
 }
 
-void MainWindow::rotate(int rotationIndice){
+int MainWindow::getrotation(int rotationIndice){
     int rotation;
     cout <<"rotation Indice " << rotationIndice << endl;
     switch(rotationIndice){
     case 0:
-        rotation=0;
-        break;
+        //rotation=0;
+        return 0;
+//        break;
     case 1:
-        rotation =90;
-        break;
+//        rotation =90;
+//        break;
+        return 90;
     case 2:
-        rotation = 180;
-        break;
+//        rotation = 180;
+//        break;
+        return 180;
     case 3:
-        rotation=270;
-        break;
+//        rotation=270;
+//        break;
+        return 270;
     default:
-        break;
+        return 0;
     }
 
 
 
-    QTransform rotating;
-    rotating.rotate(rotation);
+    //QTransform rotating;
+    //rotating.rotate(rotation);
+    //Series[currentSerieNumber-1]->setRotation(windowCurrentPlan[selectedWindow-1],rotation);
+    //QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+    //img=img.transformed(rotating);
 
-    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
 
-    displayInScene(img);
 //    switch(selectedWindow){
 //    case 1:
 //        myScene->addPixmap(img.transformed(rotating));
@@ -1062,12 +1100,24 @@ void MainWindow::updateContrast(){
 }
 
 void MainWindow::updateWindowConnection(){
+    //cout << "update window connection" << endl;
     for(int i=0; i<4; i++){
         for(int j=0; j<4; j++){
             windowConnection[i][j]=false;
-            if(windowCurrentPlan[i]== windowCurrentPlan[j])
-                windowConnection[i][j]=true;
+            if(windowSerieNb[i] !=-1 && windowSerieNb[j] !=-1 && windowSerieNb[i]==windowSerieNb[j]){
+               //cout << "from window " << i << " to window " << j << endl;
+                //  cout << "plan 1 " << windowCurrentPlan[i] << " plan 2 " << windowCurrentPlan[j]  << endl;
+                if(windowCurrentPlan[i] != Unknown && windowCurrentPlan[j] != Unknown && windowCurrentPlan[i]== windowCurrentPlan[j])
+                    windowConnection[i][j]=true;
+            }
+
         }
+    }
+
+    //update connection for displayed series
+    for(int i =0; i<4; i++){
+        if(windowSerieNb[i] != -1)
+            Series[windowSerieNb[i]-1]->setPlanWindows(windowSerieNb,windowCurrentPlan);
     }
 }
 
@@ -1131,46 +1181,60 @@ void MainWindow::mousePressEvent(QMouseEvent* e){
 
     currentSerieNumber=windowSerieNb[selectedWindow-1];
 
-    if(windowSerieNb[selectedWindow-1]!= -1 && Series[currentSerieNumber-1]->getViewLinked())
-        displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
+
+    //Updating Link button and views
+    Link->setEnabled(false);
+
+    if(windowSerieNb[selectedWindow-1]!= -1){
+        Serie * serie = Series[currentSerieNumber-1];
+        Link->setChecked(false);
+
+        if(serie->getNbImages()>10){
+            Link->setEnabled(true);
+            if(serie->getViewLinked()){
+                displayInScene(serie->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
+                Link->setChecked(true);
+            }
+        }
+    }
 
     updateWindowInfo();
-
 
 }
 
 //Scrolling images of the serie if Scroll button is activated
 void MainWindow::wheelEvent(QWheelEvent *event){
-    Serie *serie = Series[currentSerieNumber-1];
-    vector<int> connection;
-    for(int i=0;i<4;i++){
-        if(i!=selectedWindow && windowConnection[currentPlan][i])
-            connection.push_back(i);
+   // cout << "JPPPP " << windowSerieNb[selectedWindow-1] << endl;
+    updateWindowConnection();
+    if(windowSerieNb[selectedWindow-1] != -1){
+        Serie *serie = Series[currentSerieNumber-1];
+        vector<int> connection;
+        for(int i=0;i<4;i++){
+            if(i!=selectedWindow-1 && windowConnection[selectedWindow-1][i])
+                connection.push_back(i);
+        }
+
+
+        if(Scroll->isChecked()){
+            if(event->delta() >0){
+                serie->setNextIndex(currentPlan);
+            }
+            else{
+                serie->setPreviousIndex(currentPlan);
+            }
+            QPixmap img = serie->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+
+            if(serie->getViewLinked())
+                paintLinkedLines();
+
+
+            displayInScene(img);
+
+            for(int i=0; i<connection.size(); i++){
+                   displayInScene(img,connection[i]+1);
+            }
+        }
     }
-
-
-    if(Scroll->isChecked()){
-        if(event->delta() >0){
-            serie->setNextIndex(currentPlan);
-        }
-        else{
-            serie->setPreviousIndex(currentPlan);
-        }
-        QPixmap img = serie->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
-
-        if(serie->getViewLinked())
-            paintLinkedLines();
-
-
-        displayInScene(img);
-
-        for(int i=0; i<connection.size(); i++){
-               displayInScene(img,connection[i]);
-        }
-    }
-
-
-
 }
 
 //Click event for series button
@@ -1181,19 +1245,24 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     Serie *serie= Series[currentSerieNumber-1];
     currentPlan = serie->getdefaultPlan();
 
-    cout << "property number  " << currentSerieNumber<<endl;
+    //cout << "property number  " << currentSerieNumber<<endl;
     string buttonName = b->text().toLocal8Bit().constData();
     //cout << "button " << buttonName << " clicked, associated serie size: "<< this->allPath[buttonName].size() << endl;
     currentSerie=buttonName;
 
-    if(windowSerieNb[selectedWindow-1] == currentSerieNumber)
-        windowSerieNb[selectedWindow-1]=-1;
-
+    //if(windowSerieNb[selectedWindow-1] == currentSerieNumber)
+      //  windowSerieNb[selectedWindow-1]=-1;
 
     if(serie->isBuilt())
         displayInScene(serie->getCurrentImg(serie->getdefaultPlan()));
     else
         createDefaultPlan();
+
+    windowSerieNb[selectedWindow-1]=currentSerieNumber;
+    windowDefaultPlan[selectedWindow-1]=currentPlan;
+    windowCurrentPlan[selectedWindow-1]=currentPlan;
+    windowNbImg[selectedWindow-1]=serie->getNbImages();
+    windowRotation[selectedWindow-1]=0;
 
     updateWindowInfo();
 }
@@ -1323,12 +1392,16 @@ void MainWindow::zoom_minus(){
 //call for left/right image rotation
 void MainWindow::rotate_left(){
     windowRotation[selectedWindow-1]=(windowRotation[selectedWindow-1]+3)%4;
-    rotate(windowRotation[selectedWindow-1]);
+    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+    displayInScene(img);
+    //rotate(windowRotation[selectedWindow-1]);
 }
 
 void MainWindow::rotate_right(){
     windowRotation[selectedWindow-1]=(windowRotation[selectedWindow-1]+1)%4;
-    rotate(windowRotation[selectedWindow-1]);
+    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+    displayInScene(img);
+    //rotate(windowRotation[selectedWindow-1]);
 
 }
 
@@ -1392,8 +1465,17 @@ void MainWindow::link_views(){
     Series[currentSerieNumber-1]->setViewLinked();
     if(Link->isChecked())
         paintLinkedLines();
+        RotateLeft->setEnabled(false);
+        RotateRight->setEnabled(false);
     else{
+        RotateLeft->setEnabled(true);
+        RotateRight->setEnabled(true);
 
+    }
+
+    for(int i=0; i<4; i++){
+        if(windowSerieNb[i]==currentSerieNumber)
+            windowRotation[i]=0;
     }
 }
 

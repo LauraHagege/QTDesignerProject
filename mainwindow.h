@@ -112,6 +112,11 @@ private:
     QAction *SagittalAction;
     QAction *Scroll;
     QAction *Link;
+    QAction *RotateRight;
+    QAction *RotateLeft;
+
+    //Count the number of different series displayed on screen
+    int nbDisplayedSerie;
 
     int contrast[4];
 
@@ -174,7 +179,7 @@ public:
     void paintOnScene(QPixmap &pixmap, int sceneNb, int beginX,int beginY,int endX, int endY );
 
     //Active Image rotation depending on the rotationIndice
-    void rotate(int rotationIndice);
+    int getrotation(int rotationIndice);
 
     void updateContrast();
 

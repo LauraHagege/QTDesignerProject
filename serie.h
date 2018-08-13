@@ -141,6 +141,11 @@ public:
     void setViewLinked();
 
     void setPlanWindows(int windowSerieNb[], Plan windowCurrentPlan[]);
+
+//    void setRotation(Plan plan, int r);
+//    void setaxialRotation(int r);
+//    void setcoronalRotation(int r);
+//    void setsagittalRotation(int r);
 };
 
 #endif // SERIE_H
