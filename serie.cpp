@@ -5,7 +5,7 @@
 
 
 
-Serie::Serie(int id, Plan plan,char *absolutePath ,vector<string> &paths, int nbframes, double rescale, char *description, int ww, int wc)
+Serie::Serie(int id, char *studyname, char *serieref, Plan plan, char *absolutePath , vector<string> &paths, int nbframes, double rescale, char *description, int ww, int wc)
 {
     //cout << " creating serie " << id <<" :" << endl;
     cout << description << endl;
@@ -16,6 +16,13 @@ Serie::Serie(int id, Plan plan,char *absolutePath ,vector<string> &paths, int nb
     MultiPlan=false;
 
     imgPaths = paths;
+
+    hasFlagImages=false;
+    flagIndex=0;
+    nbFlag=0;
+
+    strcpy(studyName,studyname);
+    strcpy(serieRef,serieref);
 
     serieId=id;
     WW=ww;
@@ -76,7 +83,6 @@ QPixmap Serie::getCurrentImg(Plan currentPlan){
     cout <<"get current img from plan " << currentPlan <<  endl;
 
     QImage Image;
-    QTransform rotating;
 
     switch(currentPlan){
     case Axial:
@@ -414,6 +420,11 @@ void Serie::setNextIndex(Plan plan){
         if(imgYIndex+1 > pixelYdepth)
             imgYIndex=0;
         break;
+    case FlagImg:
+        flagIndex+=1;
+        if(flagIndex+1 > nbFlag)
+            flagIndex=0;
+        break;
     }
 
 }
@@ -436,6 +447,13 @@ void Serie::setPreviousIndex(Plan plan){
         if(imgYIndex<0)
             imgYIndex=pixelYdepth-1;
         break;
+    case FlagImg:
+        flagIndex-=1;
+        if(flagIndex<0)
+            flagIndex=nbFlag-1;
+        break;
+
+
     }
 
 }
@@ -526,60 +544,56 @@ vector<int> Serie::getwindow(Plan plan){
 }
 
 void Serie::setFlags(char * absolutePath){
-    char axialpath[150];
-    char coronalpath[150];
-    char sagittalpath[150];
+    cout << "setflags " << endl;
 
-    strcpy(axialpath,absolutePath);
-    strcat(axialpath,string("FLAGGED/AXIAL.jpg").c_str());
-    axialFlag=new QPixmap(axialpath);
+    char flagpath[200];
+    int count=1;
+    //char nb;
 
-    strcpy(coronalpath,absolutePath);
-    strcat(coronalpath,string("FLAGGED/CORONAL.jpg").c_str());
-    coronalFlag=new QPixmap(coronalpath);
 
-    strcpy(sagittalpath,absolutePath);
-    strcat(sagittalpath,string("FLAGGED/SAGITTAL.jpg").c_str());
-    sagittalFlag=new QPixmap(sagittalpath);
+    strcpy(flagpath,absolutePath);
+    strcat(flagpath,string("FLAGGED/").c_str());
+    strcat(flagpath,studyName);
+    strcat(flagpath,"/");
+    strcat(flagpath,serieRef);
+    strcat(flagpath,"/");
+    strcat(flagpath,string("/FLAG1.jpg").c_str());
+
+    int length = strlen(flagpath);
+
+    QPixmap *flag;
+    flag = new QPixmap(flagpath);
+
+    cout << "JPPPPP " << flag->data_ptr() << endl;
+
+
+    while(flag->data_ptr()){
+        cout <<flagpath << endl;
+        hasFlagImages=true;
+        FlagImages.push_back(flag);
+        count++;
+        char nb=to_string(count)[0];
+        flagpath[length-5]=nb;
+        flag = new QPixmap(flagpath);
+    }
+
+    nbFlag=FlagImages.size();
+
+    cout <<"nb flag " << nbFlag;
 }
 
 bool Serie::getMultiplan(){
     return MultiPlan;
 }
 
-QPixmap* Serie::getFlags(Plan plan){
-    switch(plan){
-    case Axial:
-        return axialFlag;
-    case Coronal:
-        return coronalFlag;
-    case Sagittal:
-        return sagittalFlag;
-    default:
+QPixmap Serie::getFlags(){
+    if(hasFlagImages)
+        return *FlagImages[flagIndex];
+    else
         return NULL;
-    }
-
 }
 
-bool Serie::hasFlag(Plan plan){
-    switch(plan){
-    case Axial:
-        if(axialFlag !=NULL)
-            return true;
-        else
-            return false;
-    case Coronal:
-        if(coronalFlag !=NULL)
-            return true;
-        else
-            return false;
-    case Sagittal:
-        if(sagittalFlag !=NULL)
-            return true;
-        else
-            return false;
-    default:
-        return false;
-    }
+bool Serie::hasFlag(){
+    return hasFlagImages;
 
 }

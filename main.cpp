@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
     //create window architecture
     // find images according to the given path
-    w.constructWindow(dialogbox.getStudyPath(),dialogbox.getStudyNumber(),dialogbox.getDicomDirPath());
+    w.constructWindow(dialogbox.getStudyPath(),dialogbox.getStudyNumber(),dialogbox.getStudyName(),dialogbox.getDicomDirPath());
 
 
     //
@@ -34,6 +34,8 @@ int main(int argc, char *argv[])
 
 
 
-
-    return a.exec();
+    if(w.getAccess())
+        return a.exec();
+    else
+        a.closeAllWindows();
 }

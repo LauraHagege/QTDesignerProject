@@ -21,7 +21,7 @@ private:
 public:
     explicit ReportWindow(QWidget *parent = 0);
     ~ReportWindow();
-    void render_report(char *absolutPath);
+    void render_report(char *absolutPath, char *studyName);
 
 private slots:
     void display_clinical();

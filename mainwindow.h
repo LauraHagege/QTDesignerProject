@@ -21,6 +21,15 @@
 //#include <dcmtk/dcmdata/dcfilefo.h>
 //#include <dcmtk/dcmimgle/dcmimage.h>
 //#include "dcmtk/dcmimage/diregist.h"
+
+#undef UNICODE
+#undef _UNICODE
+#include <dcmtk/config/osconfig.h>
+#include <dcmtk/dcmdata/dctk.h>
+#include <dcmtk/dcmimgle/dcmimage.h>
+
+
+
 #include <QImage>
 #include <QGraphicsScene>
 #include <QLabel>
@@ -49,6 +58,20 @@ class MainWindow : public QMainWindow
 private:
     //Declaring private attribute
     Ui::MainWindow *ui;
+
+    //Variable to proctect datawith a pin access
+    DialogPinAccess pinDialog;
+    char pinAccess[11];
+    bool Access;
+
+    //storing path to the DICOMDIR
+    char dicomdirPath[150];
+    //storing the absolute path to files
+    char absolutefilepath[150] ;
+
+    //Number corresponding to the selected study
+    int studyNumber;
+    char studyName[10];
 
     //The four scene that will contains the Images
     QGraphicsScene *myScene;
@@ -98,7 +121,6 @@ private:
     Plan windowDefaultPlan[4];
     Plan windowCurrentPlan[4];
     int windowNbImg[4];
-    int windowRotation[4]; // four step rotation, 1,2,3,4 adding 45 degree each time
 
     //storing connection window for each window
     //windowConnection[i][i] is always true;
@@ -113,8 +135,6 @@ private:
     QAction *SagittalAction;
     QAction *Scroll;
     QAction *Link;
-    QAction *RotateRight;
-    QAction *RotateLeft;
     QAction *Flag;
 
     //Count the number of different series displayed on screen
@@ -129,11 +149,20 @@ public:
     // Function to construct the Main Window architecture of the interface
     // This include, adding the Images and dinamicall created button
     // This function will call in order the necessary subfunction
-    void constructWindow(char * studyPath, int studyNumber , char*dicomdirPath);
+    void constructWindow(char * studyPath, int studyNb ,char* studyname, char*dicomdirpath);
+
+    //If no access granted, window wont show
+    bool getAccess();
+
+    //Gett patient date of birth and ask for pin verification
+    void checkPin();
+
+    //Call all relevant funtion to process data once the pin access has been verified
+    void processData();
 
     //This function will in store all relevant informations found in the DICOMDIR
     //In particular call for the creation of Serie element once a serie is found
-    void processDicom(const char *dicomdirPath, char *filepath, int studyNumber);
+    void processDicom();
 
     //Creation of the widget to display patient information
     void setPatientInfo(char *studydesc, char * date, char* patientName, char* birthdate);
@@ -180,9 +209,6 @@ public:
     //Function to draw the line on the related plan/images while scrolling in an other one
     void paintOnScene(QPixmap &pixmap, int sceneNb, int beginX,int beginY,int endX, int endY );
 
-    //Active Image rotation depending on the rotationIndice
-    int getrotation(int rotationIndice);
-
     void updateContrast();
 
     void updateWindowConnection();
@@ -218,10 +244,6 @@ private slots:
     //Zoom in/out on the image
     void zoom_plus();
     void zoom_minus();
-
-    //call for left/right image rotation
-    void rotate_left();
-    void rotate_right();
 
     //set contrst to the corresponding value
     void default_contrast();

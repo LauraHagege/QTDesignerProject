@@ -52,7 +52,7 @@ void ReportWindow::display_two_report(){
     ui->simplifiedReport->setVisible(true);
 }
 
-void ReportWindow::render_report(char *absolutPath){
+void ReportWindow::render_report(char *absolutPath, char* studyName){
     //cout << "render function " << endl;
    // QFile file("C://Users//simms//Desktop//Laura//CTAbdomen//README.txt");
 
@@ -76,12 +76,16 @@ void ReportWindow::render_report(char *absolutPath){
     char simplifiedpath[150];
 
     strcpy(clinicalpath,absolutPath);
-    strcat(clinicalpath,string("REPORTS/CLINICALREPORT.jpg").c_str());
+    strcat(clinicalpath,string("REPORTS/").c_str());
+    strcat(clinicalpath,studyName);
+    strcat(clinicalpath,string("/CLINICALREPORT.jpg").c_str());
 
     cout << "clinical path " << clinicalpath << endl;
 
     strcpy(simplifiedpath,absolutPath);
-    strcat(simplifiedpath,string("REPORTS/SIMPLIFIEDREPORT.jpg").c_str());
+    strcat(simplifiedpath,string("REPORTS/").c_str());
+    strcat(clinicalpath,studyName);
+    strcat(simplifiedpath,string("/SIMPLIFIEDREPORT.jpg").c_str());
 
     QPixmap clinicalimg = QPixmap(clinicalpath);
     clinicalScene = new QGraphicsScene(this);

@@ -16,14 +16,14 @@
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>170</x>
-     <y>90</y>
-     <width>301</width>
+     <x>190</x>
+     <y>60</y>
+     <width>251</width>
      <height>71</height>
     </rect>
    </property>
    <property name="text">
-    <string>Please enter the pin (aaaa/mm/jj) to access the data</string>
+    <string>Please enter the pin (aaaammjj) to access the data</string>
    </property>
   </widget>
   <widget class="QLineEdit" name="password">
@@ -47,6 +47,19 @@
    </property>
    <property name="text">
     <string>Access data</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="wrongPin">
+   <property name="geometry">
+    <rect>
+     <x>210</x>
+     <y>120</y>
+     <width>191</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Wrong code access, please try again!</string>
    </property>
   </widget>
  </widget>

@@ -8,11 +8,11 @@
 #include <QGuiApplication>
 #include <QApplication>
 #include <iostream>
-#undef UNICODE
-#undef _UNICODE
-#include <dcmtk/config/osconfig.h>
-#include <dcmtk/dcmdata/dctk.h>
-#include <dcmtk/dcmimgle/dcmimage.h>
+//#undef UNICODE
+//#undef _UNICODE
+//#include <dcmtk/config/osconfig.h>
+//#include <dcmtk/dcmdata/dctk.h>
+//#include <dcmtk/dcmimgle/dcmimage.h>
 #include <QPixmap>
 #include <QLabel>
 #include <QVBoxLayout>
@@ -39,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(buttonGroup, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(buttonInGroupClicked(QAbstractButton*)));
 
     report = new ReportWindow();
-
+    Access=false;
 
     //by default one serie is displayed
     nbDisplayedSerie=1;
@@ -48,7 +48,6 @@ MainWindow::MainWindow(QWidget *parent) :
         contrast[i]=0;
         windowSerieNb[i]=-1;
         windowCurrentPlan[i]=Unknown;
-        windowRotation[i]=0;
     }
 
 }
@@ -67,25 +66,54 @@ MainWindow::~MainWindow()
 //------------------------------  CONSTRUCT WINDOW  ------------------------//
 //------------ Calling all related function to create the main window-------//
 //-------------------------------------------------------------------------//
-void MainWindow::constructWindow(char *studyPath, int studyNumber, char *dicomdirPath){
+void MainWindow::constructWindow(char *studyPath, int studyNb, char *studyname, char *dicomdirpath){
     windowCreation=true;
 
+    strcpy(dicomdirPath,dicomdirpath);
+
+    strcpy(studyName,studyname);
 
     //processing Qtring path, creating string element to process DicomFile reading
 //    QByteArray ba = studyPath.toLatin1();
 //    const char *dicomdirPath = ba.data();
 
     int size =(int) strlen(dicomdirPath);
-    char *filepath=new char[130];
+    //char *filepath=new char[130];
+
+    studyNumber=studyNb;
 
     for(int i=0; i<size-8; i++){
-        filepath[i]=dicomdirPath[i];
+        absolutefilepath[i]=dicomdirPath[i];
     }
-    filepath[size-8]='\0';
+    absolutefilepath[size-8]='\0';
+
+
 
     //call function to open DICOMDIR and store images paths
-    processDicom(dicomdirPath,filepath,studyNumber);
+    checkPin();
 
+
+//    display_one_window(); // by default show only one window
+//    createDefaultPlan();
+
+//    //call function to create button architecture
+//    createButtons();
+
+//    //call for report window creation
+//    report->render_report(filepath);
+
+    //delete filepath;
+}
+
+bool MainWindow::getAccess(){
+    return Access;
+}
+
+
+//Call all relevant funtion to process data once the pin access has been verified
+void MainWindow::processData(){
+    cout << "processData" << endl;
+    processDicom();
 
     display_one_window(); // by default show only one window
     createDefaultPlan();
@@ -94,10 +122,73 @@ void MainWindow::constructWindow(char *studyPath, int studyNumber, char *dicomdi
     createButtons();
 
     //call for report window creation
-    report->render_report(filepath);
-
-    delete filepath;
+    report->render_report(absolutefilepath,studyName);
 }
+
+void MainWindow::checkPin(){
+    int study=0;
+
+    DcmDicomDir myDir(dicomdirPath);
+
+    //Declaring var for following file of the folder
+    DcmDirectoryRecord *   root = &(myDir.getRootRecord());
+    DcmDirectoryRecord *   PatientRecord = NULL;
+    DcmDirectoryRecord *   StudyRecord = NULL;
+    OFString            tmpString;
+
+
+    if(root != NULL){
+        //First depth give goes in the DICOMDAT folder
+        //Allows to get information about the patient
+        //While loop  if there are more than one subfile
+        while (((PatientRecord = root->nextSub(PatientRecord)) != NULL)){
+            while (((StudyRecord = PatientRecord->nextSub(StudyRecord)) != NULL) && study<studyNumber){
+                study +=1;
+                char *birthdate=new char[11];
+                if(studyNumber==study){
+                    if (StudyRecord->findAndGetOFString(DCM_PatientBirthDate, tmpString).good()) {
+                        int count=0;
+                        for(int i=0 ; i< 8; i++){
+                            if(i==4 || i ==6 ){
+                                birthdate[count]= '\\';
+                                count ++;
+                            }
+                            birthdate[count]=tmpString[i];
+
+                            count ++;
+                        }
+                        birthdate[count]='\0';
+                    }else{
+                        strcpy(birthdate,string("unknown").c_str());
+                    }
+
+                    cout << "pin "<< birthdate << endl;
+                    strcpy(pinAccess,birthdate);
+
+                    //checking pin access before displaying datas
+                    if(strcmp(birthdate,string("unknown").c_str())){
+                        //pinDialog = new DialogPinAccess ;
+                        //pinDialog.setPassword(birthdate);
+                        pinDialog.setModal(true);
+
+                        connect(&pinDialog,SIGNAL(checkPassword(char *)),this,SLOT(validPassword(char*)));
+
+                         pinDialog.exec();
+                    }
+                    else{
+                        //if no birthdate found, process data without pin access
+                        processData();
+                    }
+                }
+
+            }
+        }
+
+    }
+
+}
+
+
 
 
 //-------------------------------------------------------------------------------//
@@ -105,7 +196,8 @@ void MainWindow::constructWindow(char *studyPath, int studyNumber, char *dicomdi
 //----- Going down DICOMDIR tree structure to get all required informations -----//
 //-------------------------------------------------------------------------------//
 
-void MainWindow::processDicom(const char *dicomdirPath, char *filepath, int studyNumber){
+void MainWindow::processDicom(){
+    cout << "processDicom" << endl;
     //counter for the number of study
     int study=0;
     //counter for the number of series found in the file
@@ -128,7 +220,7 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath, int stud
     DcmDirectoryRecord *   FileRecord = NULL;
     OFString            tmpString;
 
-    DcmDirectoryRecord *   ImageRecord = NULL;
+
 
     //Local variable declaration
     int nbFrame=0;
@@ -190,19 +282,6 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath, int stud
                         strcpy(birthdate,string("unknown").c_str());
                     }
 
-                    cout << "birthdate" << birthdate << endl;
-
-                    //checking pin access before displaying datas
-                    if(strcmp(birthdate,string("unknown").c_str())){
-                        DialogPinAccess pinDialog;
-                        pinDialog.setPassword(birthdate);
-                        pinDialog.setModal(true);
-                        pinDialog.exec();
-
-                        connect(pinDialog,SIGNAL(pinDialog.checkPassword(char *)),this,SLOT(validPassword(char*)));
-                    }
-
-
                     //Study Description
                     if (StudyRecord->findAndGetOFString(DCM_StudyDescription, tmpString).good()) {
                         strcpy(studydesc,tmpString.c_str());
@@ -236,6 +315,10 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath, int stud
                         // counter for images within a serie
                         int count =0;
 
+                        //serie reference is the SRS* number
+                        //usefull to access the flagged data
+                        char serieRef[9];
+
                         //going down the tree to find images from each serie
                         while((FileRecord = SeriesRecord->nextSub(FileRecord)) != NULL){
                             //store full path to each image
@@ -249,7 +332,8 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath, int stud
                             //DCM_ReferencedFileID give the path to the Image from the current DICOM directory
                             if(FileRecord->findAndGetOFStringArray(DCM_ReferencedFileID,tmpString).good()){
                                 //add image inner path to file path to get the full path
-                                fullpath = filepath + string(tmpString.c_str());
+
+                                fullpath = absolutefilepath + string(tmpString.c_str());
                             }
 
 
@@ -298,6 +382,17 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath, int stud
                                     double pixelspacing = getPixelSpacingNb(tmpString.c_str());
                                     rescale = rescale*pixelspacing;
                                 }
+                                //processing to get the number of the serie
+                                if(count ==1){
+                                    int counter =0;
+                                    int size = strlen(fullpath.c_str());
+                                    for(int i=size-17; i<size-9 ; i++){
+                                        serieRef[counter]=fullpath.at(i);
+                                        counter ++;
+                                    }
+                                    serieRef[counter]='\0';
+                                    cout <<"serie Ref" << serieRef << endl;
+                                }
                             }
                         }
 
@@ -314,7 +409,7 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath, int stud
                             }
 
                             //create a new serie of images
-                            Serie *serie = new Serie(series, seriePlan,filepath,paths, nbFrame,rescale, desc, WW1, WC1);
+                            Serie *serie = new Serie(series, studyName,serieRef, seriePlan,absolutefilepath,paths, nbFrame,rescale, desc, WW1, WC1);
 
 
                             //create a button for the new serie
@@ -650,10 +745,6 @@ void MainWindow::displayInScene(QPixmap img, int window){
     if(serie->getViewLinked())
         paintLinkedLines();
 
-    QTransform rotating;
-    rotating.rotate(getrotation(windowRotation[window-1]));
-    img=img.transformed(rotating);
-
     switch(window){
     case 1:
         myScene= new QGraphicsScene(this);
@@ -739,25 +830,12 @@ void MainWindow::createButtons(){
 
     ui->mainToolBar->addSeparator();
 
-//    RotateRight= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/rotateright.png"),"Rotate image to right",this);
-//    ui->mainToolBar->addAction(RotateRight);
-
-//    connect(RotateRight, SIGNAL(triggered(bool)), SLOT(rotate_right()));
-
-//    RotateLeft= new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/rotateleft.png"),"Rotate image to left",this);
-//    ui->mainToolBar->addAction(RotateLeft);
-
-//    connect(RotateLeft, SIGNAL(triggered(bool)), SLOT(rotate_left()));
-
-//    ui->mainToolBar->addSeparator();
-
-
     Flag = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/flag.png"),"Get me to the relevant image", this);
     ui->mainToolBar->addAction(Flag);
     connect(Flag, SIGNAL(triggered(bool)), SLOT(showFlagged()));
     Flag->setCheckable(true);
 
-    bool flag=serie->hasFlag(currentPlan);
+    bool flag=serie->hasFlag();
     if(!flag)
         Flag->setEnabled(false);
 
@@ -791,7 +869,7 @@ void MainWindow::createButtons(){
 
     cout <<"nb images" <<  currentNbImages << endl;
 
-    if(currentNbImages <10){
+    if(currentNbImages <10 || !serie->getMultiplan()){
         AxialAction->setEnabled(false);
         SagittalAction->setEnabled(false);
         CoronalAction->setEnabled(false);
@@ -807,9 +885,9 @@ void MainWindow::createButtons(){
             SagittalAction->setEnabled(false);
             break;
         default:
-            AxialAction->setEnabled(true);
-            SagittalAction->setEnabled(true);
-            CoronalAction->setEnabled(true);
+            AxialAction->setEnabled(false);
+            SagittalAction->setEnabled(false);
+            CoronalAction->setEnabled(false);
             break;
         }
 
@@ -914,7 +992,7 @@ void MainWindow::updateWindowInfo(){
 
     currentPlan=windowCurrentPlan[selectedWindow-1];
 
-    if(currentNbImages <10){
+    if(currentNbImages <10 || currentPlan ==FlagImg){
         AxialAction->setEnabled(false);
         SagittalAction->setEnabled(false);
         CoronalAction->setEnabled(false);
@@ -961,7 +1039,7 @@ void MainWindow::updateWindowInfo(){
 //        cout << "plan " << windowCurrentPlan[i] << endl;
 //    }
 
-    bool flag=serie->hasFlag(currentPlan);
+    bool flag=serie->hasFlag();
     cout << "flag for plan "  << currentPlan << " " << flag << endl;
 
     if(flag)
@@ -1081,59 +1159,6 @@ void MainWindow::paintOnScene(QPixmap &pixmap, int sceneNb,int beginX,int beginY
 
 }
 
-int MainWindow::getrotation(int rotationIndice){
-    int rotation;
-    cout <<"rotation Indice " << rotationIndice << endl;
-    switch(rotationIndice){
-    case 0:
-        //rotation=0;
-        return 0;
-//        break;
-    case 1:
-//        rotation =90;
-//        break;
-        return 90;
-    case 2:
-//        rotation = 180;
-//        break;
-        return 180;
-    case 3:
-//        rotation=270;
-//        break;
-        return 270;
-    default:
-        return 0;
-    }
-
-
-
-    //QTransform rotating;
-    //rotating.rotate(rotation);
-    //Series[currentSerieNumber-1]->setRotation(windowCurrentPlan[selectedWindow-1],rotation);
-    //QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
-    //img=img.transformed(rotating);
-
-
-//    switch(selectedWindow){
-//    case 1:
-//        myScene->addPixmap(img.transformed(rotating));
-//        ui->graphicsView->setScene(myScene);
-//        break;
-//    case 2:
-//        myScene2->addPixmap(img.transformed(rotating));
-//        ui->graphicsView_2->setScene(myScene2);
-//        break;
-//    case 3:
-//        myScene3->addPixmap(img.transformed(rotating));
-//        ui->graphicsView_3->setScene(myScene3);
-//        break;
-//    case 4:
-//        myScene4->addPixmap(img.transformed(rotating));
-//        ui->graphicsView_4->setScene(myScene4);
-//        break;
-//    }
-
-}
 
 void MainWindow::updateContrast(){
     if(windowCurrentPlan[selectedWindow-1] != windowDefaultPlan[selectedWindow-1] ){
@@ -1278,7 +1303,12 @@ void MainWindow::wheelEvent(QWheelEvent *event){
             else{
                 serie->setPreviousIndex(currentPlan);
             }
-            QPixmap img = serie->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+
+            QPixmap img;
+            if(Flag->isChecked())
+                img=serie->getFlags();
+            else
+                img = serie->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
 
             if(serie->getViewLinked())
                 paintLinkedLines();
@@ -1318,7 +1348,9 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     windowDefaultPlan[selectedWindow-1]=currentPlan;
     windowCurrentPlan[selectedWindow-1]=currentPlan;
     windowNbImg[selectedWindow-1]=serie->getNbImages();
-    windowRotation[selectedWindow-1]=0;
+
+    if(!serie->hasFlag())
+        Flag->setChecked(false);
 
     updateWindowInfo();
 }
@@ -1445,22 +1477,6 @@ void MainWindow::zoom_minus(){
 }
 
 
-//call for left/right image rotation
-void MainWindow::rotate_left(){
-    windowRotation[selectedWindow-1]=(windowRotation[selectedWindow-1]+3)%4;
-    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
-    displayInScene(img);
-    //rotate(windowRotation[selectedWindow-1]);
-}
-
-void MainWindow::rotate_right(){
-    windowRotation[selectedWindow-1]=(windowRotation[selectedWindow-1]+1)%4;
-    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
-    displayInScene(img);
-    //rotate(windowRotation[selectedWindow-1]);
-
-}
-
 //set contrst to the corresponding value
 void MainWindow::default_contrast(){
     if(contrast[0] !=0){
@@ -1491,7 +1507,7 @@ void MainWindow::histo_contrast(){
 //Open the report window
 void MainWindow::on_showReport_clicked()
 {
-    report->showMaximized();
+    report->show();
 }
 
 
@@ -1521,33 +1537,39 @@ void MainWindow::link_views(){
     Series[currentSerieNumber-1]->setViewLinked();
     if(Link->isChecked()){
         paintLinkedLines();
-        RotateLeft->setEnabled(false);
-        RotateRight->setEnabled(false);
+
     }else{
-        RotateLeft->setEnabled(true);
-        RotateRight->setEnabled(true);
+
     }
 
-    for(int i=0; i<4; i++){
-        if(windowSerieNb[i]==currentSerieNumber)
-            windowRotation[i]=0;
-    }
+
 }
 
 
 void MainWindow::showFlagged(){
     Serie *serie=Series[currentSerieNumber-1];
     if(Flag->isChecked()){
-        QPixmap *img = serie->getFlags(currentPlan);
-        if(img != NULL)
-            displayInScene(*img);
+        currentPlan =FlagImg;
+        QPixmap img = serie->getFlags();
+        if(img.data_ptr())
+            displayInScene(img);
     }
     else{
+        currentPlan=serie->getdefaultPlan();
         displayInScene(serie->getCurrentImg(currentPlan));
     }
 
 }
 
 void MainWindow::validPassword(char * pw){
-    cout << "hello there for the password " << endl;
+    if(!strcmp(pinAccess,pw)){
+        cout << "correct password " << endl;
+        Access=true;
+        pinDialog.close();
+        processData();
+    }else{
+        pinDialog.setWrongPin();
+        cout << "wrong password" << endl;
+    }
+
 }

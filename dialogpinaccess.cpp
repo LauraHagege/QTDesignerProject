@@ -1,6 +1,9 @@
 #include "dialogpinaccess.h"
 #include "ui_dialogpinaccess.h"
 #include <cstring>
+#include <iostream>
+
+using namespace std;
 
 DialogPinAccess::DialogPinAccess(QWidget *parent) :
     QDialog(parent),
@@ -8,6 +11,7 @@ DialogPinAccess::DialogPinAccess(QWidget *parent) :
 {
     ui->setupUi(this);
     setWindowTitle( tr("Pin access") );
+    ui->wrongPin->setVisible(false);
 }
 
 DialogPinAccess::~DialogPinAccess()
@@ -18,6 +22,10 @@ DialogPinAccess::~DialogPinAccess()
 
 void DialogPinAccess::setPassword(char* pw){
     strcpy(password,pw);
+}
+
+void DialogPinAccess::setWrongPin(){
+    ui->wrongPin->setVisible(true);
 }
 
 //void DialogPinAccess::checkPassword(QString pw){
@@ -35,6 +43,6 @@ void DialogPinAccess::on_accessData_clicked()
     QByteArray ba = Qpw.toLatin1();
     char *pw;
     strcpy(pw,ba.data());
-
+    cout << "password " << pw << endl;
     emit checkPassword(pw);
 }

@@ -10,7 +10,7 @@
 
 using namespace std;
 
-enum Plan {Axial, Coronal, Sagittal, Unknown};
+enum Plan {Axial, Coronal, Sagittal, Unknown, FlagImg};
 
 //----------CLASS SERIE ----------//
 //Element to store all information relative to a serie
@@ -27,6 +27,12 @@ private:
     char serieDesc[100];
     //stores the default plan of the serie
     Plan defaultPlan;
+
+    //Study number associated to the serie
+    char studyName[10];
+
+    //serie reference is the SRS* number
+    char serieRef[9];
 
     //vector stroring all paths to the images of the serie
     vector<string> imgPaths;
@@ -79,14 +85,14 @@ private:
     vector<int> coronalWindow;
     vector<int> sagittalWindow;
 
-    QPixmap *axialFlag;
-    QPixmap *coronalFlag;
-    QPixmap *sagittalFlag;
-
+    bool hasFlagImages;
+    vector <QPixmap*> FlagImages;
+    int flagIndex;
+    int nbFlag;
 
 
 public:
-    Serie(int id, Plan plan,char *absolutepath, vector <string> &Path, int nbframes, double rescale, char * description, int ww, int wc);
+    Serie(int id, char *studyname, char *serieref, Plan plan, char *absolutepath, vector <string> &Path, int nbframes, double rescale, char * description, int ww, int wc);
 
     //return the image corresponding to the given plan at the corresponding indexX,Y,Z
     QPixmap getCurrentImg(Plan currentPlan);
@@ -123,10 +129,6 @@ public:
 
     void setFlags(char * absolutePath);
 
-//    void setRotation(Plan plan, int r);
-//    void setaxialRotation(int r);
-//    void setcoronalRotation(int r);
-//    void setsagittalRotation(int r);
 
     //Properties getter function
     bool isBuilt();
@@ -157,8 +159,8 @@ public:
 
     bool getMultiplan();
 
-    QPixmap* getFlags(Plan plan);
-    bool hasFlag(Plan plan);
+    QPixmap getFlags();
+    bool hasFlag();
 
 };
 

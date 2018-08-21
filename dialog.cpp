@@ -42,15 +42,19 @@ void Dialog::on_pushButton_clicked()
         this->open();
 
 
-    //Storing studyName
+    char store[11];
+
     int count =0;
     for(int i=size-5; i<size; i++){
-        studyName[count]=studyPath[i];
+        store[count]=studyPath[i];
         count ++;
     }
-    studyName[count]='\0';
+    store[count]='\0';
 
-    studyNumber=atoi(studyName)+1;
+    studyNumber=atoi(store)+1;
+
+    strcpy(studyName,string("SDY").c_str());
+    strcat(studyName,store);
 
 
     //Storing DICOMDIR path

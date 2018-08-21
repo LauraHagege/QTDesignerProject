@@ -19,6 +19,7 @@ public:
     ~DialogPinAccess();
     void setPassword(char* pw);
     //void checkPassword(QString pw);
+    void setWrongPin();
 
 private slots:
     void on_accessData_clicked();
