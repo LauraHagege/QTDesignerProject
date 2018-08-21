@@ -2,6 +2,7 @@
 #define REPORTWINDOW_H
 
 #include <QMainWindow>
+#include <QGraphicsScene>
 
 using namespace std;
 
@@ -13,9 +14,14 @@ class ReportWindow : public QMainWindow
 {
     Q_OBJECT
 
+private:
+    QGraphicsScene *clinicalScene;
+    QGraphicsScene *simplifiedScene;
+
 public:
     explicit ReportWindow(QWidget *parent = 0);
     ~ReportWindow();
+    void render_report(char *absolutPath);
 
 private slots:
     void display_clinical();
@@ -25,7 +31,7 @@ private slots:
 private:
     Ui::ReportWindow *ui;
     void add_buttons();
-    void render_report();
+
 };
 
 #endif // REPORTWINDOW_H

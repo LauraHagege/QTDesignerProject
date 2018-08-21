@@ -31,6 +31,7 @@
 #include <string>
 #include <QWheelEvent>
 #include "reportwindow.h"
+#include "dialogpinaccess.h"
 #include <QPixmap>
 
 
@@ -114,6 +115,7 @@ private:
     QAction *Link;
     QAction *RotateRight;
     QAction *RotateLeft;
+    QAction *Flag;
 
     //Count the number of different series displayed on screen
     int nbDisplayedSerie;
@@ -127,11 +129,11 @@ public:
     // Function to construct the Main Window architecture of the interface
     // This include, adding the Images and dinamicall created button
     // This function will call in order the necessary subfunction
-    void constructWindow(QString path);
+    void constructWindow(char * studyPath, int studyNumber , char*dicomdirPath);
 
     //This function will in store all relevant informations found in the DICOMDIR
     //In particular call for the creation of Serie element once a serie is found
-    void processDicom(const char *dicomdirPath,char *filepath);
+    void processDicom(const char *dicomdirPath, char *filepath, int studyNumber);
 
     //Creation of the widget to display patient information
     void setPatientInfo(char *studydesc, char * date, char* patientName, char* birthdate);
@@ -239,7 +241,9 @@ private slots:
 
     void link_views();
 
+    void showFlagged();
 
+    void validPassword(char * pw);
 
 
 };

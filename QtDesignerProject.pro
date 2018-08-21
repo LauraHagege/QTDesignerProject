@@ -36,15 +36,18 @@ SOURCES += \
         mainwindow.cpp \
     dialog.cpp \
     reportwindow.cpp \
-    serie.cpp
+    serie.cpp \
+    dialogpinaccess.cpp
 
 HEADERS += \
         mainwindow.h \
     dialog.h \
     reportwindow.h \
-    serie.h
+    serie.h \
+    dialogpinaccess.h
 
 FORMS += \
         mainwindow.ui \
     dialog.ui \
-    reportwindow.ui
+    reportwindow.ui \
+    dialogpinaccess.ui

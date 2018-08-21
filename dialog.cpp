@@ -12,6 +12,14 @@ Dialog::Dialog(QWidget *parent) :
     ui(new Ui::Dialog)
 {
     ui->setupUi(this);
+
+
+    //displaying welcoming image
+    welcomeImg = QPixmap("C:/Users/simms/Desktop/Laura/img/WelcomingPage1.jpg").scaled(QSize(570,570));
+    welcomingScene = new QGraphicsScene(this);
+    welcomingScene->addPixmap(welcomeImg);
+    ui->welcomeView->setScene(welcomingScene);
+    ui->welcomeView->show();
 }
 
 Dialog::~Dialog()
@@ -21,19 +29,58 @@ Dialog::~Dialog()
 
 void Dialog::on_pushButton_clicked()
 {
-    Filepath = QFileDialog::getOpenFileName(this,tr("Open File"),
-                                                  "Desktop","All file (*.*)");
+    QString Filepath = QFileDialog::getExistingDirectory(this);
 
-    //Filepath = QFileDialog::getExistingDirectory(0, ("Select Output Folder"), QDir::currentPath());
-    //QMessageBox::information(this,tr("Directory path"), Filepath);
+    QByteArray ba = Filepath.toLatin1();
+    strcpy(studyPath,ba.data());
 
-    this->close();
-    //qDebug() <<  OutputFolder << endl;
+    int size =(int) strlen(studyPath);
+
+    if(studyPath[size-8] =='S' && studyPath[size-7] =='D' && studyPath[size-6] =='Y')
+        this->close();
+    else
+        this->open();
+
+
+    //Storing studyName
+    int count =0;
+    for(int i=size-5; i<size; i++){
+        studyName[count]=studyPath[i];
+        count ++;
+    }
+    studyName[count]='\0';
+
+    studyNumber=atoi(studyName)+1;
+
+
+    //Storing DICOMDIR path
+    //DICOMDIR allows to go through all the arborescence of the file
+    for(int i=0; i<size-17; i++){
+        dicomdirpath[i]=studyPath[i];
+    }
+    dicomdirpath[size-17]='\0';
+
+    strcat(dicomdirpath,string("DICOMDIR").c_str());
+
+
+
 
 
 }
 
-QString Dialog::getFilepath(){
-    //QMessageBox::information(this,tr("Directory path"), Filepath);
-    return Filepath;
+char *Dialog::getStudyName(){
+    return studyName;
 }
+
+char *Dialog::getDicomDirPath(){
+    return dicomdirpath;
+}
+
+char * Dialog::getStudyPath(){
+    return studyPath;
+}
+
+int Dialog::getStudyNumber(){
+    return studyNumber;
+}
+

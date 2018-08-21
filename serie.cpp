@@ -5,8 +5,12 @@
 
 
 
-Serie::Serie(int id, Plan plan, vector<string> &paths, int nbframes, double rescale, char *description, int ww, int wc)
+Serie::Serie(int id, Plan plan,char *absolutePath ,vector<string> &paths, int nbframes, double rescale, char *description, int ww, int wc)
 {
+    //cout << " creating serie " << id <<" :" << endl;
+    cout << description << endl;
+    //cout << "nb frames " << nbframes <<endl;
+
     defaultPlan=plan;
     built=false;
     MultiPlan=false;
@@ -57,9 +61,10 @@ Serie::Serie(int id, Plan plan, vector<string> &paths, int nbframes, double resc
     pixelYdepth=0;
     pixelZdepth=0;
 
+    setFlags(absolutePath);
 
 
-
+   // cout << "default plan " << defaultPlan << endl;
 }
 
 QPixmap Serie::getCurrentImg(Plan currentPlan){
@@ -67,6 +72,8 @@ QPixmap Serie::getCurrentImg(Plan currentPlan){
 //    cout << "Xdepth " << pixelXdepth << endl;
 //    cout << "Ydepth " << pixelYdepth << endl;
 //    cout << "Zdepth " << pixelZdepth << endl;
+
+    cout <<"get current img from plan " << currentPlan <<  endl;
 
     QImage Image;
     QTransform rotating;
@@ -113,10 +120,9 @@ QPixmap Serie::getCurrentImg(Plan currentPlan){
            break;
         }
         break;
-
+    //default is unkown plan
     default:
-        //find a better default
-        //return QImage (myPixelsZ[imgZIndex],pixelXdepth,pixelYdepth, QImage::Format_Indexed8);
+        Image= QImage (myPixelsZ[imgZIndex],pixelXdepth,pixelYdepth, QImage::Format_Indexed8);
         break;
     }
 
@@ -198,6 +204,7 @@ void Serie::setDepths(int width, int height){
     built=true;
     switch(defaultPlan){
     case Axial:
+    case Unknown:
         setXdepth(width);
         setYdepth(height);
         //if currentplan is Axial, while creating other plan, pixelZdepth will need to be rescales to rescaleFatcor*pixelZdepth
@@ -246,6 +253,7 @@ void Serie::storePixel(uint8_t *pixelData){
     //cout << "storePixels" << endl;
     switch(defaultPlan){
     case Axial:
+    case Unknown:
         myPixelsZ.push_back(pixelData);
         imgZIndex=(int)myPixelsZ.size()/2;
         break;
@@ -269,6 +277,7 @@ void Serie::clearPixels(){
 
 }
 void Serie::constructPlans(){
+    cout << "construc plan " << endl;
     MultiPlan=true;
     switch(defaultPlan){
     case Axial:
@@ -390,6 +399,7 @@ void Serie::constructSagittalPlan(){
 void Serie::setNextIndex(Plan plan){
     switch(plan){
     case Axial:
+    case Unknown:
         imgZIndex+=1;
         if(imgZIndex+1 > pixelZdepth)
             imgZIndex=0;
@@ -411,6 +421,7 @@ void Serie::setNextIndex(Plan plan){
 void Serie::setPreviousIndex(Plan plan){
     switch(plan){
     case Axial:
+    case Unknown:
         imgZIndex-=1;
         if(imgZIndex <0)
             imgZIndex=pixelZdepth-1;
@@ -512,4 +523,63 @@ vector<int> Serie::getwindow(Plan plan){
     default:
         return axialWindow;
     }
+}
+
+void Serie::setFlags(char * absolutePath){
+    char axialpath[150];
+    char coronalpath[150];
+    char sagittalpath[150];
+
+    strcpy(axialpath,absolutePath);
+    strcat(axialpath,string("FLAGGED/AXIAL.jpg").c_str());
+    axialFlag=new QPixmap(axialpath);
+
+    strcpy(coronalpath,absolutePath);
+    strcat(coronalpath,string("FLAGGED/CORONAL.jpg").c_str());
+    coronalFlag=new QPixmap(coronalpath);
+
+    strcpy(sagittalpath,absolutePath);
+    strcat(sagittalpath,string("FLAGGED/SAGITTAL.jpg").c_str());
+    sagittalFlag=new QPixmap(sagittalpath);
+}
+
+bool Serie::getMultiplan(){
+    return MultiPlan;
+}
+
+QPixmap* Serie::getFlags(Plan plan){
+    switch(plan){
+    case Axial:
+        return axialFlag;
+    case Coronal:
+        return coronalFlag;
+    case Sagittal:
+        return sagittalFlag;
+    default:
+        return NULL;
+    }
+
+}
+
+bool Serie::hasFlag(Plan plan){
+    switch(plan){
+    case Axial:
+        if(axialFlag !=NULL)
+            return true;
+        else
+            return false;
+    case Coronal:
+        if(coronalFlag !=NULL)
+            return true;
+        else
+            return false;
+    case Sagittal:
+        if(sagittalFlag !=NULL)
+            return true;
+        else
+            return false;
+    default:
+        return false;
+    }
+
 }

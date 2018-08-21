@@ -79,8 +79,14 @@ private:
     vector<int> coronalWindow;
     vector<int> sagittalWindow;
 
+    QPixmap *axialFlag;
+    QPixmap *coronalFlag;
+    QPixmap *sagittalFlag;
+
+
+
 public:
-    Serie(int id, Plan plan, vector <string> &Path, int nbframes, double rescale, char * description, int ww, int wc);
+    Serie(int id, Plan plan,char *absolutepath, vector <string> &Path, int nbframes, double rescale, char * description, int ww, int wc);
 
     //return the image corresponding to the given plan at the corresponding indexX,Y,Z
     QPixmap getCurrentImg(Plan currentPlan);
@@ -100,6 +106,27 @@ public:
     void constructAxialPlan();
     void constructCoronalPlan();
     void constructSagittalPlan();
+
+    //properties setters
+    void setDepths(int width, int height);
+    void setXdepth(int depth);
+    void setYdepth(int depth);
+    void setZdepth(int depth);
+
+
+    void setNextIndex(Plan plan);
+    void setPreviousIndex(Plan plan);
+
+    void setViewLinked();
+
+    void setPlanWindows(int windowSerieNb[], Plan windowCurrentPlan[]);
+
+    void setFlags(char * absolutePath);
+
+//    void setRotation(Plan plan, int r);
+//    void setaxialRotation(int r);
+//    void setcoronalRotation(int r);
+//    void setsagittalRotation(int r);
 
     //Properties getter function
     bool isBuilt();
@@ -128,24 +155,11 @@ public:
     vector<int> getSagittalWindow();
     vector<int> getwindow(Plan plan);
 
-    //properties setters
-    void setDepths(int width, int height);
-    void setXdepth(int depth);
-    void setYdepth(int depth);
-    void setZdepth(int depth);
+    bool getMultiplan();
 
+    QPixmap* getFlags(Plan plan);
+    bool hasFlag(Plan plan);
 
-    void setNextIndex(Plan plan);
-    void setPreviousIndex(Plan plan);
-
-    void setViewLinked();
-
-    void setPlanWindows(int windowSerieNb[], Plan windowCurrentPlan[]);
-
-//    void setRotation(Plan plan, int r);
-//    void setaxialRotation(int r);
-//    void setcoronalRotation(int r);
-//    void setsagittalRotation(int r);
 };
 
 #endif // SERIE_H

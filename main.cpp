@@ -4,6 +4,7 @@
 #include <QMessageBox>
 #include <iostream>
 #include "reportwindow.h"
+//#include "dialogpinaccess.h"
 
 using namespace std;
 
@@ -16,15 +17,16 @@ int main(int argc, char *argv[])
     dialogbox.setModal(true);
     dialogbox.exec();
 
+   // DialogPinAccess test;
     //Get the selected path
-    QString path=dialogbox.getFilepath();
+    //QString path=dialogbox.getFilepath();
 
 
     MainWindow w;
 
     //create window architecture
     // find images according to the given path
-    w.constructWindow(path);
+    w.constructWindow(dialogbox.getStudyPath(),dialogbox.getStudyNumber(),dialogbox.getDicomDirPath());
 
 
     //

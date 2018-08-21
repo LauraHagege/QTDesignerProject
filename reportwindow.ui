@@ -16,10 +16,10 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="QTextEdit" name="clinicalReport"/>
+     <widget class="QGraphicsView" name="clinicalReport"/>
     </item>
     <item row="0" column="1">
-     <widget class="QTextEdit" name="simplifiedReport"/>
+     <widget class="QGraphicsView" name="simplifiedReport"/>
     </item>
    </layout>
   </widget>

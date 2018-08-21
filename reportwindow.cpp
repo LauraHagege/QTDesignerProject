@@ -4,6 +4,7 @@
 #include <QString>
 #include <QTextStream>
 #include <iostream>
+#include <cstring>
 
 using namespace std;
 
@@ -13,7 +14,6 @@ ReportWindow::ReportWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     add_buttons();
-    render_report();
 }
 
 ReportWindow::~ReportWindow()
@@ -52,15 +52,15 @@ void ReportWindow::display_two_report(){
     ui->simplifiedReport->setVisible(true);
 }
 
-void ReportWindow::render_report(){
-    cout << "render function " << endl;
-    QFile file("C://Users//simms//Desktop//Laura//CTAbdomen//README.txt");
+void ReportWindow::render_report(char *absolutPath){
+    //cout << "render function " << endl;
+   // QFile file("C://Users//simms//Desktop//Laura//CTAbdomen//README.txt");
 
 
-    if(file.open(QIODevice::ReadOnly | QIODevice::Text)){
+    //if(file.open(QIODevice::ReadOnly | QIODevice::Text)){
 
-        QTextStream in(&file);
-        ui->clinicalReport->setText(in.readAll());
+       // QTextStream in(&file);
+     //   ui->clinicalReport->setText(in.readAll());
 //        while(!in.atEnd()){
 //            QString line= in.readLine();
 //            QByteArray ba = line.toUtf8();
@@ -68,7 +68,29 @@ void ReportWindow::render_report(){
 //            //cout << "test" << strline << endl;
 //            ui->clinicalReport->append(QString::fromUtf8(ba));
 //        }
-    }
+   // }
 
-    file.close();
+    //file.close();
+
+    char clinicalpath[150];
+    char simplifiedpath[150];
+
+    strcpy(clinicalpath,absolutPath);
+    strcat(clinicalpath,string("REPORTS/CLINICALREPORT.jpg").c_str());
+
+    cout << "clinical path " << clinicalpath << endl;
+
+    strcpy(simplifiedpath,absolutPath);
+    strcat(simplifiedpath,string("REPORTS/SIMPLIFIEDREPORT.jpg").c_str());
+
+    QPixmap clinicalimg = QPixmap(clinicalpath);
+    clinicalScene = new QGraphicsScene(this);
+    clinicalScene->addPixmap(clinicalimg);
+    ui->clinicalReport->setScene(clinicalScene);
+
+    QPixmap simplifiedimg=QPixmap(simplifiedpath);
+    simplifiedScene = new QGraphicsScene(this);
+    simplifiedScene->addPixmap(simplifiedimg);
+    ui->simplifiedReport->setScene(simplifiedScene);
+
 }

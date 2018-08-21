@@ -194,7 +194,7 @@ void MainWindow::processDicom(const char *dicomdirPath, char *filepath, int stud
 
                     //checking pin access before displaying datas
                     if(strcmp(birthdate,string("unknown").c_str())){
-                        DialogPinAccess pinDialog;
+                        DialogPinAccess *pinDialog = new DialogPinAccess;
                         pinDialog.setPassword(birthdate);
                         pinDialog.setModal(true);
                         pinDialog.exec();
