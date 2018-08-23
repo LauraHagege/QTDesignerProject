@@ -15,7 +15,7 @@ Dialog::Dialog(QWidget *parent) :
 
 
     //displaying welcoming image
-    welcomeImg = QPixmap("C:/Users/simms/Desktop/Laura/img/WelcomingPage1.jpg").scaled(QSize(570,570));
+    welcomeImg = QPixmap("C:/Users/simms/Desktop/Laura/img/disclaimer.jpg").scaled(QSize(570,570));
     welcomingScene = new QGraphicsScene(this);
     welcomingScene->addPixmap(welcomeImg);
     ui->welcomeView->setScene(welcomingScene);

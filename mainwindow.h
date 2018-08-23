@@ -1,49 +1,36 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-//#include "/Users/laurah/Desktop/malon/dcmtk-3.6.3-install/usr/local/include/dcmtk/dcmdata/dctk.h"
-//#include "/Users/laurah/Desktop/malon/dcmtk-3.6.3-install/usr/local/include/dcmtk/dcmimgle/dcmimage.h"
-//#include <dcmtk/config/osconfig.h>
-//#include <dcmtk/dcmimgle/dcmimage.h>
-//#include "/Users/laurah/Desktop/malon/dcmtk-3.6.3/dcmimgle/libsrc/dcmimage.cc"
-#include <QString>
 
-#include <QMainWindow>
-#include <QPushButton>
-
-#include "qimage.h"
-#include "serie.h"
-
-//#include <dcmtk/config/cfunix.h>
-//#include <dcmtk/config/osconfig.h>
-//#include <dcmtk/ofstd/ofstring.h>
-//#include <dcmtk/ofstd/ofconsol.h>
-//#include <dcmtk/dcmdata/dcdeftag.h>
-//#include <dcmtk/dcmdata/dcfilefo.h>
-//#include <dcmtk/dcmimgle/dcmimage.h>
-//#include "dcmtk/dcmimage/diregist.h"
-
+//Include relatives to DCMTK module
 #undef UNICODE
 #undef _UNICODE
 #include <dcmtk/config/osconfig.h>
 #include <dcmtk/dcmdata/dctk.h>
 #include <dcmtk/dcmimgle/dcmimage.h>
 
+//Include relatives to self made classes
+#include "serie.h"
+#include "reportwindow.h"
+#include "dialogpinaccess.h"
 
 
+//Include Qt Classes
+#include <QString>
+#include <QMainWindow>
+#include <QPushButton>
 #include <QImage>
 #include <QGraphicsScene>
 #include <QLabel>
 #include <QStackedWidget>
 #include <QScrollBar>
-#include <vector>
-#include <map>
-#include <string>
 #include <QWheelEvent>
-#include "reportwindow.h"
-#include "dialogpinaccess.h"
 #include <QPixmap>
 
 
+//basic C++ include
+#include <vector>
+#include <map>
+#include <string>
 
 using namespace std;
 
@@ -136,11 +123,16 @@ private:
     QAction *Scroll;
     QAction *Link;
     QAction *Flag;
+    QAction *InvertContrast;
+    QAction *DefaultContrast;
+    QAction *MinMaxContrast;
+    QAction *HistoContrast;
 
     //Count the number of different series displayed on screen
     int nbDisplayedSerie;
 
-    int contrast[4];
+    //saving the contrast for each of the window
+    Contrast contrast[4];
 
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -200,7 +192,13 @@ public:
     void createButtons();
 
     //Update all "current" variable to their value according to the selectedWindow and the serie number
+    //Call follozing function to update button that should be marked "checked" or not
     void updateWindowInfo();
+
+    //Updating the "checked" position of the corresponding button
+    void updatePlanButton();
+    void updateFlagButton();
+    void updateContrastButton();
 
     //Function called if "linkedViews" button is activated
     //Function to set up information before drawing onthe screen
@@ -209,7 +207,7 @@ public:
     //Function to draw the line on the related plan/images while scrolling in an other one
     void paintOnScene(QPixmap &pixmap, int sceneNb, int beginX,int beginY,int endX, int endY );
 
-    void updateContrast();
+//    void updateContrast();
 
     void updateWindowConnection();
 
@@ -257,9 +255,6 @@ private slots:
     void callAxial();
     void callCoronal();
     void callSagittal();
-
-
-    void callTest();
 
     void link_views();
 

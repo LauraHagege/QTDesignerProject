@@ -1,6 +1,7 @@
 #ifndef SERIE_H
 #define SERIE_H
 
+
 #include <iostream>
 #include <vector>
 #include <QImage>
@@ -11,6 +12,9 @@
 using namespace std;
 
 enum Plan {Axial, Coronal, Sagittal, Unknown, FlagImg};
+
+//Contrast level relatives to the one that DICOM offers
+enum Contrast{Default, DefaultInverted, MinMax, MinMaxInverted, Histo, HistoInverted};
 
 //----------CLASS SERIE ----------//
 //Element to store all information relative to a serie
@@ -79,6 +83,9 @@ private:
     //serie is ;ultiplan if it contains enough value in order to construct relaliv plans
     bool MultiPlan;
 
+    //saving the contrast of the serie
+    Contrast contrast;
+
     //storing in wich window is the plan displayed
     //if the plan is not in any window the vector contains -1
     vector<int> axialWindow;
@@ -113,38 +120,46 @@ public:
     void constructCoronalPlan();
     void constructSagittalPlan();
 
-    //properties setters
+    //PROPERTIES SETTER FUNCTIONS
     void setDepths(int width, int height);
     void setXdepth(int depth);
     void setYdepth(int depth);
     void setZdepth(int depth);
 
-
+    //Set next and previous index for scrolling trough images
     void setNextIndex(Plan plan);
     void setPreviousIndex(Plan plan);
 
+    //set the boolean viewLinked to true or false
     void setViewLinked();
 
+    //For multiplan series
+    //Pair on plan with the window inwhich it is displayed
     void setPlanWindows(int windowSerieNb[], Plan windowCurrentPlan[]);
 
+    void setcontrast(Contrast c);
+
+    //Store the flagged images according to the path
     void setFlags(char * absolutePath);
 
 
-    //Properties getter function
+    //PROPERTIES GETTER FUNCTIONS
     bool isBuilt();
     char* getName();
+    int getId();
     char *getDescription();
     Plan getdefaultPlan();
-    int getId();
+
+
     int getNbImages();
     int getNbFrames();
+
     int getWW();
     int getWC();
 
     int getXIndex();
     int getYIndex();
     int getZIndex();
-
 
     int getXdepth();
     int getYdepth();
@@ -158,6 +173,8 @@ public:
     vector<int> getwindow(Plan plan);
 
     bool getMultiplan();
+
+    Contrast getcontrast();
 
     QPixmap getFlags();
     bool hasFlag();

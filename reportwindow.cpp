@@ -14,6 +14,7 @@ ReportWindow::ReportWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     add_buttons();
+    setWindowTitle( tr("Reports") );
 }
 
 ReportWindow::~ReportWindow()
@@ -84,17 +85,20 @@ void ReportWindow::render_report(char *absolutPath, char* studyName){
 
     strcpy(simplifiedpath,absolutPath);
     strcat(simplifiedpath,string("REPORTS/").c_str());
-    strcat(clinicalpath,studyName);
+    strcat(simplifiedpath,studyName);
     strcat(simplifiedpath,string("/SIMPLIFIEDREPORT.jpg").c_str());
+
+    //cout << "simplified path " << simplifiedpath << endl;
 
     QPixmap clinicalimg = QPixmap(clinicalpath);
     clinicalScene = new QGraphicsScene(this);
-    clinicalScene->addPixmap(clinicalimg);
+    clinicalScene->addPixmap(clinicalimg.scaled(0.6*clinicalimg.width(),0.6*clinicalimg.height()));
     ui->clinicalReport->setScene(clinicalScene);
 
     QPixmap simplifiedimg=QPixmap(simplifiedpath);
     simplifiedScene = new QGraphicsScene(this);
-    simplifiedScene->addPixmap(simplifiedimg);
+    simplifiedScene->addPixmap(simplifiedimg.scaled(0.6*simplifiedimg.width(),0.6*simplifiedimg.height()));
     ui->simplifiedReport->setScene(simplifiedScene);
+
 
 }

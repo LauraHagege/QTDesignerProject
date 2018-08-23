@@ -45,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent) :
     nbDisplayedSerie=1;
 
     for(int i=0 ; i<4; i++){
-        contrast[i]=0;
+        contrast[i]=Default;
         windowSerieNb[i]=-1;
         windowCurrentPlan[i]=Unknown;
     }
@@ -319,6 +319,9 @@ void MainWindow::processDicom(){
                         //usefull to access the flagged data
                         char serieRef[9];
 
+                        //storing serie description
+                        char *desc=new char[100];
+
                         //going down the tree to find images from each serie
                         while((FileRecord = SeriesRecord->nextSub(FileRecord)) != NULL){
                             //store full path to each image
@@ -345,16 +348,23 @@ void MainWindow::processDicom(){
                                 // If the file is not an image, don't store it, ie don't create a serie
                                 if (DicomImage(fullpath.c_str()).getStatus() != EIS_Normal){
                                     count =0;
-                                    //cout << "statu not normal" << endl;
+                                }
 
+                                //get serie description
+                                if (SeriesRecord->findAndGetOFString(DCM_SeriesDescription, tmpString).good()){
+                                    strcpy(desc,tmpString.c_str());
+                                    cout << tmpString.c_str() << " " << endl;
+                                    if(!strcmp(desc,string("Patient Protocol").c_str()))
+                                        count=0;
                                 }
                             }
+
                             // add image path to the local vector
                             paths.push_back(fullpath);
 
                             //storing basic information common to all images of the serie
                             //count <= 3 is a security in case the first image is just a "reference plan"
-                            if(count <=3){
+                            if(count <=3 && count >0){
                                 if(FileRecord->findAndGetOFString(DCM_WindowCenter,tmpString).good()){
                                     WC1=atoi(tmpString.c_str());
                                 }
@@ -370,7 +380,6 @@ void MainWindow::processDicom(){
                                 }
 
                                 if(FileRecord->findAndGetOFStringArray(DCM_ImageOrientationPatient,tmpString).good()){
-                                    //cout << "image orientation patient " << tmpString.c_str() << endl;
                                     seriePlan = findSeriePlan(tmpString.c_str());
                                 }
                                 if(FileRecord->findAndGetOFString(DCM_SliceThickness,tmpString).good()){
@@ -401,12 +410,6 @@ void MainWindow::processDicom(){
                             series +=1;
                             //cout << "series nb " <<series << "with "<< count <<" images" << endl;
 
-                            //get serie description
-                            char *desc=new char[100];
-                            if (SeriesRecord->findAndGetOFString(DCM_SeriesDescription, tmpString).good()){
-                                strcpy(desc,tmpString.c_str());
-                                cout << tmpString.c_str() << " " << endl;
-                            }
 
                             //create a new serie of images
                             Serie *serie = new Serie(series, studyName,serieRef, seriePlan,absolutefilepath,paths, nbFrame,rescale, desc, WW1, WC1);
@@ -447,6 +450,10 @@ void MainWindow::setPatientInfo(char *studydesc, char *date, char *patientName, 
 void MainWindow::addSerieButton(Serie *serie){
     //creating/adding button for each serie in the serieWidget
     QPushButton *button = new QPushButton(this);
+    button->setCheckable(true);
+
+    if(serie->getId() ==  currentSerieNumber)
+        button->setChecked(true);
 
 //     display first Image of the serie near the button
 //    DicomImage *serieImg;
@@ -602,9 +609,6 @@ void MainWindow::createDefaultPlan(){
     //Single frame Images are stored separately
     //Multiframe are stored in one DicomImage element
 
-    cout <<"nb frame  " << nbFrame << "nb Img " << currentNbImages << endl;
-
-    cout << "path " << serie->getPath(0).c_str() << endl;
 
     for(int i=0; i< currentNbImages ; i++){
         if(nbFrame ==0)
@@ -620,13 +624,11 @@ void MainWindow::createDefaultPlan(){
     }
 
 
+    serie->clearPixels();
+
     // height and with are the default argument defined for the default plan of the Image
     int width = DicomImages[0]->getWidth();
     int height =  DicomImages[0]->getHeight();
-
-    // Update current serie information
-    serie->setDepths(width,height);
-    serie->clearPixels();
 
     //cout << "width " << width <<" height " << height << endl;
 
@@ -645,19 +647,37 @@ void MainWindow::createDefaultPlan(){
 
         for(int i=0; i<DicomImages.size(); i++){
             //Contrast display depends on the selected one for each window
-            if (contrast[0]==0)
+            if(!serie->isBuilt()){
+                serie->setDepths(width,height);
+                serie->setcontrast(Default);
+
                 DicomImages[i]->setWindow(serie->getWC(),serie->getWW());
-            else if (contrast[0] ==1)
-                DicomImages[i] ->setMinMaxWindow();
-            else
-                DicomImages[i] ->setHistogramWindow();
+                // DicomImages[i] ->setMinMaxWindow();
+
+            }
+            else{
+                switch(serie->getcontrast()){
+                case Default:
+                case DefaultInverted:
+                    DicomImages[i]->setWindow(serie->getWC(),serie->getWW());
+                    break;
+                case MinMax:
+                case MinMaxInverted:
+                    DicomImages[i] ->setMinMaxWindow();
+                    break;
+                case Histo:
+                case HistoInverted:
+                    DicomImages[i] ->setHistogramWindow();
+                    break;
+                }
+
+            }
+
 
             //Getting pixel information from the DicomImage
             // 8 is the number of pixel per sample
 
             uint8_t* pixelData = (uint8_t *)(DicomImages[i]->getOutputData(8));
-
-            // if (pixelData != NULL)
 
             //storing the pixel for the current serie
             //according to the default plan of the serie pixel will be stored in a different vector
@@ -667,7 +687,7 @@ void MainWindow::createDefaultPlan(){
    else
       cerr << "Error: cannot load DICOM image (" << DicomImage::getString(DicomImages[0]->getStatus()) << ")" << endl;
 
-    //cout << "MDR " <<windowCreation <<endl;
+
     //Call for window scene creation
     if(windowCreation){
         cout << "build views" << endl;
@@ -934,24 +954,33 @@ void MainWindow::createButtons(){
     //creating advanced setting tool bar
     ui->AdvancedSettings->setVisible(false);
 
-    QAction *Invert = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/grayscale.png"),"Invert Grayscale", this);
-    ui->AdvancedSettings->addAction(Invert);
+    InvertContrast = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/grayscale.png"),"Invert Grayscale", this);
+    ui->AdvancedSettings->addAction(InvertContrast);
+    connect(InvertContrast,SIGNAL(triggered(bool)),this,SLOT(invert_grayscale()) );
+    InvertContrast->setCheckable(true);
+    InvertContrast->setChecked(false);
 
     //setting invert var to zero = normal grayscale displayed
-    invertGrayScale=0;
-    connect(Invert,SIGNAL(triggered(bool)),this,SLOT(invert_grayscale()) );
+    //invertGrayScale=0;
 
-    QAction *Default = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/defaultcontrast.png"),"Set default contrast", this);
-    ui->AdvancedSettings->addAction(Default);
-    connect(Default,SIGNAL(triggered(bool)),this,SLOT(default_contrast()) );
+    DefaultContrast = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/defaultcontrast.png"),"Set default contrast", this);
+    ui->AdvancedSettings->addAction(DefaultContrast);
+    connect(DefaultContrast,SIGNAL(triggered(bool)),this,SLOT(default_contrast()) );
+    DefaultContrast->setCheckable(true);
+    DefaultContrast->setChecked(true);
 
-    QAction *Darker = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/minmaxcontrast.png"),"Set darker contrast", this);
-    ui->AdvancedSettings->addAction(Darker);
-    connect(Darker,SIGNAL(triggered(bool)),this,SLOT(minmax_contrast()) );
+    MinMaxContrast = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/minmaxcontrast.png"),"Set darker contrast", this);
+    ui->AdvancedSettings->addAction(MinMaxContrast);
+    connect(MinMaxContrast,SIGNAL(triggered(bool)),this,SLOT(minmax_contrast()) );
+    MinMaxContrast->setCheckable(true);
+    MinMaxContrast->setChecked(false);
 
-    QAction *Brigther = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/histogramcontrast.png"),"Set brighter contrast", this);
-    ui->AdvancedSettings->addAction(Brigther);
-    connect(Brigther,SIGNAL(triggered(bool)),this,SLOT(histo_contrast()) );
+
+    HistoContrast = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/histogramcontrast.png"),"Set brighter contrast", this);
+    ui->AdvancedSettings->addAction(HistoContrast);
+    connect(HistoContrast,SIGNAL(triggered(bool)),this,SLOT(histo_contrast()) );
+    HistoContrast->setCheckable(true);
+    HistoContrast->setChecked(false);
 
     QAction *AddStudy = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/study.png"),"Compare my other study", this);
     ui->AdvancedSettings->addAction(AddStudy);
@@ -983,15 +1012,46 @@ void MainWindow::createButtons(){
 //------------------------ UPDATE WINDOW INFO  ------------------//
 //---------------------------------------------------------------//
 void MainWindow::updateWindowInfo(){
-   Serie *serie = Series[currentSerieNumber-1];
    // cout << "updateWindowinfo" << endl;
     if(currentSerieNumber != -1)
-        currentNbImages=serie->getNbImages();
+        currentNbImages=Series[currentSerieNumber-1]->getNbImages();
     else
         currentNbImages=0;
 
     currentPlan=windowCurrentPlan[selectedWindow-1];
 
+    updatePlanButton();
+
+    //update the number of different series displayed;
+//    int nb=4;
+//    for(int i=0; i<4; i++){
+//        if(windowSerieNb[i]==-1)
+//            nb-=1;
+//        else {
+//            for(int j=i+1; j<4; j++){
+//                if(windowSerieNb[i] == windowSerieNb[j])
+//                    nb-=1;
+//            }
+//        }
+//    }
+//    nbDisplayedSerie = nb;
+
+
+//    for(int i=0; i<4 ; i++){
+//        cout << "serie nb " << windowSerieNb[i] << endl;
+//        cout << "plan " << windowCurrentPlan[i] << endl;
+//    }
+
+
+
+    updateContrastButton();
+
+    updateWindowConnection();
+    //cout << "there are currently " << nbDisplayedSerie << " different series displayed on screen" << endl;
+
+}
+
+void MainWindow::updatePlanButton(){
     if(currentNbImages <10 || currentPlan ==FlagImg){
         AxialAction->setEnabled(false);
         SagittalAction->setEnabled(false);
@@ -1019,39 +1079,54 @@ void MainWindow::updateWindowInfo(){
         }
     }
 
-    //update the number of different series displayed;
-//    int nb=4;
-//    for(int i=0; i<4; i++){
-//        if(windowSerieNb[i]==-1)
-//            nb-=1;
-//        else {
-//            for(int j=i+1; j<4; j++){
-//                if(windowSerieNb[i] == windowSerieNb[j])
-//                    nb-=1;
-//            }
-//        }
-//    }
-//    nbDisplayedSerie = nb;
+}
 
-
-//    for(int i=0; i<4 ; i++){
-//        cout << "serie nb " << windowSerieNb[i] << endl;
-//        cout << "plan " << windowCurrentPlan[i] << endl;
-//    }
+void MainWindow::updateFlagButton(){
+    Serie *serie = Series[currentSerieNumber-1];
 
     bool flag=serie->hasFlag();
-    cout << "flag for plan "  << currentPlan << " " << flag << endl;
 
     if(flag)
         Flag->setEnabled(true);
     else
         Flag->setEnabled(false);
-
-
-    updateWindowConnection();
-    //cout << "there are currently " << nbDisplayedSerie << " different series displayed on screen" << endl;
-
 }
+
+void MainWindow::updateContrastButton(){
+    InvertContrast->setChecked(false);
+    DefaultContrast->setChecked(false);
+    MinMaxContrast->setChecked(false);
+    HistoContrast->setChecked(false);
+
+    if(currentSerieNumber != -1){
+        Serie *serie = Series[currentSerieNumber-1];
+        switch(serie->getcontrast()){
+        case Default:
+            DefaultContrast->setChecked(true);
+            break;
+        case MinMax:
+            MinMaxContrast->setChecked(true);
+            break;
+        case Histo:
+            HistoContrast->setChecked(true);
+            break;
+        case DefaultInverted:
+            DefaultContrast->setChecked(true);
+            InvertContrast->setChecked(true);
+            break;
+        case MinMaxInverted:
+            MinMaxContrast->setChecked(true);
+            InvertContrast->setChecked(true);
+            break;
+        case HistoInverted:
+            HistoContrast->setChecked(true);
+            InvertContrast->setChecked(true);
+            break;
+        }
+
+    }
+}
+
 
 //---------------------------------------------------------------//
 //------------------------ PAINT LINKED LINES  ------------------//
@@ -1160,25 +1235,25 @@ void MainWindow::paintOnScene(QPixmap &pixmap, int sceneNb,int beginX,int beginY
 }
 
 
-void MainWindow::updateContrast(){
-    if(windowCurrentPlan[selectedWindow-1] != windowDefaultPlan[selectedWindow-1] ){
-        switch(windowCurrentPlan[selectedWindow-1]){
-        case Axial:
-            displayAxialPlan();
-            break;
-        case Coronal:
-            displayCoronalPlan();
-            break;
-        case Sagittal:
-            displaySagittalPlan();
-            break;
-        default:
-            break;
-        }
+//void MainWindow::updateContrast(){
+//    if(windowCurrentPlan[selectedWindow-1] != windowDefaultPlan[selectedWindow-1] ){
+//        switch(windowCurrentPlan[selectedWindow-1]){
+//        case Axial:
+//            displayAxialPlan();
+//            break;
+//        case Coronal:
+//            displayCoronalPlan();
+//            break;
+//        case Sagittal:
+//            displaySagittalPlan();
+//            break;
+//        default:
+//            break;
+//        }
 
-    }
+//    }
 
-}
+//}
 
 void MainWindow::updateWindowConnection(){
     //cout << "update window connection" << endl;
@@ -1278,9 +1353,7 @@ void MainWindow::mousePressEvent(QMouseEvent* e){
             }
         }
     }
-
     updateWindowInfo();
-
 }
 
 //Scrolling images of the serie if Scroll button is activated
@@ -1328,6 +1401,13 @@ void MainWindow::wheelEvent(QWheelEvent *event){
 void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     currentSerieNumber = b->property("Id").toInt();
 
+    b->setChecked(true);
+
+    cout <<"button checked " << buttonGroup->checkedId() << endl;
+
+    //uncheck the button that was previously selected
+    buttonGroup->button(buttonGroup->checkedId())->setChecked(false);
+
     Serie *serie= Series[currentSerieNumber-1];
     currentPlan = serie->getdefaultPlan();
 
@@ -1366,16 +1446,43 @@ void MainWindow::hide_advanced()
     ui->AdvancedSettings->setVisible(false);
 }
 
-void MainWindow::invert_grayscale()
-{
+void MainWindow::invert_grayscale(){
+    Serie *serie = Series[currentSerieNumber-1];
     //To redo
-    invertGrayScale=(1-invertGrayScale)%2;
+    //invertGrayScale=(1-invertGrayScale)%2;
 
-    QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+    //QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
 
     //if(invertGrayScale)
        // img.invertPixels();
-    displayInScene(img);
+    if(InvertContrast->isChecked()){
+        switch(serie->getcontrast()){
+        case Default:
+            serie->setcontrast(DefaultInverted);
+            break;
+        case MinMax:
+            serie->setcontrast(MinMaxInverted);
+            break;
+        case Histo:
+            serie->setcontrast(HistoInverted);
+            break;
+        }
+    }else{
+        switch(serie->getcontrast()){
+        case DefaultInverted:
+            serie->setcontrast(Default);
+            break;
+        case MinMaxInverted:
+            serie->setcontrast(MinMax);
+            break;
+        case Histo:
+            serie->setcontrast(HistoInverted);
+            break;
+        }
+
+    }
+
+    displayInScene(serie->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
 
 //    switch(selectedWindow){
 //    case 1:
@@ -1479,27 +1586,62 @@ void MainWindow::zoom_minus(){
 
 //set contrst to the corresponding value
 void MainWindow::default_contrast(){
-    if(contrast[0] !=0){
-        contrast[0]=0;
+    Serie *serie = Series[currentSerieNumber-1];
+    Contrast ct = contrast[selectedWindow-1];
+
+    //disable all other contrasts
+    InvertContrast->setChecked(false);
+    MinMaxContrast->setChecked(false);
+    HistoContrast->setChecked(false);
+
+    if(ct ==Default){
+       DefaultContrast->setChecked(true);
+    }else{
+        contrast[selectedWindow-1]=Default;
+        serie->setcontrast(Default);
         createDefaultPlan();
-        updateContrast();
     }
 }
 
 void MainWindow::minmax_contrast(){
-    if(contrast[0] !=1){
-        contrast[0]=1;
-        createDefaultPlan();
-        updateContrast();
+    Serie *serie = Series[currentSerieNumber-1];
+    Contrast ct = contrast[selectedWindow-1];
 
+    //disable all other contrasts
+    DefaultContrast->setChecked(false);
+    HistoContrast->setChecked(false);
+
+    if(ct ==MinMax || ct==MinMaxInverted){
+       MinMaxContrast->setChecked(true);
+    }else if (!InvertContrast->isChecked()){
+        contrast[selectedWindow-1]=MinMax;
+        serie->setcontrast(MinMax);
+        createDefaultPlan();
+    }else {
+        contrast[selectedWindow-1]=MinMaxInverted;
+        serie->setcontrast(MinMaxInverted);
+        createDefaultPlan();
     }
 }
 
 void MainWindow::histo_contrast(){
-    if(contrast[0] !=2){
-        contrast[0]=2;
+    Serie *serie = Series[currentSerieNumber-1];
+    Contrast ct = contrast[selectedWindow-1];
+
+    //disable all other contrasts
+    DefaultContrast->setChecked(false);
+    MinMaxContrast->setChecked(false);
+
+    if(ct ==Histo || ct==HistoInverted){
+       HistoContrast->setChecked(true);
+    }else if (!InvertContrast->isChecked()){
+        contrast[selectedWindow-1]=Histo;
+        serie->setcontrast(Histo);
         createDefaultPlan();
-        updateContrast();
+    }else{
+        contrast[selectedWindow-1]=HistoInverted;
+        serie->setcontrast(HistoInverted);
+        createDefaultPlan();
     }
 }
 
@@ -1507,7 +1649,7 @@ void MainWindow::histo_contrast(){
 //Open the report window
 void MainWindow::on_showReport_clicked()
 {
-    report->show();
+    report->showMaximized();
 }
 
 
@@ -1524,14 +1666,6 @@ void MainWindow::callSagittal(){
     displaySagittalPlan();
 }
 
-void MainWindow::callTest(){
-  cout << "callTest"<< endl;
-
- // Series[currentSerieNumber-1]->setViewLinked(true);
-
-    paintLinkedLines();
-
-}
 
 void MainWindow::link_views(){
     Series[currentSerieNumber-1]->setViewLinked();
@@ -1541,8 +1675,6 @@ void MainWindow::link_views(){
     }else{
 
     }
-
-
 }
 
 

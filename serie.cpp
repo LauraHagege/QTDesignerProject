@@ -132,6 +132,10 @@ QPixmap Serie::getCurrentImg(Plan currentPlan){
         break;
     }
 
+    if(contrast==DefaultInverted || contrast == MinMaxInverted || contrast ==HistoInverted)
+        Image.invertPixels();
+
+
     return QPixmap::fromImage(Image);
 
 }
@@ -544,7 +548,6 @@ vector<int> Serie::getwindow(Plan plan){
 }
 
 void Serie::setFlags(char * absolutePath){
-    cout << "setflags " << endl;
 
     char flagpath[200];
     int count=1;
@@ -564,8 +567,6 @@ void Serie::setFlags(char * absolutePath){
     QPixmap *flag;
     flag = new QPixmap(flagpath);
 
-    cout << "JPPPPP " << flag->data_ptr() << endl;
-
 
     while(flag->data_ptr()){
         cout <<flagpath << endl;
@@ -577,9 +578,7 @@ void Serie::setFlags(char * absolutePath){
         flag = new QPixmap(flagpath);
     }
 
-    nbFlag=FlagImages.size();
-
-    cout <<"nb flag " << nbFlag;
+    nbFlag=(int)FlagImages.size();
 }
 
 bool Serie::getMultiplan(){
@@ -596,4 +595,12 @@ QPixmap Serie::getFlags(){
 bool Serie::hasFlag(){
     return hasFlagImages;
 
+}
+
+void Serie::setcontrast(Contrast c){
+    contrast=c;
+}
+
+Contrast Serie::getcontrast(){
+    return contrast;
 }
