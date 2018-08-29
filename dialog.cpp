@@ -13,6 +13,7 @@ Dialog::Dialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    setWindowTitle( tr("Welcome!") );
 
     //displaying welcoming image
     welcomeImg = QPixmap("C:/Users/simms/Desktop/Laura/img/disclaimer.jpg").scaled(QSize(570,570));
@@ -20,6 +21,7 @@ Dialog::Dialog(QWidget *parent) :
     welcomingScene->addPixmap(welcomeImg);
     ui->welcomeView->setScene(welcomingScene);
     ui->welcomeView->show();
+    ui->WrongFolder->setVisible(false);
 }
 
 Dialog::~Dialog()
@@ -38,9 +40,10 @@ void Dialog::on_pushButton_clicked()
 
     if(studyPath[size-8] =='S' && studyPath[size-7] =='D' && studyPath[size-6] =='Y')
         this->close();
-    else
+    else{
+        ui->WrongFolder->setVisible(true);
         this->open();
-
+    }
 
     char store[11];
 

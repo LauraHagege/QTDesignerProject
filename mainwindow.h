@@ -97,17 +97,20 @@ private:
     //If the number if to low, plan creation button are disabled
     int currentNbImages;
     //Storing the default plan of the serie displayed in the selectedWindow
-    bool defaultPlan;
+    bool defaultPlane;
     //Storing the current plan of the serie displayed in the selectedWindow
-    Plan currentPlan;
+    Plane currentPlane;
 
 
     //Storing respectively, Serie number, Default and CurrentPlan, Nb of Images for each of the four graphicsView of the window
     //Variable used to update the above "current" attributes
     int windowSerieNb[4];
-    Plan windowDefaultPlan[4];
-    Plan windowCurrentPlan[4];
+    Plane windowDefaultPlane[4];
+    Plane windowCurrentPlane[4];
     int windowNbImg[4];
+    int windowZoom[4];
+    bool windowFlag[4];
+    bool windowRef[4];
 
     //storing connection window for each window
     //windowConnection[i][i] is always true;
@@ -127,6 +130,7 @@ private:
     QAction *DefaultContrast;
     QAction *MinMaxContrast;
     QAction *HistoContrast;
+    QAction *Ref;
 
     //Count the number of different series displayed on screen
     int nbDisplayedSerie;
@@ -138,19 +142,19 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    //Gett patient date of birth and ask for pin verification
+    //if given PIN is right, will call or processData function
+    void checkPin(char *studyPath, int studyNb, char *studyname, char *dicomdirpath);
+
+
     // Function to construct the Main Window architecture of the interface
     // This include, adding the Images and dinamicall created button
     // This function will call in order the necessary subfunction
-    void constructWindow(char * studyPath, int studyNb ,char* studyname, char*dicomdirpath);
+    void processData();
 
+    //Function called from main to know if access have been granted from PinAccess windows
     //If no access granted, window wont show
     bool getAccess();
-
-    //Gett patient date of birth and ask for pin verification
-    void checkPin();
-
-    //Call all relevant funtion to process data once the pin access has been verified
-    void processData();
 
     //This function will in store all relevant informations found in the DICOMDIR
     //In particular call for the creation of Serie element once a serie is found
@@ -163,14 +167,14 @@ public:
     void addSerieButton(Serie* serie);
 
     //Return the default plan calculated from the given orientation
-    Plan findSeriePlan(const char * orientation);
+    Plane findSeriePlane(const char * orientation);
 
     //Treat DICOM given information to render a number
     double getPixelSpacingNb(const char* pixelArray);
 
     //Process to the creation of Images from the "processDicom" information
     //Will call for "bujildViews" and "displayInScene" function
-    void createDefaultPlan();
+    void createDefaultPlane();
 
     //Function only called once, during the creation of the window
     //Initializing QGraphicsScene and graphicsView for the window
@@ -183,9 +187,9 @@ public:
 
 
     //Calling for Serie "getCurrentImg(Plan plan)", to display the relevant image in the selectedWindow
-    void displayAxialPlan();
-    void displayCoronalPlan();
-    void displaySagittalPlan();
+    void displayAxialPlane();
+    void displayCoronalPlane();
+    void displaySagittalPlane();
 
     //Function to set up the button design of the window
     //Also binding button with their actions
@@ -196,9 +200,10 @@ public:
     void updateWindowInfo();
 
     //Updating the "checked" position of the corresponding button
-    void updatePlanButton();
+    void updatePlaneButton();
     void updateFlagButton();
     void updateContrastButton();
+    void updateRefButton();
 
     //Function called if "linkedViews" button is activated
     //Function to set up information before drawing onthe screen
@@ -256,13 +261,20 @@ private slots:
     void callCoronal();
     void callSagittal();
 
+    //linking scroll of images for multiplane series
     void link_views();
 
+    //display Flagged immages if serie has some
     void showFlagged();
 
+    //display references image if serie has some
+    void showRef();
+
+    //called fro; pinAccess window to accept window opening or not
     void validPassword(char * pw);
 
-
+    //reset settings to the default one
+    void reset_settings();
 };
 
 

@@ -47,7 +47,10 @@ MainWindow::MainWindow(QWidget *parent) :
     for(int i=0 ; i<4; i++){
         contrast[i]=Default;
         windowSerieNb[i]=-1;
-        windowCurrentPlan[i]=Unknown;
+        windowCurrentPlane[i]=Unknown;
+        windowZoom[i]=0;
+        windowFlag[i]=false;
+        windowRef[i]=false;
     }
 
 }
@@ -63,10 +66,9 @@ MainWindow::~MainWindow()
 
 
 //--------------------------------------------------------------------------//
-//------------------------------  CONSTRUCT WINDOW  ------------------------//
-//------------ Calling all related function to create the main window-------//
-//-------------------------------------------------------------------------//
-void MainWindow::constructWindow(char *studyPath, int studyNb, char *studyname, char *dicomdirpath){
+//----------------------------------  CHECK PIN  -----------------=---------//
+//--------------------------------------------------------------------------//
+void MainWindow::checkPin(char *studyPath, int studyNb, char *studyname, char *dicomdirpath){
     windowCreation=true;
 
     strcpy(dicomdirPath,dicomdirpath);
@@ -88,44 +90,6 @@ void MainWindow::constructWindow(char *studyPath, int studyNb, char *studyname, 
     absolutefilepath[size-8]='\0';
 
 
-
-    //call function to open DICOMDIR and store images paths
-    checkPin();
-
-
-//    display_one_window(); // by default show only one window
-//    createDefaultPlan();
-
-//    //call function to create button architecture
-//    createButtons();
-
-//    //call for report window creation
-//    report->render_report(filepath);
-
-    //delete filepath;
-}
-
-bool MainWindow::getAccess(){
-    return Access;
-}
-
-
-//Call all relevant funtion to process data once the pin access has been verified
-void MainWindow::processData(){
-    cout << "processData" << endl;
-    processDicom();
-
-    display_one_window(); // by default show only one window
-    createDefaultPlan();
-
-    //call function to create button architecture
-    createButtons();
-
-    //call for report window creation
-    report->render_report(absolutefilepath,studyName);
-}
-
-void MainWindow::checkPin(){
     int study=0;
 
     DcmDicomDir myDir(dicomdirPath);
@@ -188,6 +152,33 @@ void MainWindow::checkPin(){
 
 }
 
+//--------------------------------------------------------------------------//
+//---------------------------------- GET ACCESS  ---------------------------//
+//----------------------If no access granted window won't show-------------//
+//-------------------------------------------------------------------------//
+bool MainWindow::getAccess(){
+    return Access;
+}
+
+
+//--------------------------------------------------------------------------//
+//-----------------------------------  PROCESS DATA ------------------------//
+//------------ Calling all related function to create the main window-------//
+//-------------------------------------------------------------------------//
+void MainWindow::processData(){
+    cout << "processData" << endl;
+    processDicom();
+
+    display_one_window(); // by default show only one window
+    createDefaultPlane();
+
+    //call function to create button architecture
+    createButtons();
+
+    //call for report window creation
+    report->render_report(absolutefilepath,studyName);
+}
+
 
 
 
@@ -226,7 +217,7 @@ void MainWindow::processDicom(){
     int nbFrame=0;
     int WC1,WW1;
     double rescale =1;
-    Plan seriePlan = Unknown;
+    Plane seriePlane = Unknown;
 
     //Going down DICOMDIR tree structur to get the path to all images stored in the given Directory
     if(root != NULL){
@@ -380,7 +371,7 @@ void MainWindow::processDicom(){
                                 }
 
                                 if(FileRecord->findAndGetOFStringArray(DCM_ImageOrientationPatient,tmpString).good()){
-                                    seriePlan = findSeriePlan(tmpString.c_str());
+                                    seriePlane = findSeriePlane(tmpString.c_str());
                                 }
                                 if(FileRecord->findAndGetOFString(DCM_SliceThickness,tmpString).good()){
                                     rescale = atoi(tmpString.c_str()) ;
@@ -412,7 +403,7 @@ void MainWindow::processDicom(){
 
 
                             //create a new serie of images
-                            Serie *serie = new Serie(series, studyName,serieRef, seriePlan,absolutefilepath,paths, nbFrame,rescale, desc, WW1, WC1);
+                            Serie *serie = new Serie(series, studyName,serieRef, seriePlane,absolutefilepath,paths, nbFrame,rescale, desc, WW1, WC1);
 
 
                             //create a button for the new serie
@@ -502,7 +493,7 @@ void MainWindow::addSerieButton(Serie *serie){
 //----- DETERMINE THE DEFAULT PLAN FOR A GIVEN SERIE ------------------------------//
 //----- DEFAULT PLAN meaning the one created without "treatment on DICOM files ----//
 //---------------------------------------------------------------------------------//
-Plan MainWindow::findSeriePlan(const char *orientation){
+Plane MainWindow::findSeriePlane(const char *orientation){
 
     int count=0;
     int str=0;
@@ -587,13 +578,13 @@ double MainWindow::getPixelSpacingNb(const char* pixelArray){
 //----------------------------CREATE DEFAULT PLAN ----------------------------------//
 //------------------------ Render Images according to the default plan -------------//
 //----------------------------------------------------------------------------------//
-void MainWindow::createDefaultPlan(){
+void MainWindow::createDefaultPlane(){
     Serie *serie=Series[currentSerieNumber-1];
     //CurrentSerieNumber contains the number/id of the serie displayed in the current selected window
 
     // currentPlan stores the serie plan displayed relatively to the selected window
     // by default this is the default plan of the serie
-    currentPlan = serie->getdefaultPlan();
+    currentPlane = serie->getdefaultPlane();
 
     //currentNbImages is the number of current displyed serie
     currentNbImages = serie->getNbImages();
@@ -690,19 +681,17 @@ void MainWindow::createDefaultPlan(){
 
     //Call for window scene creation
     if(windowCreation){
-        cout << "build views" << endl;
         buildViews();
         windowCreation=false;
     }
 
-    cout <<"current plan  " << currentPlan << endl;
-    displayInScene(serie->getCurrentImg(currentPlan));
+    displayInScene(serie->getCurrentImg(currentPlane));
 
     //If the serie contains multiple images, the other corresponding plan can be created
     //The function is called by default and stored
     //As asked plan will only need to be rendered
-   if(currentNbImages>10 && currentPlan!=Unknown)
-        Series[currentSerieNumber-1]->constructPlans();
+   if(currentNbImages>50 && serie->getdefaultPlane()!=Unknown)
+        Series[currentSerieNumber-1]->constructPlanes();
 
 }
 
@@ -750,15 +739,15 @@ void MainWindow::displayInScene(QPixmap img, int window){
     //Set the information if the window wasnt containing any Serie
     if(windowSerieNb[selectedWindow-1]==-1 || windowSerieNb[selectedWindow-1] != currentSerieNumber ){
         windowSerieNb[selectedWindow-1]= currentSerieNumber;
-        windowDefaultPlan[selectedWindow-1]= serie->getdefaultPlan();
-        windowCurrentPlan[selectedWindow-1]= serie->getdefaultPlan();
+        windowDefaultPlane[selectedWindow-1]= serie->getdefaultPlane();
+        windowCurrentPlane[selectedWindow-1]= serie->getdefaultPlane();
         windowNbImg[selectedWindow-1]=  serie->getNbImages();
     }
 
     //This is a "casual" update
     //All serie must store information to know in which plan is displayed in which window
     //Variable used to link views of the same serie together
-    serie->setPlanWindows(windowSerieNb, windowCurrentPlan);
+    serie->setPlaneWindows(windowSerieNb, windowCurrentPlane);
 
 
     //If views are marked linked
@@ -795,9 +784,9 @@ void MainWindow::displayInScene(QPixmap img, int window){
 //----------------------------------------------------------------------//
 //--------------------------- DISPPLAY SAGITTAL PLAN  ------------------//
 //----------------------------------------------------------------------//
-void MainWindow::displaySagittalPlan(){
-    windowCurrentPlan[selectedWindow-1]=Sagittal;
-   displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
+void MainWindow::displaySagittalPlane(){
+    windowCurrentPlane[selectedWindow-1]=Sagittal;
+   displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlane[selectedWindow-1]));
 
    updateWindowInfo();
 }
@@ -805,10 +794,10 @@ void MainWindow::displaySagittalPlan(){
 //------------------------------------------------------------------//
 //--------------------------- DISPLAY AXIAL PLAN  ------------------//
 //------------------------------------------------------------------//
-void MainWindow::displayAxialPlan(){
-   windowCurrentPlan[selectedWindow-1]=Axial;
+void MainWindow::displayAxialPlane(){
+   windowCurrentPlane[selectedWindow-1]=Axial;
 
-    displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
+    displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlane[selectedWindow-1]));
     updateWindowInfo();
 
 }
@@ -817,12 +806,12 @@ void MainWindow::displayAxialPlan(){
 //--------------------------------------------------------------------//
 //--------------------------- DISPLAY CORONAL PLAN  ------------------//
 //--------------------------------------------------------------------//
-void MainWindow::displayCoronalPlan(){
+void MainWindow::displayCoronalPlane(){
 
-  //  cout <<"current plan " << windowCurrentPlan[selectedWindow-1] << "selected window "<< selectedWindow<<  endl;
+  //  cout <<"current plan " << windowCurrentPlane[selectedWindow-1] << "selected window "<< selectedWindow<<  endl;
 
-    windowCurrentPlan[selectedWindow-1]=Coronal;
-    displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
+    windowCurrentPlane[selectedWindow-1]=Coronal;
+    displayInScene(Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlane[selectedWindow-1]));
 
     updateWindowInfo();
 }
@@ -887,14 +876,13 @@ void MainWindow::createButtons(){
     ui->mainToolBar->addAction(SagittalAction);
     connect(SagittalAction, SIGNAL(triggered(bool)), SLOT(callSagittal()));
 
-    cout <<"nb images" <<  currentNbImages << endl;
 
-    if(currentNbImages <10 || !serie->getMultiplan()){
+    if(currentNbImages <50 || !serie->getMultiplane()){
         AxialAction->setEnabled(false);
         SagittalAction->setEnabled(false);
         CoronalAction->setEnabled(false);
     }else {
-        switch(currentPlan){
+        switch(currentPlane){
         case Axial:
             AxialAction->setEnabled(false);
             break;
@@ -934,13 +922,22 @@ void MainWindow::createButtons(){
 
     ui->mainToolBar->addSeparator();
 
-    QAction *Examples = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/examples.png"),"Show me normal images", this);
-    ui->mainToolBar->addAction(Examples);
+    Ref = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/examples.png"),"Show me normal images", this);
+    ui->mainToolBar->addAction(Ref);
+    connect(Ref, SIGNAL(triggered(bool)), SLOT(showRef()));
+
+    Ref->setCheckable(true);
+
+    bool ref=serie->hasRef();
+    if(!flag)
+        Ref->setEnabled(false);
 
     ui->mainToolBar->addSeparator();
 
-    QAction *Reset = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/reset.png"),"Reset", this);
+    QAction *Reset = new QAction(QIcon("C:/Users/simms/Desktop/Laura/img/reset.png"),"Reset settings in the active window", this);
     ui->mainToolBar->addAction(Reset);
+    connect(Reset,SIGNAL(triggered(bool)),this,SLOT(reset_settings()) );
+
 
     ui->mainToolBar->addSeparator();
 
@@ -1018,9 +1015,9 @@ void MainWindow::updateWindowInfo(){
     else
         currentNbImages=0;
 
-    currentPlan=windowCurrentPlan[selectedWindow-1];
+    currentPlane=windowCurrentPlane[selectedWindow-1];
 
-    updatePlanButton();
+    updatePlaneButton();
 
     //update the number of different series displayed;
 //    int nb=4;
@@ -1047,12 +1044,15 @@ void MainWindow::updateWindowInfo(){
     updateContrastButton();
 
     updateWindowConnection();
+
+    updateFlagButton();
+    updateRefButton();
     //cout << "there are currently " << nbDisplayedSerie << " different series displayed on screen" << endl;
 
 }
 
-void MainWindow::updatePlanButton(){
-    if(currentNbImages <10 || currentPlan ==FlagImg){
+void MainWindow::updatePlaneButton(){
+    if(currentNbImages <50 || currentPlane ==FlagImg || currentPlane== RefImg){
         AxialAction->setEnabled(false);
         SagittalAction->setEnabled(false);
         CoronalAction->setEnabled(false);
@@ -1061,7 +1061,7 @@ void MainWindow::updatePlanButton(){
         SagittalAction->setEnabled(true);
         CoronalAction->setEnabled(true);
 
-        switch(currentPlan){
+        switch(currentPlane){
         case Axial:
             AxialAction->setEnabled(false);
             break;
@@ -1086,10 +1086,31 @@ void MainWindow::updateFlagButton(){
 
     bool flag=serie->hasFlag();
 
-    if(flag)
+    if(flag){
         Flag->setEnabled(true);
+        if(windowFlag[selectedWindow-1])
+            Flag->setChecked(true);
+        else
+            Flag->setChecked(false);
+    }
     else
-        Flag->setEnabled(false);
+       Flag->setEnabled(false);
+}
+
+void MainWindow::updateRefButton(){
+    Serie *serie = Series[currentSerieNumber-1];
+
+    bool ref=serie->hasRef();
+
+    if(ref){
+        Ref->setEnabled(true);
+        if(windowRef[selectedWindow-1])
+            Ref->setChecked(true);
+        else
+            Ref->setChecked(false);
+    }
+    else
+        Ref->setEnabled(false);
 }
 
 void MainWindow::updateContrastButton(){
@@ -1143,7 +1164,7 @@ void MainWindow::paintLinkedLines(){
     QPixmap Axialmap, Sagittalmap,Coronalmap;
     int bx,by,ex,ey;
 
-    switch(currentPlan){
+    switch(currentPlane){
     case Axial:
         bx=0;
         by = ey = serie->getZIndex();
@@ -1235,26 +1256,6 @@ void MainWindow::paintOnScene(QPixmap &pixmap, int sceneNb,int beginX,int beginY
 }
 
 
-//void MainWindow::updateContrast(){
-//    if(windowCurrentPlan[selectedWindow-1] != windowDefaultPlan[selectedWindow-1] ){
-//        switch(windowCurrentPlan[selectedWindow-1]){
-//        case Axial:
-//            displayAxialPlan();
-//            break;
-//        case Coronal:
-//            displayCoronalPlan();
-//            break;
-//        case Sagittal:
-//            displaySagittalPlan();
-//            break;
-//        default:
-//            break;
-//        }
-
-//    }
-
-//}
-
 void MainWindow::updateWindowConnection(){
     //cout << "update window connection" << endl;
     for(int i=0; i<4; i++){
@@ -1263,7 +1264,7 @@ void MainWindow::updateWindowConnection(){
             if(windowSerieNb[i] !=-1 && windowSerieNb[j] !=-1 && windowSerieNb[i]==windowSerieNb[j]){
                //cout << "from window " << i << " to window " << j << endl;
                 //  cout << "plan 1 " << windowCurrentPlan[i] << " plan 2 " << windowCurrentPlan[j]  << endl;
-                if(windowCurrentPlan[i] != Unknown && windowCurrentPlan[j] != Unknown && windowCurrentPlan[i]== windowCurrentPlan[j])
+                if(windowCurrentPlane[i] != Unknown && windowCurrentPlane[j] != Unknown && windowCurrentPlane[i]== windowCurrentPlane[j])
                     windowConnection[i][j]=true;
             }
 
@@ -1273,7 +1274,7 @@ void MainWindow::updateWindowConnection(){
     //update connection for displayed series
     for(int i =0; i<4; i++){
         if(windowSerieNb[i] != -1)
-            Series[windowSerieNb[i]-1]->setPlanWindows(windowSerieNb,windowCurrentPlan);
+            Series[windowSerieNb[i]-1]->setPlaneWindows(windowSerieNb,windowCurrentPlane);
     }
 }
 
@@ -1348,7 +1349,7 @@ void MainWindow::mousePressEvent(QMouseEvent* e){
         if(serie->getNbImages()>10){
             Link->setEnabled(true);
             if(serie->getViewLinked()){
-                displayInScene(serie->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
+                displayInScene(serie->getCurrentImg(windowCurrentPlane[selectedWindow-1]));
                 Link->setChecked(true);
             }
         }
@@ -1371,17 +1372,17 @@ void MainWindow::wheelEvent(QWheelEvent *event){
 
         if(Scroll->isChecked()){
             if(event->delta() >0){
-                serie->setNextIndex(currentPlan);
+                serie->setNextIndex(currentPlane);
             }
             else{
-                serie->setPreviousIndex(currentPlan);
+                serie->setPreviousIndex(currentPlane);
             }
 
             QPixmap img;
             if(Flag->isChecked())
                 img=serie->getFlags();
             else
-                img = serie->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
+                img = serie->getCurrentImg(windowCurrentPlane[selectedWindow-1]);
 
             if(serie->getViewLinked())
                 paintLinkedLines();
@@ -1409,7 +1410,7 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
     buttonGroup->button(buttonGroup->checkedId())->setChecked(false);
 
     Serie *serie= Series[currentSerieNumber-1];
-    currentPlan = serie->getdefaultPlan();
+    currentPlane = serie->getdefaultPlane();
 
     //cout << "property number  " << currentSerieNumber<<endl;
     string buttonName = b->text().toLocal8Bit().constData();
@@ -1420,17 +1421,20 @@ void MainWindow::buttonInGroupClicked(QAbstractButton *b){
       //  windowSerieNb[selectedWindow-1]=-1;
 
     if(serie->isBuilt())
-        displayInScene(serie->getCurrentImg(serie->getdefaultPlan()));
+        displayInScene(serie->getCurrentImg(serie->getdefaultPlane()));
     else
-        createDefaultPlan();
+        createDefaultPlane();
 
     windowSerieNb[selectedWindow-1]=currentSerieNumber;
-    windowDefaultPlan[selectedWindow-1]=currentPlan;
-    windowCurrentPlan[selectedWindow-1]=currentPlan;
+    windowDefaultPlane[selectedWindow-1]=currentPlane;
+    windowCurrentPlane[selectedWindow-1]=currentPlane;
     windowNbImg[selectedWindow-1]=serie->getNbImages();
 
     if(!serie->hasFlag())
-        Flag->setChecked(false);
+        Flag->setEnabled(false);
+
+    if(!serie->hasRef())
+        Ref->setEnabled(false);
 
     updateWindowInfo();
 }
@@ -1448,13 +1452,7 @@ void MainWindow::hide_advanced()
 
 void MainWindow::invert_grayscale(){
     Serie *serie = Series[currentSerieNumber-1];
-    //To redo
-    //invertGrayScale=(1-invertGrayScale)%2;
 
-    //QPixmap img = Series[currentSerieNumber-1]->getCurrentImg(windowCurrentPlan[selectedWindow-1]);
-
-    //if(invertGrayScale)
-       // img.invertPixels();
     if(InvertContrast->isChecked()){
         switch(serie->getcontrast()){
         case Default:
@@ -1482,7 +1480,7 @@ void MainWindow::invert_grayscale(){
 
     }
 
-    displayInScene(serie->getCurrentImg(windowCurrentPlan[selectedWindow-1]));
+    displayInScene(serie->getCurrentImg(windowCurrentPlane[selectedWindow-1]));
 
 //    switch(selectedWindow){
 //    case 1:
@@ -1548,7 +1546,7 @@ void MainWindow::display_four_window()
 
 //Zoom in the image
 void MainWindow::zoom_plus(){
-    cout << "zoom clicked" << endl;
+    windowZoom[selectedWindow-1] +=1;
     switch(selectedWindow){
     case 1:
         ui->graphicsView->scale(1.1,1.1);
@@ -1567,6 +1565,7 @@ void MainWindow::zoom_plus(){
 }
 
 void MainWindow::zoom_minus(){
+    windowZoom[selectedWindow-1] -=1;
     switch(selectedWindow){
     case 1:
         ui->graphicsView->scale(0.9,0.9);
@@ -1589,17 +1588,20 @@ void MainWindow::default_contrast(){
     Serie *serie = Series[currentSerieNumber-1];
     Contrast ct = contrast[selectedWindow-1];
 
-    //disable all other contrasts
-    InvertContrast->setChecked(false);
+    //disable all other contrast
     MinMaxContrast->setChecked(false);
     HistoContrast->setChecked(false);
 
-    if(ct ==Default){
+    if(ct ==Default || ct==DefaultInverted){
        DefaultContrast->setChecked(true);
-    }else{
+    }else if(!InvertContrast->isChecked() ){
         contrast[selectedWindow-1]=Default;
         serie->setcontrast(Default);
-        createDefaultPlan();
+        createDefaultPlane();
+    }else{
+        contrast[selectedWindow-1]=DefaultInverted;
+        serie->setcontrast(DefaultInverted);
+        createDefaultPlane();
     }
 }
 
@@ -1616,11 +1618,11 @@ void MainWindow::minmax_contrast(){
     }else if (!InvertContrast->isChecked()){
         contrast[selectedWindow-1]=MinMax;
         serie->setcontrast(MinMax);
-        createDefaultPlan();
+        createDefaultPlane();
     }else {
         contrast[selectedWindow-1]=MinMaxInverted;
         serie->setcontrast(MinMaxInverted);
-        createDefaultPlan();
+        createDefaultPlane();
     }
 }
 
@@ -1637,11 +1639,11 @@ void MainWindow::histo_contrast(){
     }else if (!InvertContrast->isChecked()){
         contrast[selectedWindow-1]=Histo;
         serie->setcontrast(Histo);
-        createDefaultPlan();
+        createDefaultPlane();
     }else{
         contrast[selectedWindow-1]=HistoInverted;
         serie->setcontrast(HistoInverted);
-        createDefaultPlan();
+        createDefaultPlane();
     }
 }
 
@@ -1655,15 +1657,15 @@ void MainWindow::on_showReport_clicked()
 
 //Calling for corresponding displayPlan function
 void MainWindow::callAxial(){
-    displayAxialPlan();
+    displayAxialPlane();
 }
 
 void MainWindow::callCoronal(){
-    displayCoronalPlan();
+    displayCoronalPlane();
 }
 
 void MainWindow::callSagittal(){
-    displaySagittalPlan();
+    displaySagittalPlane();
 }
 
 
@@ -1680,15 +1682,36 @@ void MainWindow::link_views(){
 
 void MainWindow::showFlagged(){
     Serie *serie=Series[currentSerieNumber-1];
+
     if(Flag->isChecked()){
-        currentPlan =FlagImg;
+        windowFlag[selectedWindow-1]=true;
+        currentPlane =FlagImg;
         QPixmap img = serie->getFlags();
         if(img.data_ptr())
             displayInScene(img);
     }
     else{
-        currentPlan=serie->getdefaultPlan();
-        displayInScene(serie->getCurrentImg(currentPlan));
+        windowFlag[selectedWindow-1]=false;
+        currentPlane=serie->getdefaultPlane();
+        displayInScene(serie->getCurrentImg(currentPlane));
+    }
+
+}
+
+void MainWindow::showRef(){
+    Serie *serie=Series[currentSerieNumber-1];
+
+    if(Ref->isChecked()){
+        windowRef[selectedWindow-1]=true;
+        currentPlane =RefImg;
+        QPixmap img = serie->getRef();
+        if(img.data_ptr())
+            displayInScene(img);
+    }
+    else{
+        windowRef[selectedWindow-1]=false;
+        currentPlane=serie->getdefaultPlane();
+        displayInScene(serie->getCurrentImg(currentPlane));
     }
 
 }
@@ -1703,5 +1726,39 @@ void MainWindow::validPassword(char * pw){
         pinDialog.setWrongPin();
         cout << "wrong password" << endl;
     }
+
+}
+
+
+//reseting
+void MainWindow::reset_settings(){
+    //reseting contrast
+    contrast[selectedWindow-1] = Default;
+    default_contrast();
+
+    //reseting zoom
+    int zoom = windowZoom[selectedWindow-1] ;
+    if(zoom > 0){
+        for (int i=0; i<zoom ; i++){
+            zoom_minus();
+        }
+    }else  if(zoom < 0){
+        for (int i=0; i>zoom ; i--){
+            zoom_plus();
+        }
+    }
+    windowZoom[selectedWindow-1]=0;
+
+    //by default Scrolling is activated
+    Scroll->setChecked(true);
+
+    //by default everything else is unchecked
+    if(Flag->isChecked()){
+        Flag->setChecked(false);
+        windowFlag[selectedWindow-1]=false;
+        showFlagged();
+    }
+
+
 
 }

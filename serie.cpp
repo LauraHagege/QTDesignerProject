@@ -5,21 +5,25 @@
 
 
 
-Serie::Serie(int id, char *studyname, char *serieref, Plan plan, char *absolutePath , vector<string> &paths, int nbframes, double rescale, char *description, int ww, int wc)
+Serie::Serie(int id, char *studyname, char *serieref, Plane plane, char *absolutePath , vector<string> &paths, int nbframes, double rescale, char *description, int ww, int wc)
 {
     //cout << " creating serie " << id <<" :" << endl;
     cout << description << endl;
     //cout << "nb frames " << nbframes <<endl;
 
-    defaultPlan=plan;
+    defaultPlane=plane;
     built=false;
-    MultiPlan=false;
+    MultiPlane=false;
 
     imgPaths = paths;
 
     hasFlagImages=false;
     flagIndex=0;
     nbFlag=0;
+
+    hasRefImages=false;
+    refIndex=0;
+    nbRef=0;
 
     strcpy(studyName,studyname);
     strcpy(serieRef,serieref);
@@ -33,7 +37,7 @@ Serie::Serie(int id, char *studyname, char *serieref, Plan plan, char *absoluteP
     rescaleXFactor=1;
     rescaleYFactor=1;
     rescaleZFactor=1;
-    switch(plan){
+    switch(plane){
     case Axial:
         rescaleZFactor=rescale;
         break;
@@ -69,24 +73,18 @@ Serie::Serie(int id, char *studyname, char *serieref, Plan plan, char *absoluteP
     pixelZdepth=0;
 
     setFlags(absolutePath);
+    setRef(absolutePath);
 
 
-   // cout << "default plan " << defaultPlan << endl;
+   // cout << "default plane " << defaultPlan << endl;
 }
 
-QPixmap Serie::getCurrentImg(Plan currentPlan){
-//    cout << serieName << endl;
-//    cout << "Xdepth " << pixelXdepth << endl;
-//    cout << "Ydepth " << pixelYdepth << endl;
-//    cout << "Zdepth " << pixelZdepth << endl;
-
-    cout <<"get current img from plan " << currentPlan <<  endl;
-
+QPixmap Serie::getCurrentImg(Plane currentPlane){
     QImage Image;
 
-    switch(currentPlan){
+    switch(currentPlane){
     case Axial:
-        switch(defaultPlan){
+        switch(defaultPlane){
         case Coronal:
             Image = QImage (myPixelsZ[imgYIndex],pixelXdepth,pixelYdepth, QImage::Format_Indexed8).scaled(QSize(pixelXdepth,rescaleYFactor*pixelYdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
             break;
@@ -100,7 +98,7 @@ QPixmap Serie::getCurrentImg(Plan currentPlan){
         break;
 
     case Coronal:
-        switch(defaultPlan){
+        switch(defaultPlane){
         case Coronal:
             Image= QImage (myPixelsY[imgYIndex],pixelXdepth,pixelZdepth, QImage::Format_Indexed8);
             break;
@@ -114,7 +112,7 @@ QPixmap Serie::getCurrentImg(Plan currentPlan){
         break;
 
     case Sagittal:
-        switch(defaultPlan){
+        switch(defaultPlane){
         case Coronal:
             Image= (QImage (myPixelsX[imgXIndex],pixelYdepth,pixelZdepth, QImage::Format_Indexed8)).scaled(QSize(rescaleYFactor*pixelYdepth,pixelZdepth), Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
             break;
@@ -160,8 +158,8 @@ char * Serie::getDescription(){
     return serieDesc;
 }
 
-Plan Serie::getdefaultPlan(){
-    return defaultPlan;
+Plane Serie::getdefaultPlane(){
+    return defaultPlane;
 }
 
 int Serie::getId(){
@@ -212,7 +210,7 @@ int Serie::getZdepth(){
 
 void Serie::setDepths(int width, int height){
     built=true;
-    switch(defaultPlan){
+    switch(defaultPlane){
     case Axial:
     case Unknown:
         setXdepth(width);
@@ -261,7 +259,7 @@ void Serie::setZdepth(int depth){
 
 void Serie::storePixel(uint8_t *pixelData){
     //cout << "storePixels" << endl;
-    switch(defaultPlan){
+    switch(defaultPlane){
     case Axial:
     case Unknown:
         myPixelsZ.push_back(pixelData);
@@ -286,21 +284,22 @@ void Serie::clearPixels(){
     myPixelsZ.clear();
 
 }
-void Serie::constructPlans(){
+void Serie::constructPlanes(){
     cout << "construc plan " << endl;
-    MultiPlan=true;
-    switch(defaultPlan){
+    MultiPlane=true;
+    switch(defaultPlane){
     case Axial:
-        constructCoronalPlan();
-        constructSagittalPlan();
+    case Unknown:
+        constructCoronalPlane();
+        constructSagittalPlane();
         break;
     case Coronal:
-        constructAxialPlan();
-        constructSagittalPlan();
+        constructAxialPlane();
+        constructSagittalPlane();
         break;
     case Sagittal:
-        constructAxialPlan();
-        constructCoronalPlan();
+        constructAxialPlane();
+        constructCoronalPlane();
         break;
     default:
         break;
@@ -308,8 +307,8 @@ void Serie::constructPlans(){
 
 }
 
-void Serie::constructAxialPlan(){
-    if(defaultPlan == Sagittal){
+void Serie::constructAxialPlane(){
+    if(defaultPlane == Sagittal){
         //cout << "axial from sagittal" << endl;
         for (int z=0; z<pixelZdepth; z++){
            uint8_t *mypixel= new uint8_t[pixelYdepth*pixelXdepth];
@@ -323,7 +322,7 @@ void Serie::constructAxialPlan(){
             myPixelsZ.push_back(mypixel);
         }
     }
-    else if(defaultPlan == Coronal){
+    else if(defaultPlane == Coronal){
         //cout << "axial from coronal" << endl;
         for (int z=0; z<pixelZdepth; z++){
            uint8_t *mypixel= new uint8_t[pixelYdepth*pixelXdepth];
@@ -340,8 +339,8 @@ void Serie::constructAxialPlan(){
     imgZIndex=(int)myPixelsZ.size()/2;
 }
 
-void Serie::constructCoronalPlan(){
-    if(defaultPlan == Axial){
+void Serie::constructCoronalPlane(){
+    if(defaultPlane == Axial){
         //cout << "coronal from axial" << endl;
         for (int y=0; y<pixelYdepth; y++){
            uint8_t *mypixel= new uint8_t[pixelXdepth*pixelZdepth];
@@ -355,7 +354,7 @@ void Serie::constructCoronalPlan(){
             myPixelsY.push_back(mypixel);
         }
 
-    }else if(defaultPlan == Sagittal){
+    }else if(defaultPlane == Sagittal){
         //cout << "coronal from sagittal" << endl;
         for (int y=0; y<pixelYdepth; y++){
            uint8_t *mypixel= new uint8_t[pixelXdepth*pixelZdepth];
@@ -373,8 +372,8 @@ void Serie::constructCoronalPlan(){
 
 }
 
-void Serie::constructSagittalPlan(){
-    if(defaultPlan == Axial){
+void Serie::constructSagittalPlane(){
+    if(defaultPlane == Axial){
         for (int x=0; x<pixelXdepth; x++){
            uint8_t *mypixel= new uint8_t[pixelYdepth*pixelZdepth];
            int countX=0;
@@ -389,7 +388,7 @@ void Serie::constructSagittalPlan(){
 
 
     }
-    else if(defaultPlan == Coronal){
+    else if(defaultPlane == Coronal){
         //cout << "sagittal from coronal" << endl;
         for (int x=0; x<pixelXdepth; x++){
            uint8_t *mypixel= new uint8_t[pixelYdepth*pixelZdepth];
@@ -406,8 +405,8 @@ void Serie::constructSagittalPlan(){
     imgXIndex=(int)myPixelsX.size()/2;
 }
 
-void Serie::setNextIndex(Plan plan){
-    switch(plan){
+void Serie::setNextIndex(Plane plane){
+    switch(plane){
     case Axial:
     case Unknown:
         imgZIndex+=1;
@@ -429,12 +428,17 @@ void Serie::setNextIndex(Plan plan){
         if(flagIndex+1 > nbFlag)
             flagIndex=0;
         break;
+    case RefImg:
+        refIndex+=1;
+        if(refIndex+1 > nbRef)
+            refIndex=0;
+        break;
     }
 
 }
 
-void Serie::setPreviousIndex(Plan plan){
-    switch(plan){
+void Serie::setPreviousIndex(Plane plane){
+    switch(plane){
     case Axial:
     case Unknown:
         imgZIndex-=1;
@@ -456,6 +460,11 @@ void Serie::setPreviousIndex(Plan plan){
         if(flagIndex<0)
             flagIndex=nbFlag-1;
         break;
+    case RefImg:
+        refIndex-=1;
+        if(refIndex <0)
+            refIndex=nbRef-1;
+        break;
 
 
     }
@@ -464,7 +473,7 @@ void Serie::setPreviousIndex(Plan plan){
 
 
 void Serie::setViewLinked(){
-    if(MultiPlan){
+    if(MultiPlane){
         if(viewLinked)
             viewLinked=false;
         else
@@ -478,7 +487,7 @@ bool Serie::getViewLinked(){
     return viewLinked;
 }
 
-void Serie::setPlanWindows(int windowSerieNb[4], Plan windowCurrentPlan[4]){
+void Serie::setPlaneWindows(int windowSerieNb[4], Plane windowCurrentPlane[4]){
     axialWindow.clear();
     coronalWindow.clear();
     sagittalWindow.clear();
@@ -489,7 +498,7 @@ void Serie::setPlanWindows(int windowSerieNb[4], Plan windowCurrentPlan[4]){
 
     for(int i =0; i<4; i++){
         if(windowSerieNb[i]==serieId){
-            switch(windowCurrentPlan[i]){
+            switch(windowCurrentPlane[i]){
             case Axial:
                 if(axialWindow[0]==-1)
                     axialWindow[0]=i+1;
@@ -534,8 +543,8 @@ vector<int> Serie::getSagittalWindow(){
     return sagittalWindow;
 }
 
-vector<int> Serie::getwindow(Plan plan){
-    switch(plan){
+vector<int> Serie::getwindow(Plane plane){
+    switch(plane){
     case Axial:
         return axialWindow;
     case Coronal:
@@ -569,7 +578,6 @@ void Serie::setFlags(char * absolutePath){
 
 
     while(flag->data_ptr()){
-        cout <<flagpath << endl;
         hasFlagImages=true;
         FlagImages.push_back(flag);
         count++;
@@ -581,8 +589,42 @@ void Serie::setFlags(char * absolutePath){
     nbFlag=(int)FlagImages.size();
 }
 
-bool Serie::getMultiplan(){
-    return MultiPlan;
+void Serie::setRef(char * absolutePath){
+
+    char refpath[200];
+    int count=1;
+    //char nb;
+
+
+    strcpy(refpath,absolutePath);
+    strcat(refpath,string("REFERENCES/").c_str());
+    strcat(refpath,studyName);
+    strcat(refpath,"/");
+    strcat(refpath,serieRef);
+    strcat(refpath,"/");
+    strcat(refpath,string("/REF1.jpg").c_str());
+
+    int length = strlen(refpath);
+
+    QPixmap *ref;
+    ref = new QPixmap(refpath);
+
+
+    while(ref->data_ptr()){
+        hasRefImages=true;
+        RefImages.push_back(ref);
+        count++;
+        char nb=to_string(count)[0];
+        refpath[length-5]=nb;
+        ref = new QPixmap(refpath);
+    }
+
+    nbRef=(int)RefImages.size();
+}
+
+
+bool Serie::getMultiplane(){
+    return MultiPlane;
 }
 
 QPixmap Serie::getFlags(){
@@ -596,6 +638,19 @@ bool Serie::hasFlag(){
     return hasFlagImages;
 
 }
+
+QPixmap Serie::getRef(){
+    if(hasRefImages)
+        return *RefImages[refIndex];
+    else
+        return NULL;
+}
+
+bool Serie::hasRef(){
+    return hasRefImages;
+
+}
+
 
 void Serie::setcontrast(Contrast c){
     contrast=c;

@@ -11,7 +11,8 @@
 
 using namespace std;
 
-enum Plan {Axial, Coronal, Sagittal, Unknown, FlagImg};
+//Plane enumeration for plane reconstruction
+enum Plane {Axial, Coronal, Sagittal, Unknown, FlagImg, RefImg};
 
 //Contrast level relatives to the one that DICOM offers
 enum Contrast{Default, DefaultInverted, MinMax, MinMaxInverted, Histo, HistoInverted};
@@ -30,7 +31,7 @@ private:
     //contains the description of the serie
     char serieDesc[100];
     //stores the default plan of the serie
-    Plan defaultPlan;
+    Plane defaultPlane;
 
     //Study number associated to the serie
     char studyName[10];
@@ -81,7 +82,7 @@ private:
     //boolean value to know if views of the serie has been ask to be linked
     bool viewLinked;
     //serie is ;ultiplan if it contains enough value in order to construct relaliv plans
-    bool MultiPlan;
+    bool MultiPlane;
 
     //saving the contrast of the serie
     Contrast contrast;
@@ -97,12 +98,17 @@ private:
     int flagIndex;
     int nbFlag;
 
+    bool hasRefImages;
+    vector <QPixmap*> RefImages;
+    int refIndex;
+    int nbRef;
+
 
 public:
-    Serie(int id, char *studyname, char *serieref, Plan plan, char *absolutepath, vector <string> &Path, int nbframes, double rescale, char * description, int ww, int wc);
+    Serie(int id, char *studyname, char *serieref, Plane plane, char *absolutepath, vector <string> &Path, int nbframes, double rescale, char * description, int ww, int wc);
 
     //return the image corresponding to the given plan at the corresponding indexX,Y,Z
-    QPixmap getCurrentImg(Plan currentPlan);
+    QPixmap getCurrentImg(Plane currentPlane);
 
     //return the path saved at pathNb
     string getPath(int pathNb);
@@ -113,12 +119,12 @@ public:
     void clearPixels();
 
     //calling for the following function depending on the default plan
-    void constructPlans();
+    void constructPlanes();
 
     //construction of respective plan depending on the serie default plan
-    void constructAxialPlan();
-    void constructCoronalPlan();
-    void constructSagittalPlan();
+    void constructAxialPlane();
+    void constructCoronalPlane();
+    void constructSagittalPlane();
 
     //PROPERTIES SETTER FUNCTIONS
     void setDepths(int width, int height);
@@ -127,20 +133,21 @@ public:
     void setZdepth(int depth);
 
     //Set next and previous index for scrolling trough images
-    void setNextIndex(Plan plan);
-    void setPreviousIndex(Plan plan);
+    void setNextIndex(Plane plane);
+    void setPreviousIndex(Plane plane);
 
     //set the boolean viewLinked to true or false
     void setViewLinked();
 
     //For multiplan series
     //Pair on plan with the window inwhich it is displayed
-    void setPlanWindows(int windowSerieNb[], Plan windowCurrentPlan[]);
+    void setPlaneWindows(int windowSerieNb[], Plane windowCurrentPlane[]);
 
     void setcontrast(Contrast c);
 
-    //Store the flagged images according to the path
+    //Store the flagged and Normal images according to the path, if found
     void setFlags(char * absolutePath);
+    void setRef(char *absolutPath);
 
 
     //PROPERTIES GETTER FUNCTIONS
@@ -148,7 +155,7 @@ public:
     char* getName();
     int getId();
     char *getDescription();
-    Plan getdefaultPlan();
+    Plane getdefaultPlane();
 
 
     int getNbImages();
@@ -170,14 +177,17 @@ public:
     vector<int> getAxialWindow();
     vector<int> getCoronalWindow();
     vector<int> getSagittalWindow();
-    vector<int> getwindow(Plan plan);
+    vector<int> getwindow(Plane plane);
 
-    bool getMultiplan();
+    bool getMultiplane();
 
     Contrast getcontrast();
 
     QPixmap getFlags();
     bool hasFlag();
+
+    QPixmap getRef();
+    bool hasRef();
 
 };
 

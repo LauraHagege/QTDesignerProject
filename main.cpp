@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
     //create window architecture
     // find images according to the given path
-    w.constructWindow(dialogbox.getStudyPath(),dialogbox.getStudyNumber(),dialogbox.getStudyName(),dialogbox.getDicomDirPath());
+    w.checkPin(dialogbox.getStudyPath(),dialogbox.getStudyNumber(),dialogbox.getStudyName(),dialogbox.getDicomDirPath());
 
 
     //
