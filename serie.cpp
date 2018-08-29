@@ -568,13 +568,14 @@ void Serie::setFlags(char * absolutePath){
     strcat(flagpath,studyName);
     strcat(flagpath,"/");
     strcat(flagpath,serieRef);
-    strcat(flagpath,"/");
     strcat(flagpath,string("/FLAG1.jpg").c_str());
 
     int length = strlen(flagpath);
 
     QPixmap *flag;
     flag = new QPixmap(flagpath);
+
+    cout <<"flag path" << flagpath << endl;
 
 
     while(flag->data_ptr()){
@@ -601,7 +602,6 @@ void Serie::setRef(char * absolutePath){
     strcat(refpath,studyName);
     strcat(refpath,"/");
     strcat(refpath,serieRef);
-    strcat(refpath,"/");
     strcat(refpath,string("/REF1.jpg").c_str());
 
     int length = strlen(refpath);

@@ -1009,7 +1009,7 @@ void MainWindow::createButtons(){
 //------------------------ UPDATE WINDOW INFO  ------------------//
 //---------------------------------------------------------------//
 void MainWindow::updateWindowInfo(){
-   // cout << "updateWindowinfo" << endl;
+   cout << "updateWindowinfo" << endl;
     if(currentSerieNumber != -1)
         currentNbImages=Series[currentSerieNumber-1]->getNbImages();
     else
@@ -1018,6 +1018,8 @@ void MainWindow::updateWindowInfo(){
     currentPlane=windowCurrentPlane[selectedWindow-1];
 
     updatePlaneButton();
+
+    cout << "1" << endl;
 
     //update the number of different series displayed;
 //    int nb=4;
@@ -1042,17 +1044,28 @@ void MainWindow::updateWindowInfo(){
 
 
     updateContrastButton();
+    cout << "2" << endl;
 
     updateWindowConnection();
 
+
     updateFlagButton();
+    cout << "4" << endl;
+
     updateRefButton();
+
+    cout << "2" << endl;
     //cout << "there are currently " << nbDisplayedSerie << " different series displayed on screen" << endl;
 
 }
 
 void MainWindow::updatePlaneButton(){
-    if(currentNbImages <50 || currentPlane ==FlagImg || currentPlane== RefImg){
+    if(currentSerieNumber ==-1){
+        AxialAction->setEnabled(false);
+        SagittalAction->setEnabled(false);
+        CoronalAction->setEnabled(false);
+    }
+    else if(currentNbImages <50 || currentPlane ==FlagImg || currentPlane== RefImg){
         AxialAction->setEnabled(false);
         SagittalAction->setEnabled(false);
         CoronalAction->setEnabled(false);
@@ -1082,35 +1095,40 @@ void MainWindow::updatePlaneButton(){
 }
 
 void MainWindow::updateFlagButton(){
-    Serie *serie = Series[currentSerieNumber-1];
+    if(currentSerieNumber != -1){
+        Serie *serie = Series[currentSerieNumber-1];
 
-    bool flag=serie->hasFlag();
-
-    if(flag){
-        Flag->setEnabled(true);
-        if(windowFlag[selectedWindow-1])
-            Flag->setChecked(true);
+        bool flag=serie->hasFlag();
+        if(flag){
+            Flag->setEnabled(true);
+            if(windowFlag[selectedWindow-1])
+                Flag->setChecked(true);
+            else
+                Flag->setChecked(false);
+        }
         else
-            Flag->setChecked(false);
+           Flag->setEnabled(false);
     }
-    else
-       Flag->setEnabled(false);
+
 }
 
 void MainWindow::updateRefButton(){
-    Serie *serie = Series[currentSerieNumber-1];
+    if(currentSerieNumber != -1){
+        Serie *serie = Series[currentSerieNumber-1];
 
-    bool ref=serie->hasRef();
+        bool ref=serie->hasRef();
 
-    if(ref){
-        Ref->setEnabled(true);
-        if(windowRef[selectedWindow-1])
-            Ref->setChecked(true);
+        if(ref){
+            Ref->setEnabled(true);
+            if(windowRef[selectedWindow-1])
+                Ref->setChecked(true);
+            else
+                Ref->setChecked(false);
+        }
         else
-            Ref->setChecked(false);
+            Ref->setEnabled(false);
     }
-    else
-        Ref->setEnabled(false);
+
 }
 
 void MainWindow::updateContrastButton(){
